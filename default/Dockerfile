@@ -1,6 +1,8 @@
 # DOCKER-VERSION 1.1.0
 FROM    centos
 
+ADD     . /INGInious
+
 # Install python, needed for scripts used in INGInious
 RUN     yum -y install python
 
