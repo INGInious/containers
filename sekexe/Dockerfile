@@ -1,11 +1,10 @@
-FROM    inginious/default
+FROM    ingi/inginious-containers:default
 
 ADD sekexe /sekexe
 
-RUN yum -y install zsh
-RUN mkdir /.__input
-RUN mkdir /.__output
-RUN mkdir /task
-RUN mkdir /.__tests
+RUN mkdir /.__input && \
+    mkdir /.__output && \
+    mkdir /task && \
+    mkdir /.__tests
 
 CMD ["/sekexe/run", "/bin/INGInious"]
