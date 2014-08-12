@@ -1,4 +1,4 @@
-FROM    ingi/inginious-containers:default
+FROM    ingi/inginious-c-default
 
 ADD sekexe /sekexe
 

@@ -1,6 +1,6 @@
 # DOCKER-VERSION 1.1.0
 
-FROM    ingi/inginious-containers:default
+FROM    ingi/inginious-c-default
 
 # Install Oz
 ADD     . /mozartRPM
