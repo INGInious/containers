@@ -90,7 +90,7 @@ input_data = data["input"]
 limits = data["limits"]
 
 # Determining if debug mode or not
-debug = True if sys.argv[1:] and sys.argv[1] == '--debug' else False
+debug = (sys.argv[1:] and sys.argv[1] == '--debug') or data.get("debug", False)
 
 # Create tests directory
 os.mkdir('/.__tests')
