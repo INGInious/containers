@@ -121,15 +121,12 @@ if os.path.exists("/task/run"):
     except:
         result={"result":"timeout","text":"'/task/run' did a timeout","problems":{}}
         if debug:
-            result['stdout'] = stdout
-            result['stderr'] = stderr
+            result['stdout'] = stdout.decode('utf-8', 'replace')
+            result['stderr'] = stderr.decode('utf-8', 'replace')
         print json.dumps(result)
         exit()
 else:
     result = {"result":"crash","text":"'/task/run' couldn't be found","problems":{}}
-    if debug:
-        result['stdout'] = stdout
-        result['stderr'] = stderr
     print json.dumps(result)
     exit()
 
@@ -139,15 +136,15 @@ tests_results = inginious.tests.get_tests_results()
 if not feedback:
     result = {"result":"crash", "text":"No feedback was given !", "problems":{}}
     if debug:
-        result['stdout'] = stdout
-        result['stderr'] = stderr
+        result['stdout'] = stdout.decode('utf-8', 'replace')
+        result['stderr'] = stderr.decode('utf-8', 'replace')
         result['tests'] = tests_results
     print json.dumps(result)
     exit()
 else:
     if debug:
-        feedback['stdout'] = stdout
-        feedback['stderr'] = stderr
+        feedback['stdout'] = stdout.decode('utf-8', 'replace')
+        feedback['stderr'] = stderr.decode('utf-8', 'replace')
         feedback['tests'] = tests_results
     feedback['archive'] = b64tarfile('/.__output')
     print json.dumps(feedback)
