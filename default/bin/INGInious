@@ -120,9 +120,6 @@ if os.path.exists("/task/run"):
         stdout, stderr = executeProcess("/task/run", "")
     except:
         result={"result":"timeout","text":"'/task/run' did a timeout","problems":{}}
-        if debug:
-            result['stdout'] = stdout.decode('utf-8', 'replace')
-            result['stderr'] = stderr.decode('utf-8', 'replace')
         print json.dumps(result)
         exit()
 else:
