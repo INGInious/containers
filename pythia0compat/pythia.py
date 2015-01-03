@@ -167,18 +167,21 @@ stdOutputData["stderr"] = stdOutputData["stderr"]+"FEEDBACK: "+stderr+"\n"
 archivetosend=get_tarfile('/job/output/files')
 
 if os.path.exists("feedback.xml"):
-    fileF = open("feedback.xml","r")
-    feedback = xmltodict.parse(fileF.read())['feedback']
-    text = (feedback["#text"] if "#text" in feedback else "") + (feedback["general"] if "general" in feedback else "")
-    problems = {}
-    if "question" in feedback and isinstance(feedback["question"],list):
-        for question in feedback["question"]:
-            if "#text" in question:
-                problems = {question["@id"]: question["#text"]}
-    elif "question" in feedback: #ordered dict
-        if "#text" in feedback["question"]:
-            problems = {feedback["question"]["@id"]: feedback["question"]["#text"]}
-    print json.dumps({"result":("success" if feedback["verdict"] == "OK" else "failed"),"text":text,"problems":problems,"v0out":stdOutputData, "archive":archivetosend})
+    try:
+        fileF = open("feedback.xml","r")
+        feedback = xmltodict.parse(fileF.read())['feedback']
+        text = (feedback["#text"] if "#text" in feedback else "") + (feedback["general"] if "general" in feedback else "")
+        problems = {}
+        if "question" in feedback and isinstance(feedback["question"],list):
+            for question in feedback["question"]:
+                if "#text" in question:
+                    problems = {question["@id"]: question["#text"]}
+        elif "question" in feedback: #ordered dict
+            if "#text" in feedback["question"]:
+                problems = {feedback["question"]["@id"]: feedback["question"]["#text"]}
+        print json.dumps({"result":("success" if feedback["verdict"] == "OK" else "failed"),"text":text,"problems":problems,"v0out":stdOutputData, "archive":archivetosend})
+    except:
+        print json.dumps({"result":"crash","text":"The grader gave a badly formatted XML feedback","problems":{},"v0out":stdOutputData,"archive":archivetosend})
 else:
-    print json.dumps({"result":"crash","text":"The grader did not give any input","problems":{},"v0out":stdOutputData, "archive":archivetosend})
+    print json.dumps({"result":"crash","text":"The grader did not give any output","problems":{},"v0out":stdOutputData, "archive":archivetosend})
 
