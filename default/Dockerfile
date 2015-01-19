@@ -4,7 +4,9 @@ FROM    centos
 ADD     . /INGInious
 
 # Install python, needed for scripts used in INGInious
-RUN     yum -y install python
+RUN     yum -y install python epel-release && \
+		yum -y install python-pip && \
+        pip install rpyc
 
 # Allow to run commands
 RUN     mv /INGInious/bin/* /bin
