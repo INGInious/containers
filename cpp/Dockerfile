@@ -5,4 +5,4 @@ FROM    ingi/inginious-c-default
 
 RUN     yum install -y epel-release
 # Add gcc
-RUN     yum install -y gcc cpp make valgrind binutils libstdc++ clang llvm automake check check-devel
+RUN     yum install -y gcc cpp make valgrind binutils libstdc++ clang llvm automake check check-devel CUnit CUnit-devel
