@@ -1,8 +1,7 @@
 #!/usr/bin/python
+import json
 import os
 import sys
-import json
-
 def load_feedback():
     """ Open existing feedback file """
     result = {}
@@ -35,7 +34,13 @@ def set_result(result):
     rdict = load_feedback()
     rdict['result'] = result
     save_feedback(rdict)
-    
+
+def set_grade(grade):
+    """ Set global grade of this job """
+    rdict = load_feedback()
+    rdict['grade'] = float(grade)
+    save_feedback(rdict)
+
 def set_global_feedback(feedback):
     """ Set global feedback in case of error """
     rdict = load_feedback()

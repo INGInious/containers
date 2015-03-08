@@ -7,13 +7,13 @@ import inginious
 from inginious import feedback
 
 def usage():
-    print "Usage : feedback [-r|--result ]result [-f|--feedback ]feedback_text [-i|--id ]problem_id [-p|--print]"
+    print "Usage : feedback [-r|--result=result] [-grade|--grade=grade] [-f|--feedback=feedback_text] [-i|--id=problem_id] [-p|--print]"
     print "All parameters are optional."
     sys.exit(1)
 
 # Read arguments from the command line
 try:
-    opts, args = getopt.getopt(sys.argv[1:], 'r:f:i:p', ['result=', 'feedback=', 'id=' , 'print'])
+    opts, args = getopt.getopt(sys.argv[1:], 'r:f:i:p:g:', ['result=', 'feedback=', 'id=', 'grade=', 'print'])
     if not opts:
         usage()
 except getopt.GetoptError,e:
@@ -23,11 +23,14 @@ except getopt.GetoptError,e:
 result = ''
 feedback = ''
 problem = ''
+grade = None
 getjson = False
 
 for opt, arg in opts:
     if opt in ('-r', '--result'):
         result = arg
+    elif opt in ('-g', '--grade'):
+        grade = arg
     elif opt in ('-f', '--feedback'):
         feedback = arg
     elif opt in ('-i', '--id'):
@@ -39,6 +42,9 @@ for opt, arg in opts:
 
 if result != '':
     inginious.feedback.set_result(result)
+
+if grade is not None:
+    inginious.feedback.set_grade(grade)
     
 if feedback != '':
     if problem == '':
