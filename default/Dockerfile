@@ -3,8 +3,8 @@ FROM    centos
 
 ADD     . /INGInious
 
-# Install python, needed for scripts used in INGInious
-RUN     yum -y install python
+# Install sed, unzip and python, needed for scripts used in INGInious
+RUN     yum -y install sed python zip unzip tar
 
 # Allow to run commands
 RUN     mv /INGInious/bin/* /bin

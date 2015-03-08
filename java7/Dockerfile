@@ -4,4 +4,4 @@
 FROM    ingi/inginious-c-default
 
 # Add java 1.7
-RUN     yum install -y java-1.7.0-openjdk java-1.7.0-openjdk-devel
+RUN     yum install -y java-1.7.0-openjdk java-1.7.0-openjdk-devel ant ant-junit bc
