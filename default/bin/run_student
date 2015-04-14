@@ -27,6 +27,7 @@ import struct
 import sys
 import threading
 import time
+import os
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Runs a command in a secure environment.\n\
 This command will proxy stdin, stdout, stderr, most signals and the return value. \n\n\
@@ -87,7 +88,7 @@ def multiplexed_socket_stream_helper(socket):
         yield (type, data)
 
 conn = rpyc_unix_connect('/sockets/INGInious.sock', config={"allow_public_attrs": True, 'allow_pickle': True})
-container_id, stdout_err, error = conn.root.run(args.container, ' '.join(args.cmd), args.memory, args.time, args.hard_time)
+container_id, stdout_err, error = conn.root.run(args.container, os.getcwd(), ' '.join(args.cmd), args.memory, args.time, args.hard_time)
 if error is not None:
     sys.stderr.write(error)
     exit(254)
