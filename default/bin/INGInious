@@ -40,7 +40,7 @@ def setlimits():
     os.setgid(4242)
     os.setuid(4242)
     resource.setrlimit(resource.RLIMIT_CPU, (limits["time"], limits["time"]))
-    resource.setrlimit(resource.RLIMIT_NPROC, (100, 100))
+    resource.setrlimit(resource.RLIMIT_NPROC, (1000, 1000))
     
 def setExecutable(filename):
     st = os.stat(filename)
