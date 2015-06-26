@@ -3,11 +3,11 @@ import json
 import sys
 import shutil
 import os
+import os.path
 import stat
 import resource
 import subprocess
-from os.path import isfile, join
-import inginious
+import inginious.tests
 import inginious.feedback
 import time
 import tempfile
@@ -113,8 +113,7 @@ if os.path.exists("/task/run"):
     try:
         stdout, stderr = executeProcess("/task/run", "")
     except:
-        result={"result":"crash","text":"An error occured while running the grading script. It is possible that it is non-executable or made a "
-                                        "timeout", "problems":{}}
+        result={"result":"crash","text":"An error occured while running the grading script. It is possible that it is non-executable or made a timeout","problems":{}}
         print json.dumps(result)
         exit()
 else:
