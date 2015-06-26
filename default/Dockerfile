@@ -1,14 +1,13 @@
 # DOCKER-VERSION 1.1.0
 FROM    centos
 
-ADD     . /INGInious
-
 # Install python, needed for scripts used in INGInious
 RUN     yum -y install python epel-release zip unzip tar sed && \
 		yum -y install python-pip && \
         pip install rpyc
 
 # Allow to run commands
+ADD     . /INGInious
 RUN     mv /INGInious/bin/* /bin
 
 # Install everything needed to allow INGInious' python libs to be loaded
