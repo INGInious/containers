@@ -1,0 +1,147 @@
+#! /bin/python
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2014 Université Catholique de Louvain.
+#
+# This file is part of INGInious.
+#
+# INGInious is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# INGInious is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public
+# License along with INGInious.  If not, see <http://www.gnu.org/licenses/>.
+
+import argparse
+import rpyc
+import select
+import signal
+import socket
+import struct
+import sys
+import threading
+import time
+import os
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Runs a command in a secure environment.\n\
+This command will proxy stdin, stdout, stderr, most signals and the return value. \n\n\
+There are special return values: \n\
+* 252 means that the command was killed due to an out-of-memory \n\
+* 253 means that the command timed out \n\
+* 254 means that an error occured while running the proxy')
+parser.add_argument('--container', help="Name of the container to use. The default is the same as the current container", default="")
+parser.add_argument('--time', help="Timeout (in CPU time) for the container. The default is the same as the current container", type=int, default=0)
+parser.add_argument('--hard-time', help="Hard timeout for the container (in real time). The default is three times the value indicated for --time", type=int, default=0)
+parser.add_argument('--memory', help="Maximum memory for the container, in Mo. The default is the same as the current container", type=int, default=0)
+parser.add_argument('cmd', help="Command to be run on the remote container", nargs=argparse.REMAINDER)
+args = parser.parse_args()
+
+def rpyc_unix_connect(path, service = rpyc.VoidService, config = {}):
+    """ creates a socket-connection to the given host and port
+    :param path: the path to the unix domain socket
+    :param service: the local service to expose (defaults to Void)
+    :param config: configuration dict
+ 
+    :returns: an RPyC connection
+    """
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(3)
+    s.connect(path)
+    stream = rpyc.SocketStream(s)
+    return rpyc.connect_stream(stream, service, config)
+ 
+def multiplexed_socket_stream_helper(socket):
+    """A generator of multiplexed data blocks coming from a response socket. 
+    This function comes from the Docker-py library, and is under the Apache 2.0 license."""
+    
+    def recvall(socket, size):
+        blocks = []
+        while size > 0:
+            block = socket.recv(size)
+            if not block:
+                return None
+    
+            blocks.append(block)
+            size -= len(block)
+    
+        sep = str()
+        data = sep.join(blocks)
+        return data
+
+    while True:
+        socket.settimeout(None)
+        header = recvall(socket, 8)
+        if not header:
+            break
+        type, length = struct.unpack('>BxxxL', header)
+        if not length:
+            break
+        data = recvall(socket, length)
+        if not data:
+            break
+        yield (type, data)
+
+conn = rpyc_unix_connect('/sockets/INGInious.sock', config={"allow_public_attrs": True, 'allow_pickle': True})
+container_id, stdout_err, error = conn.root.run(args.container, os.getcwd(), ' '.join(args.cmd), args.memory, args.time, args.hard_time)
+if error is not None:
+    sys.stderr.write(error)
+    exit(254)
+
+container_id = str(container_id)
+
+# Catch every signal, and send it to Docker
+def receive_signal(signum, stack):
+    """ Send the signal to the remote process """
+    c = rpyc_unix_connect('/sockets/INGInious.sock', config={"allow_public_attrs": True, 'allow_pickle': True})
+    c.root.signal(container_id, signum)
+    
+uncatchable = ['SIG_DFL','SIGSTOP','SIGKILL']
+for i in [x for x in dir(signal) if x.startswith("SIG")]:
+    if not i in uncatchable:
+        signum = getattr(signal,i)
+        signal.signal(signum,receive_signal)
+
+# Start the thread that will handle stdin
+done = False
+def redirect_stdin():
+    try:
+        c = rpyc_unix_connect('/sockets/INGInious.sock', config={"allow_public_attrs": True, 'allow_pickle': True})
+        stdin = c.root.stdin(container_id)
+        while True:
+            if done:
+                break
+            try:
+                value = raw_input()
+                if done:
+                    break
+                stdin.send(value)
+            except:
+                break
+        stdin.shutdown(socket.SHUT_WR)
+    except:
+        pass
+
+thread_stdin = threading.Thread(target=redirect_stdin)
+thread_stdin.daemon = True
+thread_stdin.start()
+
+# Read stdout/stderr
+data = multiplexed_socket_stream_helper(stdout_err)
+for type, message in data:
+    if type == 1:
+        print message
+    elif type == 2:
+        sys.stderr.write(message)
+    else:
+        pass
+
+# When we are here, we are done
+done = True
+return_status = conn.root.close(container_id)
+exit(return_status)

@@ -41,8 +41,7 @@ def setDirectoryRights(path):
 def setlimits():
     os.setgid(4242)
     os.setuid(4242)
-    resource.setrlimit(resource.RLIMIT_CPU, (limits["time"], limits["time"]+5))
-    resource.setrlimit(resource.RLIMIT_NPROC, (100, 100))
+    resource.setrlimit(resource.RLIMIT_NPROC, (1000, 1000))
     
 def setExecutable(filename):
     st = os.stat(filename)
@@ -60,9 +59,6 @@ def executeProcess(filename,stdinString):
     start = time.time()
     while p.poll() is None:
         time.sleep(0.2)
-        if time.time()-start > limits["time"]*2:
-            p.kill()
-            raise Exception("Timeout")
     stdout.seek(0)
     stderr.seek(0)
     
@@ -98,8 +94,9 @@ os.mkdir('/.__tests')
 # Create output directory
 os.mkdir("/.__output")
 
-#Copy /ro/task (which is read-only) in /task. Everything will be executed there
-shutil.copytree("/ro/task","/task")
+# Verify that task directory exists
+if not os.path.exists("/task"):
+    os.mkdir("/task")
 
 #Set rights on some files
 setDirectoryRights("/tmp")
@@ -110,6 +107,7 @@ setDirectoryRights("/.__output")
 #Launch everything
 if os.path.exists("/task/run"):
     os.chdir("/task")
+    stdout, stderr= "", ""
     try:
         stdout, stderr = executeProcess("/task/run", input_data['student_response']+'\n')
     except:
@@ -121,9 +119,6 @@ if os.path.exists("/task/run"):
         exit()
 else:
     result = {"result":"crash","text":"'/task/run' couldn't be found","problems":{}}
-    if debug:
-        result['stdout'] = stdout
-        result['stderr'] = stderr
     print json.dumps(result)
     exit()
 
@@ -136,10 +131,11 @@ for filepath in ['/tmp/work/new_file.oz', '/tmp/work/new_file.ozf', '/tmp/work/e
 stdout = "["+re.sub('\} *\n* *\{','},{',stdout)+"]"
 tests_results = inginious.tests.get_tests_results()
 try:
-	feedback = json.loads(stdout)
+    feedback = json.loads(stdout)
 except:
-	print json.dumps({"result":"crash", "text":"Unable to read feedback: " + stdout, "problems":{}})
-	exit()
+    print json.dumps({"result":"crash", "text":"Unable to read feedback: " + stdout, "problems":{}})
+    exit()
+
 if not feedback:
     print json.dumps({"result":"crash", "text":"No feedback was given !", "problems":{}})
     exit()

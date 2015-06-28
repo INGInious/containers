@@ -39,10 +39,7 @@ def setDirectoryRights(path):
 def setlimits():
     os.setgid(4242)
     os.setuid(4242)
-    #Send a SIGXCPU after limits["time"], then a SIGKILL after limits["time"]+5
-    resource.setrlimit(resource.RLIMIT_CPU, (limits["time"], limits["time"]+5))
-    #Limit number of subprocesses
-    resource.setrlimit(resource.RLIMIT_NPROC, (100, 100))
+    resource.setrlimit(resource.RLIMIT_NPROC, (1000, 1000))
     
 def setExecutable(filename):
     st = os.stat(filename)
@@ -60,9 +57,6 @@ def executeProcess(filename,stdinString):
     start = time.time()
     while p.poll() is None:
         time.sleep(0.2)
-        if time.time()-start > limits["time"]*2:
-            p.kill()
-            raise Exception("Timeout")
     stdout.seek(0)
     stderr.seek(0)
     
@@ -91,7 +85,7 @@ limits = data["limits"]
 os.mkdir("/tmp/work")
 
 #Copy /ro/task (which is read-only) in /job. Everything will be executed there
-shutil.copytree("/ro/task","/job")
+shutil.copytree("/task","/job")
 
 if not os.path.exists("/job/input"):
     os.mkdir("/job/input")
