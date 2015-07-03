@@ -1,6 +1,10 @@
 # DOCKER-VERSION 1.1.0
 FROM    centos
 
+ENV LANG en_US.UTF-8  
+ENV LANGUAGE en_US:en  
+ENV LC_ALL en_US.UTF-8
+
 # Install python, needed for scripts used in INGInious
 RUN     yum -y install python epel-release zip unzip tar sed && \
 		yum -y install python-pip && \
