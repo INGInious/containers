@@ -107,7 +107,6 @@ setDirectoryRights("/.__tests")
 setDirectoryRights("/.__output")
 
 #Launch everything
-
 if os.path.exists("/task/run"):
     os.chdir("/task")
     try:
@@ -115,10 +114,12 @@ if os.path.exists("/task/run"):
     except:
         result={"result":"crash","text":"An error occured while running the grading script. It is possible that it is non-executable or made a timeout","problems":{}}
         print json.dumps(result)
+        setDirectoryRights('/task')
         exit()
 else:
     result = {"result":"crash","text":"'/task/run' couldn't be found","problems":{}}
     print json.dumps(result)
+    setDirectoryRights('/task')
     exit()
 
 # Produce feedback
@@ -131,7 +132,6 @@ if not feedback:
         result['stderr'] = stderr.decode('utf-8', 'replace')
         result['tests'] = tests_results
     print json.dumps(result)
-    exit()
 else:
     if debug:
         feedback['stdout'] = stdout.decode('utf-8', 'replace')
@@ -139,3 +139,4 @@ else:
         feedback['tests'] = tests_results
     feedback['archive'] = b64tarfile('/.__output')
     print json.dumps(feedback)
+setDirectoryRights('/task')

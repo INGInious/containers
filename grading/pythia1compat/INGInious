@@ -116,10 +116,12 @@ if os.path.exists("/task/run"):
             result['stdout'] = stdout
             result['stderr'] = stderr
         print json.dumps(result)
+        setDirectoryRights('/task')
         exit()
 else:
     result = {"result":"crash","text":"'/task/run' couldn't be found","problems":{}}
     print json.dumps(result)
+    setDirectoryRights('/task')
     exit()
 
 # Copy required files in output folder
@@ -134,10 +136,12 @@ try:
     feedback = json.loads(stdout)
 except:
     print json.dumps({"result":"crash", "text":"Unable to read feedback: " + stdout, "problems":{}})
+    setDirectoryRights('/task')
     exit()
 
 if not feedback:
     print json.dumps({"result":"crash", "text":"No feedback was given !", "problems":{}})
+    setDirectoryRights('/task')
     exit()
 else:
     output = {"result":'success','text':'','archive':b64tarfile('/.__output'),'problems':{}}
@@ -153,3 +157,4 @@ else:
                 output['text'] += "<br/>"
             output['text'] += f['msg']
     print json.dumps(output)
+    setDirectoryRights('/task')

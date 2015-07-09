@@ -129,6 +129,7 @@ if os.path.exists("/job/dataset.sh"):
         stdout, stderr = executeProcess("/job/dataset.sh", "")
     except:
         print json.dumps({"result":"crash","text":"Dataset.sh did a timeout","problems":{},"v0out":stdOutputData})
+        setDirectoryRights('/task')
         exit()
     stdOutputData["stdout"] = stdOutputData["stdout"]+"DATASET: "+stdout+"\n"
     stdOutputData["stderr"] = stdOutputData["stderr"]+"DATASET: "+stderr+"\n"
@@ -140,6 +141,7 @@ if os.path.exists("/job/run.sh"):
         stdout, stderr = executeProcess("/job/run.sh", "")
     except:
         print json.dumps({"result":"timeout","text":"Your code did a timeout","problems":{},"v0out":stdOutputData})
+        setDirectoryRights('/task')
         exit()
     stdOutputData["stdout"] = stdOutputData["stdout"]+"RUN: "+stdout+"\n"
     stdOutputData["stderr"] = stdOutputData["stderr"]+"RUN: "+stderr+"\n"
@@ -154,6 +156,7 @@ try:
     stdout, stderr = executeProcess("/job/feedback.sh", "")
 except:
     print json.dumps({"result":"crash","text":"Feedback.sh did a timeout","problems":{},"v0out":stdOutputData})
+    setDirectoryRights('/task')
     exit()
 stdOutputData["stdout"] = stdOutputData["stdout"]+"FEEDBACK: "+stdout+"\n"
 stdOutputData["stderr"] = stdOutputData["stderr"]+"FEEDBACK: "+stderr+"\n"
@@ -178,4 +181,5 @@ if os.path.exists("feedback.xml"):
         print json.dumps({"result":"crash","text":"The grader gave a badly formatted XML feedback","problems":{},"v0out":stdOutputData,"archive":archivetosend})
 else:
     print json.dumps({"result":"crash","text":"The grader did not give any output","problems":{},"v0out":stdOutputData, "archive":archivetosend})
+setDirectoryRights('/task')
 
