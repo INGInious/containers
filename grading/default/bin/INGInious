@@ -97,6 +97,9 @@ if not os.path.exists("/.__tests"):
 if not os.path.exists("/.__output"):
     os.mkdir("/.__output")
 
+# Touch __feedback.json (to set the rights)
+open('/.__output/__feedback.json', 'w').close()
+
 # Verify that task directory exists
 if not os.path.exists("/task"):
     os.mkdir("/task")
@@ -139,7 +142,7 @@ else: #start the ssh server
     attempts = 0
     while connected_workers == 0 and attempts < 120:
         time.sleep(1)
-        stdout, stderr = executeProcess(["/bin/bash", "-c", "ps --user 4242 | grep sshd | wc -l"], as_root=True)
+        stdout, stderr = executeProcess(["/bin/bash", "-c", "ps -f -C sshd | grep 'worker@pts' | wc -l"], as_root=True)
         connected_workers = int(stdout)
         attempts += 1
 
@@ -148,7 +151,7 @@ else: #start the ssh server
         attempts = 0
         while connected_workers != 0 and attempts < 60*30:
             time.sleep(1)
-            stdout, stderr = executeProcess(["/bin/bash", "-c", "ps --user 4242 | grep sshd | wc -l"], as_root=True)
+            stdout, stderr = executeProcess(["/bin/bash", "-c", "ps -f -C sshd | grep 'worker@pts' | wc -l"], as_root=True)
             connected_workers = int(stdout)
             attempts += 1
     else:
