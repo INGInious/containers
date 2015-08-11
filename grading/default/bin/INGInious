@@ -44,16 +44,20 @@ def setExecutable(filename):
     st = os.stat(filename)
     os.chmod(filename, st.st_mode | stat.S_IEXEC)
 
-def executeProcess(filename,stdinString):
-    setExecutable(filename)
+def executeProcess(args,stdinString="",as_root=False):
+    if not isinstance(args, list):
+        args = [args]
     stdin = tempfile.TemporaryFile()
     stdin.write(stdinString)
     stdin.seek(0)
     
     stdout = tempfile.TemporaryFile()
     stderr = tempfile.TemporaryFile()
-    p = subprocess.Popen([filename], preexec_fn=setlimits, stdin=stdin, stdout=stdout, stderr=stderr)
-    start = time.time()
+    if as_root:
+        p = subprocess.Popen(args, stdin=stdin, stdout=stdout, stderr=stderr)
+    else:
+        setExecutable(args[0])
+        p = subprocess.Popen(args, preexec_fn=setlimits, stdin=stdin, stdout=stdout, stderr=stderr)
     while p.poll() is None:
         time.sleep(0.2)
     stdout.seek(0)
@@ -61,8 +65,6 @@ def executeProcess(filename,stdinString):
     return stdout.read(), stderr.read()
 
 def b64tarfile(source_dir):
-    encoded_string = ''
-    
     with tarfile.open('/.__output/archive.tgz', "w:gz") as tar:
         tar.add(source_dir, arcname='/')
         
@@ -107,20 +109,53 @@ setDirectoryRights("/.__tests")
 setDirectoryRights("/.__output")
 
 #Launch everything
-if os.path.exists("/task/run"):
-    os.chdir("/task")
-    try:
-        stdout, stderr = executeProcess("/task/run", "")
-    except:
-        result={"result":"crash","text":"An error occured while running the grading script. It is possible that it is non-executable or made a timeout","problems":{}}
-        print json.dumps(result)
-        setDirectoryRights('/task')
-        exit()
-else:
-    result = {"result":"crash","text":"'/task/run' couldn't be found","problems":{}}
-    print json.dumps(result)
-    setDirectoryRights('/task')
-    exit()
+stdout, stderr = "", ""
+if debug != "ssh": #normal start
+    if os.path.exists("/task/run"):
+        os.chdir("/task")
+        try:
+            stdout, stderr = executeProcess("/task/run")
+        except:
+            inginious.feedback.set_result('crash')
+            inginious.feedback.set_global_feedback("An error occured while running the grading script. It is possible that it is non-executable or made a timeout")
+    else:
+        inginious.feedback.set_result('crash')
+        inginious.feedback.set_global_feedback("'/task/run' could not be found")
+else: #start the ssh server
+    executeProcess(["/usr/bin/ssh-keygen", "-t", "rsa", "-b", "4096", "-N", '', "-f", "/home/worker/.ssh/id_rsa"], as_root=True)
+    executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
+    executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "AuthorizedKeysFile=.ssh/id_rsa.pub", "-o", "PermitRootLogin=no", "-o",
+                    "PasswordAuthentication=no"], as_root=True)
+    with open('/home/worker/.ssh/id_rsa') as private_key:
+        print json.dumps({"ssh_key": private_key.read()})
+        sys.stdout.flush()  # force flush to ensure the agent gets it
+
+    # Set defaults
+    inginious.feedback.set_result('crash')
+    inginious.feedback.set_global_feedback("[SSH Debug] Not feedback was set")
+
+    # Wait until someone connects to the server
+    connected_workers = 0
+    attempts = 0
+    while connected_workers == 0 and attempts < 120:
+        time.sleep(1)
+        stdout, stderr = executeProcess(["/bin/bash", "-c", "ps --user 4242 | grep sshd | wc -l"], as_root=True)
+        connected_workers = int(stdout)
+        attempts += 1
+
+    # If someone is connected, wait until no one remains
+    if connected_workers != 0:
+        attempts = 0
+        while connected_workers != 0 and attempts < 60*30:
+            time.sleep(1)
+            stdout, stderr = executeProcess(["/bin/bash", "-c", "ps --user 4242 | grep sshd | wc -l"], as_root=True)
+            connected_workers = int(stdout)
+            attempts += 1
+    else:
+        inginious.feedback.set_result('crash')
+        inginious.feedback.set_global_feedback('[SSH Debug] Nobody connected to the SSH server.')
+
+    stdout, stderr = "", ""
 
 # Produce feedback
 feedback = inginious.feedback.get_feedback()
