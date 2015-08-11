@@ -125,7 +125,7 @@ if debug != "ssh": #normal start
         inginious.feedback.set_result('crash')
         inginious.feedback.set_global_feedback("'/task/run' could not be found")
 else: #start the ssh server
-    executeProcess(["/usr/bin/ssh-keygen", "-t", "rsa", "-b", "4096", "-N", '', "-f", "/home/worker/.ssh/id_rsa"], as_root=True)
+    executeProcess(["/usr/bin/ssh-keygen", "-t", "rsa", "-b", "1024", "-N", '', "-f", "/home/worker/.ssh/id_rsa"], as_root=True)
     executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
     executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "AuthorizedKeysFile=.ssh/id_rsa.pub", "-o", "PermitRootLogin=no", "-o",
                     "PasswordAuthentication=no"], as_root=True)
