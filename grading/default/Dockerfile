@@ -26,9 +26,7 @@ RUN     rm -R /INGInious
 
 # Create worker user
 RUN     groupadd --gid 4242 worker && \
-        useradd --uid 4242 --gid 4242 worker && \
-        mkdir -p /home/worker/.ssh && \
-        chown -R worker:worker /home/worker
+        useradd --uid 4242 --gid 4242 worker --home-dir /task
 
 CMD ["INGInious"]
 

@@ -104,6 +104,10 @@ open('/.__output/__feedback.json', 'w').close()
 if not os.path.exists("/task"):
     os.mkdir("/task")
 
+# Assert that the directory .ssh does not exists
+if os.path.exists("/task/.ssh"):
+    shutil.rmtree("/task/.ssh")
+
 #Set rights on some files
 setDirectoryRights("/tmp")
 setDirectoryRights("/task")
@@ -125,11 +129,18 @@ if debug != "ssh": #normal start
         inginious.feedback.set_result('crash')
         inginious.feedback.set_global_feedback("'/task/run' could not be found")
 else: #start the ssh server
-    executeProcess(["/usr/bin/ssh-keygen", "-t", "rsa", "-b", "1024", "-N", '', "-f", "/home/worker/.ssh/id_rsa"], as_root=True)
+    os.mkdir("/task/.ssh")
+    executeProcess(["/usr/bin/ssh-keygen", "-t", "rsa", "-b", "1024", "-N", '', "-f", "/task/.ssh/id_rsa"], as_root=True)
+
+    # Do the chmod after to avoid race conditions between the GC of python (closing the file opened by chmod) and Linux.
+    os.chown("/task/.ssh", 4242, 4242)
+    os.chown("/task/.ssh/id_rsa", 4242, 4242)
+    os.chown("/task/.ssh/id_rsa.pub", 4242, 4242)
+
     executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
     executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "AuthorizedKeysFile=.ssh/id_rsa.pub", "-o", "PermitRootLogin=no", "-o",
-                    "PasswordAuthentication=no"], as_root=True)
-    with open('/home/worker/.ssh/id_rsa') as private_key:
+                    "PasswordAuthentication=no", "-o", "StrictModes=no"], as_root=True)
+    with open('/task/.ssh/id_rsa') as private_key:
         print json.dumps({"ssh_key": private_key.read()})
         sys.stdout.flush()  # force flush to ensure the agent gets it
 
