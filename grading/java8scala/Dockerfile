@@ -9,3 +9,5 @@ RUN yum -y install wget && \
     yum -y remove wget && \
     rm jdk-8u25-linux-x64.rpm && \
     rpm -ivh http://downloads.typesafe.com/scala/2.11.2/scala-2.11.2.rpm
+
+Something that won't work
