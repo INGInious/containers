@@ -37,8 +37,12 @@ There are special return values: \n\
 * 254 means that an error occured while running the proxy')
 parser.add_argument('--container', help="Name of the container to use. The default is the same as the current container", default="")
 parser.add_argument('--time', help="Timeout (in CPU time) for the container. The default is the same as the current container", type=int, default=0)
-parser.add_argument('--hard-time', help="Hard timeout for the container (in real time). The default is three times the value indicated for --time", type=int, default=0)
+parser.add_argument('--hard-time', help="Hard timeout for the container (in real time). The default is three times the value indicated for --time",
+                    type=int, default=0)
 parser.add_argument('--memory', help="Maximum memory for the container, in Mo. The default is the same as the current container", type=int, default=0)
+parser.add_argument('--share-network', help="Share the network stack of the grading container with the student container. This is not the case by "
+                                            "default. If the container container has network access, this will also be the case for the student!",
+                    action='store_true', dest='share_network')
 parser.add_argument('cmd', help="Command to be run on the remote container", nargs=argparse.REMAINDER)
 args = parser.parse_args()
 
@@ -88,7 +92,8 @@ def multiplexed_socket_stream_helper(socket):
         yield (type, data)
 
 conn = rpyc_unix_connect('/sockets/INGInious.sock', config={"allow_public_attrs": True, 'allow_pickle': True})
-container_id, stdout_err, error = conn.root.run(args.container, os.getcwd(), ' '.join(args.cmd), args.memory, args.time, args.hard_time)
+container_id, stdout_err, error = conn.root.run(args.container, os.getcwd(), ' '.join(args.cmd), args.memory, args.time, args.hard_time,
+                                                args.share_network)
 if error is not None:
     sys.stderr.write(error)
     exit(254)
