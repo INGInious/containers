@@ -6,7 +6,8 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # Install python, needed for scripts used in INGInious
-RUN     yum -y install epel-release && \
+RUN     yum clean metadata && \
+        yum -y install epel-release && \
         yum -y install python python-pip zip unzip tar sed openssh-server && \
         pip install rpyc
 
