@@ -55,6 +55,18 @@ def set_problem_feedback(feedback, problem_id):
     rdict['problems'][problem_id] = feedback
     save_feedback(rdict)
 
+def set_custom_value(custom_name, custom_val):
+    """
+    Set a custom value to be given back in the feedback
+    :param custom_name: name/key of the entry to be placed in the custom dict
+    :param custom_val: content of the entry to be placed in the custom dict
+    """
+    rdict = load_feedback()
+    if not "custom" in rdict:
+        rdict["custom"] = {}
+    rdict["custom"][custom_name] = custom_val
+    save_feedback(rdict)
+
 def get_feedback():
     """ Returns the dictionary containing the feedback """
     rdict = load_feedback()

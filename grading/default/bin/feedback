@@ -7,13 +7,14 @@ import inginious
 from inginious import feedback
 
 def usage():
-    print "Usage : feedback [-r|--result=result] [-grade|--grade=grade] [-f|--feedback=feedback_text] [-i|--id=problem_id] [-p|--print]"
+    print "Usage : feedback [-r|--result=result] [-grade|--grade=grade] [-f|--feedback=feedback_text] [-i|--id=problem_id] [-p|--print] [" \
+          "-c|--custom=custom_name:custom_value] [-j|--custom-json=custom_name:custom_json]"
     print "All parameters are optional."
     sys.exit(1)
 
 # Read arguments from the command line
 try:
-    opts, args = getopt.getopt(sys.argv[1:], 'r:f:i:p:g:', ['result=', 'feedback=', 'id=', 'grade=', 'print'])
+    opts, args = getopt.getopt(sys.argv[1:], 'r:f:i:p:g:c:j', ['result=', 'feedback=', 'id=', 'grade=', 'custom=', 'custom-json=', 'print'])
     if not opts:
         usage()
 except getopt.GetoptError,e:
@@ -25,6 +26,8 @@ feedback = ''
 problem = ''
 grade = None
 getjson = False
+custom_str = None
+custom_json = False
 
 for opt, arg in opts:
     if opt in ('-r', '--result'):
@@ -37,6 +40,9 @@ for opt, arg in opts:
         problem = arg
     elif opt in ('-p', '--print'):
         getjson = True
+    elif opt in ('-c', '--custom', '-j', '--custom-json'):
+        custom_str = arg
+        custom_json = opt in ('-j', '--custom-json')
 
 # Doing the real stuff
 
@@ -52,5 +58,32 @@ if feedback != '':
     else:
         inginious.feedback.set_problem_feedback(feedback, problem)
 
+if custom_str != None:
+    try:
+        custom_str = custom_str.split(':')
+        custom_name = custom_str[0]
+        custom_str = ":".join(custom_str[1:])
+    except:
+        print "Invalid value for --custom(-json)"
+        exit(1)
+
+    if custom_json:
+        try:
+            custom_str = json.loads(custom_str)
+        except:
+            print "Cannot decode json. Invalid value for --custom-json"
+            exit(1)
+    else: # try to convert to int/float if possible
+        try:
+            custom_str = int(custom_str)
+        except:
+            try:
+                custom_str = float(custom_str)
+            except:
+                pass
+
+    inginious.feedback.set_custom_value(custom_name, custom_str)
+
 if getjson:
     print json.dumps(inginious.feedback.get_feedback())
+
