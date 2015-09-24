@@ -4,4 +4,4 @@
 FROM    ingi/inginious-c-default
 
 # Add gcc
-RUN     yum install -y gcc cpp make valgrind binutils libstdc++ clang llvm automake check check-devel CUnit CUnit-devel
+RUN     yum install -y gcc cpp make valgrind binutils libstdc++ clang llvm automake check check-devel CUnit CUnit-devel zlib-devel
