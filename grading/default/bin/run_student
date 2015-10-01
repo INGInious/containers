@@ -140,7 +140,7 @@ thread_stdin.start()
 data = multiplexed_socket_stream_helper(stdout_err)
 for type, message in data:
     if type == 1:
-        print message
+        sys.stdout.write(message)
     elif type == 2:
         sys.stderr.write(message)
     else:
