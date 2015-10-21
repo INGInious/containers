@@ -30,6 +30,9 @@ do
     rm -f /todo/current-$username/__feedback.json > /dev/null 2> /dev/null
 done
 
+# Extract the archives
+find /todo -iname \*.zip | sed -e 's/^\(.*\)\(\.zip\)$/"\1.zip" -d "\1_extract"/' | xargs -n 3 unzip
+
 # Parse the language
 lang="java17"
 if [ -e "/workdir/course/$taskid/jplag_lang.txt" ]

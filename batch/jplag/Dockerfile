@@ -9,11 +9,11 @@ RUN yum install -y maven git && \
     cd / && \
     rm -Rf /jplag_src && \
     yum -y remove maven git && \
-    yum -y install java-1.7.0-openjdk
+    yum -y install java-1.7.0-openjdk unzip
 
-ADD ./run /
-RUN chmod +x /run
-CMD "/run"
+ADD ./runcmd /
+RUN chmod +x /runcmd
+CMD "/runcmd"
 
 # This container is a batch one
 LABEL org.inginious.batch=1
