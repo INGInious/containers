@@ -19,19 +19,19 @@ then
     exit 1
 fi
 
+# Extract the archives
+find /workdir/submissions/$taskid -iname \*.zip | sed -e 's/^\(.*\)\(\.zip\)$/"\1.zip" -d "\1"/' | xargs -n 3 unzip
+
 # Copy the submissions to a proper location
 mkdir /todo
 for userdir in `find /workdir/submissions/$taskid/ -mindepth 1 -maxdepth 1 -type d`
-do 
+do
     username=${userdir#"/workdir/submissions/$taskid/"}
     mkdir "/todo/current-$username/"
     cp -R /workdir/submissions/$taskid/$username/*/archive/* /todo/current-$username/
-    # drop __feedback.json, not needed here
+    cp -R /workdir/submissions/$taskid/$username/*/uploaded_files/* /todo/current-$username/
     rm -f /todo/current-$username/__feedback.json > /dev/null 2> /dev/null
 done
-
-# Extract the archives
-find /todo -iname \*.zip | sed -e 's/^\(.*\)\(\.zip\)$/"\1.zip" -d "\1_extract"/' | xargs -n 3 unzip
 
 # Parse the language
 lang="java17"
