@@ -31,6 +31,7 @@ LABEL org.inginious.batch.args.submissions=file \
       org.inginious.batch.args.submissions.description="All submissions made by students" \
       org.inginious.batch.args.submissions.folder_format="taskid/group" \
       org.inginious.batch.args.submissions.best_only="1"
+      org.inginious.batch.args.submissions.task="task"
 
 # Course files
 LABEL org.inginious.batch.args.course=file \
