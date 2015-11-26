@@ -64,7 +64,7 @@ the path ``/input/course/taskid/yourfile``. For example, to use the exclude file
 \n\
 \n\
 \n\
-Please note that by default, ``jplag_exclude.txt`` and ``jplag_basecode`` will be used if they exists as exclude file and base code dir. If you \
+Please note that by default, ``jplag_exclude.txt`` will be used if it exists as exclude file. If you \
 leave this field empty, the container will also search in the file ``jplag_args.txt`` for additionnal arguments."
 
 # Language
@@ -74,3 +74,10 @@ LABEL org.inginious.batch.args.language=text \
       org.inginious.batch.args.language.description="Language used in the submissions. Can be 'java17' (default), 'java15', 'java15dm', 'java12', \
 'java11', 'c/c++', 'c#-1.2', 'char', 'text' or 'scheme'. If you leave this field empty, the container will look at the file ``jplag_lang.txt`` \
 inside you task folder to get the language."
+
+# Base code
+LABEL org.inginious.batch.args.template=text \
+      org.inginious.batch.args.template.name="Base code" \
+      org.inginious.batch.args.template.path="template.txt" \
+      org.inginious.batch.args.template.description="Base code (code shared between all the submissions). You should indicate a path relative to \
+      your course directory (likely ``taskid/jplag_basecode`` ; this is the default)."
