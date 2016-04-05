@@ -1,6 +1,6 @@
 # DOCKER-VERSION 1.1.0
 
-FROM    debian:sid
+FROM    debian:jessie
 
 # Update packages if it is needed and install python, needed for scripts used in Pythia
 RUN     apt-get update && \
