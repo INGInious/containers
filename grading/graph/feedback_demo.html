@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Access-Control-Allow-Origin" content="*"/>
+</head>
+<body>
+
+<h1>Execution steps browser</h1>
+
+<!-- Include the required files for CodeMirror (codemirror.net) -->
+<script src="../CodeMirror/lib/codemirror.js"></script>
+<link rel="stylesheet" href="../CodeMirror/lib/codemirror.css">
+<script src="../CodeMirror/mode/javascript/javascript.js"></script>
+<script src="../CodeMirror/mode/clike/clike.js"></script>
+
+<!-- Since the CSS is small, directly put it in the html file -->
+<!-- The following style code is for highlight the current line of the execution -->
+<style>
+  .error {
+    background: #FF0000;
+  }
+  .current_line {
+    background: #00cc00;
+  }
+  .default {
+    background: #ffffff;
+  }
+  img {
+    max-width: 70%;
+    max-height: 70%;
+  }
+  #codeEditor {
+    max-width: 100%;
+    max-height: 100%;
+  }
+</style>
+<!-- end of CSS -->
+
+<!-- Beginning page design -->
+<div id="container" style="width:100%;">
+  <div id="left" style="float:left; width:50%;">
+    <div id="codeEditor"></div>
+    <div id="buttonsPanel">
+      <center id="c">
+        <button onclick="initLoop()">Reset Execution</button>
+        <button onclick="steps(false)">Previous step</button>
+        <button onclick="steps(true);">Next step</button>
+        <input type="text" id="step" size="4"><button onclick="showIthStep(step);">Go</button>
+        <p id="progression">Current Execution Point : </p>
+      </center>
+      <p>This feedback let you observe how the states of the heap and stack frames evolve during the execution of the program in which your solution has been implanted. The highlighted line is always the next line that will be executed. The images correspond to the memory state before the execution of the next line.</p>
+      <p id="rem"><b>Reminder</b> : 
+      <ul>
+        <li>The stack frames are sections of memory (on the stack) given to functions when they are called during the exuction of the C program. They contain the function arguments and local variables.</li>
+        <li>The heap contains the global variables and the dynamically allocated variables (using <b>malloc())</b></li>
+      </ul>
+      </p>
+    </div>
+  </div>
+  <div id="right" style="float:right; width:50%;">
+    <center>
+      <div id="ExecImages"></div>
+    </center>
+  </div>
+<div>
+
+<!-- Get and parse the trace file from the web server inside the INGI network -->
+<script type="text/javascript"> 
+
+/*
+* Download the trace file from the server and parse it
+* Then display the source-code (in the trace file) using the
+* 'handleJsonObject' function with 'displaySourceCode' function
+*/
+function loadTraceFile(callback) {
+  var xobj = new XMLHttpRequest();
+  xobj.overrideMimeType("application/json");
+  // retrieving files from local web-server :
+  //xobj.open("GET", "http://localhost/thesis_LinkedList.trace", true);
+  // retrieving files from INGI web-server (only works with Firefox) :
+  xobj.open("GET", "./thesis_LinkedList.trace", true);
+  xobj.onreadystatechange = function() {
+    if (xobj.readyState == 4 && xobj.status == "200") {
+      callback(xobj.responseText);
+    }
+  };
+  xobj.send();
+}
+
+/*
+* get the exec point image corresponding to a specific execution point
+* 'currExecPointObject' is the currently processed exec point in the trace file
+* This function dislays the exec point image and highlight the corresponding line
+* in the code
+*/
+function getExecPointImage (currExecPointObject, i) {
+  var prefix = "./execution_images/exec_point_";
+  var indice = i.toString();
+  var ext = ".png";
+  var path = prefix + indice + ext;
+  displayImage(path, "curr_exec_image", "ExecImages");
+}
+
+function displayImage(src, id, parentId)
+{
+  var img = document.createElement("img");
+  img.src = src;
+  img.id = id;
+  document.getElementById(parentId).appendChild(img);
+}
+
+/*
+* Removes the image currently displayed on the page
+* (If there is one)
+*/
+function clear() {
+  var hasErrorMessage = document.getElementById("error_message");
+  if (hasErrorMessage)
+    hasErrorMessage.parentNode.removeChild(hasErrorMessage);
+
+  var imageZone = document.getElementById("ExecImages"); 
+  var image = document.getElementById("curr_exec_image");
+  if (image)
+    imageZone.removeChild(image);
+}
+
+/*
+* 'source' is the string representing the source code of the C program
+*/
+function displaySourceCode(source) {
+  // this display the source code in a beautiful CodeMirror element
+  var myCodeMirror = CodeMirror(document.getElementById("codeEditor"), {
+    value: source,
+    mode: "text/x-c",
+    readOnly: true,
+    lineNumbers: true
+  }); 
+  // Put the codeMirror in the object to easy get it elsewhere in the code
+  this.codeMirror = myCodeMirror;
+}
+/*
+* Used to always show the current line
+* from : http://stackoverflow.com/questions/10575343/codemirror-is-it-possible-to-scroll-to-a-line-so-that-it-is-in-the-middle-of-w
+*/
+function jumpToLine(i, codeMirror)
+{
+  var t = codeMirror.charCoords({line: i, ch: 0}, "local").top;
+  var middleHeight = codeMirror.getScrollerElement().offsetHeight / 2;
+  codeMirror.scrollTo(null, t - middleHeight - 5);
+}
+
+/*
+* initialization of the execution loop
+*/
+function initLoop() {
+  clear();
+
+  var codeMirror = this.codeMirror;
+  curr_line = this.ExecPoints[0].line;
+
+  getExecPointImage(this.ExecPoints[0], 0);
+  jumpToLine(curr_line, codeMirror);
+
+  // "un-highlight" the previous highlighted line :
+  if (this.previousLine && this.previousLine != curr_line)
+  {
+    codeMirror.removeLineClass(curr_line - 1, 'background', 'current_line');
+    codeMirror.addLineClass(previousLine - 1, 'background', 'default');
+  }
+
+  // decrement the line number because the lines begin at '0' in CodeMirror API :
+  codeMirror.removeLineClass(curr_line - 1, 'background', 'default');
+  codeMirror.addLineClass(curr_line - 1, 'background', 'current_line');
+  codeMirror.setCursor(curr_line);
+
+  this.previousLine = curr_line;
+  this.currExecPointNumber = 0;
+
+  displayProgression(0);
+}
+
+/*
+* display the current execution point number under the codeMirror object
+*/
+function displayProgression(current) {
+  var total = this.ExecPoints.length - 1;
+  var toDisplay = "Current Execution Point : " + current.toString() + "/" + total.toString();
+  var progression = document.getElementById("progression");
+  var text = document.createElement("p");
+
+  text.textContent = toDisplay;
+  text.setAttribute("id", "progression");
+  progression.parentNode.replaceChild(text, progression);
+}
+
+/*
+* Show the I-th execution step
+*/
+function showIthStep(i)
+{
+  clear();
+  var ExecutionPoints = this.ExecPoints;
+
+  var i = document.getElementById("step").value;
+  if (i > ExecutionPoints.length - 1)
+    i = ExecutionPoints.length - 1;
+  else if (i < 0)
+    i = 0;
+
+  var currExecPointObject = ExecutionPoints[i];
+  var curr_line = currExecPointObject.line;
+
+  if (this.previousLine)
+  {
+    codeMirror.removeLineClass(this.previousLine - 1, 'background', 'current_line');
+    codeMirror.addLineClass(this.previousLine - 1, 'background', 'default');
+  }
+  codeMirror.removeLineClass(curr_line - 1, 'background', 'default');
+  codeMirror.addLineClass(curr_line - 1, 'background', 'current_line');
+
+  if (segFault(currExecPointObject))
+  {
+    errorMsg(codeMirror, curr_line);
+  }
+
+  jumpToLine(curr_line, codeMirror);
+  getExecPointImage(currExecPointObject, i);
+  displayProgression(i);
+  this.previousLine = curr_line;
+  this.currExecPointNumber = i;
+}
+
+/*
+* for the 'Next Step' and 'Previous step' buttons
+* Navigate through the execution points
+*/
+function steps(isNext) {
+  clear();
+
+  var codeMirror = this.codeMirror;
+  var curr_i = this.currExecPointNumber; 
+  var total = this.ExecPoints.length;
+  var ExecutionPoints = this.ExecPoints;
+
+  if (isNext && curr_i < total - 1)
+  {
+    curr_i++;
+  }
+
+  else if (!isNext && curr_i > 0)
+  {
+    curr_i--;
+  }
+
+  var currExecPointObject = ExecutionPoints[curr_i];
+  var curr_line = currExecPointObject.line;
+
+  if (this.previousLine)
+  {
+    codeMirror.removeLineClass(this.previousLine - 1, 'background', 'current_line');
+    codeMirror.addLineClass(this.previousLine - 1, 'background', 'default');
+  }
+
+  codeMirror.removeLineClass(curr_line - 1, 'background', 'default');
+  codeMirror.addLineClass(curr_line - 1, 'background', 'current_line');
+
+  if (segFault(currExecPointObject))
+  {
+    errorMsg(codeMirror, curr_line);
+  }
+
+  jumpToLine(curr_line, codeMirror);
+  getExecPointImage(currExecPointObject, curr_i);
+
+  displayProgression(curr_i);
+
+  this.previousLine = curr_line;
+  this.currExecPointNumber = curr_i;
+}
+
+/*
+* check if there is a 'segfault' entry in the 'execPoint' dict
+*/
+function segFault(execPoint)
+{
+  if (execPoint['event'] == "segfault")
+    return true;
+}
+
+/*
+* display the right informations in case of segmentation fault
+*/
+function errorMsg(codeMirror, curr_line)
+{
+  codeMirror.removeLineClass(curr_line - 1, 'background', 'current_line');
+  codeMirror.addLineClass(curr_line - 1, 'background', 'error');
+
+  var hasErrorMessage = document.getElementById("error_message");
+  if (!hasErrorMessage)
+  {
+    var error = document.createElement("p");
+    error.textContent = "-> La ligne soulignée en rouge a produit une erreur de segmentation";
+    error.style.color = "#FF0000";
+    error.style.fontSize = "large";
+    error.setAttribute("id", "error_message");
+    document.getElementById("buttonsPanel").appendChild(error);
+  }
+}
+
+
+/*
+* get the response from the HTTP request and parse the trace (json) file into
+* a JS object
+* Then we can do whatever whe want with that object beginning by displaying the
+* code on the html page
+*/
+function handleJsonObject() {
+  loadTraceFile(function(response) {
+    // parse JSON string into object
+    var json_object = JSON.parse(response);
+    // displaying the source-code by passing the 'code' entry of the trace file
+    displaySourceCode(json_object.code);
+    // starting execution loop :
+    this.ExecPoints = (json_object.trace);
+    initLoop();
+  });
+}
+
+// Calling the 'main' function to start everything !
+handleJsonObject();
+ 
+
+</script>
+
+</body>
+</html>
