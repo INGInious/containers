@@ -1,0 +1,39 @@
+FROM centos
+
+ADD ./runcmd
+RUN chmod +x /runcmd
+
+CMD "/runcmd"
+
+
+# This container is a batch one
+LABEL org.inginious.batch=1
+
+#
+# Some Metadata for the container
+#
+LABEL org.inginious.batch.title="Batch for evaluation of SINF1252" \
+      org.inginious.batch.description="Run the tests from a batch method"
+
+# Submissions
+LABEL org.inginious.batch.args.submissions=file \
+      org.inginious.batch.args.submissions.name="Submissions" \
+      org.inginious.batch.args.submissions.path="submissions.tgz" \
+      org.inginious.batch.args.submissions.description="All submissions made by students" \
+      org.inginious.batch.args.submissions.folder_format="taskid/username" \
+      org.inginious.batch.args.submissions.best_only="1" \
+      org.inginious.batch.args.submissions.task="task"
+
+# Course files
+LABEL org.inginious.batch.args.course=file \
+      org.inginious.batch.args.course.name="Course" \
+      org.inginious.batch.args.course.path="course.tgz" \
+      org.inginious.batch.args.course.description="The course files"
+
+# Task
+LABEL org.inginious.batch.args.task=text \
+      org.inginious.batch.args.task.name="Task to check" \
+      org.inginious.batch.args.task.path="task.txt" \
+      org.inginious.batch.args.task.description="Id of the task you want to check."
+
+

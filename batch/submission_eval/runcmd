@@ -1,0 +1,49 @@
+#! /bin/bash
+
+mkdir ./workdir
+mkdir ./workdir/course
+mkdir ./workdir/submissions
+mkdir ./output
+#tar -zxf ./input/course.tgz -C /workdir/course > /dev/null 2> /dev/null
+tar -zxf ./input/submissions.tgz -C ./workdir/submissions > /dev/null 2> /dev/null
+
+#I got a per user,the task call in the file.
+
+taskid=$(cat ./input/task.txt)
+for userdir in `find ./workdir/submissions/ -mindepth 1 -maxdepth 1 -type d`
+do
+	username=${userdir#"./workdir/submissions/"}
+	if [ ! -e "./workdir/submissions/$username/$taskid" ]
+	then
+	    	>&2 echo "Task id $taskid not found in submissions for student $username"
+    		#exit 1
+		continue
+	fi
+	
+	#mkdir "/todo/$username/$taskid"
+	#cp -r /workdir/submissions/$username/$taskid/* /todo/$username/$taskid
+	#rm -r /todo/$username/$taskid/*/archive > /dev/null 2> /dev/null
+	
+	mkdir ./output/$username
+	mkdir ./output/$username/$taskid
+	#From here, I have to parse each file to get the code of the student.
+	for subId in `find ./workdir/submissions/$username/$taskid/ -mindepth 1 -maxdepth 1 -type d`
+	do
+		submissionId=${subId#"./workdir/submissions/$username/$taskid/"}
+		mkdir ./output/$username/$taskid/$submissionId/
+		touch ./output/$username/$taskid/$submissionId/student_code.c
+		sed -n '/^        int fct(int a){/, /^    montest:/p' ./workdir/submissions/$username/$taskid/$submissionId/submission.test > ./output/$username/$taskid/$submissionId/student_codeOUT.c
+		sed '$d' ./output/$username/$taskid/$submissionId/student_codeOUT.c > ./output/$username/$taskid/$submissionId/student_code.c
+		rm ./output/$username/$taskid/$submissionId/student_codeOUT.c
+		mv ./output/$username/$taskid/$submissionId/student_code.c ./output/$username/$taskid/$submissionId/myfile.txt
+		cut -c 9- ./output/$username/$taskid/$submissionId/myfile.txt > ./output/$username/$taskid/$submissionId/student_code.c && rm -f ./output/$username/$taskid/$submissionId/myfile.txt
+		cp ./workdir/course ./output/$username/$taskid/$submissionId/student_code.c
+		make -f ./output/$username/$taskid/$submissionId/Makefile
+		./output/$username/$taskid/$submissionId/run
+		#check necessity to remove files after.
+	done
+done
+
+
+
+
