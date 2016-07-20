@@ -1,4 +1,9 @@
-#! /usr/bin/python
+#!/bin/python3.5
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
 import json
 import sys
 import shutil
@@ -48,7 +53,7 @@ def executeProcess(args,stdinString="",as_root=False):
     if not isinstance(args, list):
         args = [args]
     stdin = tempfile.TemporaryFile()
-    stdin.write(stdinString)
+    stdin.write(stdinString.encode('utf-8'))
     stdin.seek(0)
     
     stdout = tempfile.TemporaryFile()
@@ -71,13 +76,11 @@ def b64tarfile(source_dir):
     with open('/.__output/archive.tgz', "rb") as tar:
         encoded_string = base64.b64encode(tar.read())
         
-    return encoded_string
+    return encoded_string.decode('utf-8')
 
 # Get input data
 stdin = sys.stdin.read().strip('\0').strip()
 data = json.loads(stdin)
-input_data = data["input"]
-limits = data["limits"]
 
 # Determining if debug mode or not
 debug = (sys.argv[1:] and sys.argv[1] == '--debug') or data.get("debug",False)
@@ -141,7 +144,7 @@ else: #start the ssh server
     executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "AuthorizedKeysFile=.ssh/id_rsa.pub", "-o", "PermitRootLogin=no", "-o",
                     "PasswordAuthentication=no", "-o", "StrictModes=no"], as_root=True)
     with open('/task/.ssh/id_rsa') as private_key:
-        print json.dumps({"ssh_key": private_key.read()})
+        print(json.dumps({"ssh_key": private_key.read()}))
         sys.stdout.flush()  # force flush to ensure the agent gets it
 
     # Set defaults
@@ -180,12 +183,12 @@ if not feedback:
         result['stdout'] = stdout.decode('utf-8', 'replace')
         result['stderr'] = stderr.decode('utf-8', 'replace')
         result['tests'] = tests_results
-    print json.dumps(result)
+    print(json.dumps(result))
 else:
     if debug:
         feedback['stdout'] = stdout.decode('utf-8', 'replace')
         feedback['stderr'] = stderr.decode('utf-8', 'replace')
         feedback['tests'] = tests_results
     feedback['archive'] = b64tarfile('/.__output')
-    print json.dumps(feedback)
+    print(json.dumps(feedback))
 setDirectoryRights('/task')

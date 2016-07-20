@@ -1,4 +1,9 @@
-#!/usr/bin/python
+#!/bin/python3.5
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
 import os
 import re
 import sys
@@ -6,9 +11,9 @@ import shutil
 import getopt
 
 def usage():
-    print "Usage : archive [-o|--outsubdir ]output_subdir [-a|--add ]filepath [-r|--remove ]filepath"
-    print "--outsubdir will put the file in the specified sub-directory in the output archive"
-    print "If specified whith --remove, it prefixes the filepath"
+    print("Usage : archive [-o|--outsubdir ]output_subdir [-a|--add ]filepath [-r|--remove ]filepath")
+    print("--outsubdir will put the file in the specified sub-directory in the output archive")
+    print("If specified whith --remove, it prefixes the filepath")
     sys.exit(1)
 
 # Read arguments from the command line
@@ -16,8 +21,8 @@ try:
     opts, args = getopt.getopt(sys.argv[1:], 'a:r:o:', ['add=', 'remove=','outsubdir='])
     if not opts:
         usage()
-except getopt.GetoptError,e:
-    print e
+except getopt.GetoptError as e:
+    print(e)
     sys.exit(1)
 
 add = False
@@ -39,18 +44,18 @@ for opt, arg in opts:
 if add:
     try:
         os.makedirs('/.__output/' + outsubdir)
-    except OSError, e:
+    except OSError as e:
         pass
     
     try:    
         shutil.copy(addfile, '/.__output/' + outsubdir + '/' + os.path.basename(addfile))
-    except IOError,e:
-        print e
+    except IOError as e:
+        print(e)
         sys.exit(2)
 
 if remove:
     try:
         os.remove('/.__output/' + outsubdir + '/' + rmfile)
-    except IOError, e:
-        print e
+    except IOError as e:
+        print(e)
         sys.exit(2)

@@ -1,5 +1,9 @@
-#!/usr/bin/python
-# Tool to import answer from standard input to the template files given in arguments
+#!/bin/python3.5
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
 import os
 import re
 import sys
@@ -11,7 +15,7 @@ import base64
 from inginious import templateparser
 
 def usage():
-    print "Usage : getinput problem_id"
+    print("Usage : getinput problem_id")
     sys.exit(1)
 
 # Read arguments from the command line
@@ -26,10 +30,10 @@ try:
         # Do not use print as it does not support binary
         sys.stdout.write(base64.b64decode(input_data['input'][sys.argv[1]]["value"]))
     else:
-        print input_data['input'][sys.argv[1]].encode('utf-8')
-except IOError, e:
+        print(input_data['input'][sys.argv[1]].encode('utf-8'))
+except IOError as e:
     sys.stderr.write("Input file not found")
     sys.exit(2)
-except ValueError, e:
+except ValueError as e:
     sys.stderr.write("Input is not compatible")
     sys.exit(2)

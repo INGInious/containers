@@ -1,5 +1,11 @@
-#!/usr/bin/python
+#!/bin/python3.5
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+#
 # Tool to import answer from standard input to the template files given in arguments
+
 import os
 import re
 import sys
@@ -10,8 +16,8 @@ import inginious
 from inginious import templateparser
 
 def usage():
-    print "Usage : parsetemplate [-o|--output ]output_file input_file"
-    print "JSON must be passed trough stdin"
+    print("Usage : parsetemplate [-o|--output ]output_file input_file")
+    print("JSON must be passed trough stdin")
     sys.exit(1)
 
 # Read arguments from the command line
@@ -19,8 +25,8 @@ try:
     opts, args = getopt.getopt(sys.argv[1:], 'o:', ['output='])
     if not args:
         usage()
-except getopt.GetoptError,e:
-    print e
+except getopt.GetoptError as e:
+    print(e)
     sys.exit(1)
 
 outfile=''
@@ -41,17 +47,17 @@ try:
     with codecs.open(infile, 'r', 'utf-8') as file:
         content = file.read()
     content = inginious.templateparser.parseTemplate(content, input_data)
-except IOError, e:
-    print "Input file not found"
+except IOError as e:
+    print("Input file not found")
     sys.exit(2)
-except ValueError, e:
-    print "Input is not compatible"
+except ValueError as e:
+    print("Input is not compatible")
     sys.exit(2)
 
 # Ensure directory of resulting file exists
 try:
     os.makedirs(os.path.dirname(outfile))
-except OSError, e:
+except OSError as e:
     pass
 
 # Write file
