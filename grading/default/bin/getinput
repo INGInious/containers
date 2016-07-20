@@ -28,9 +28,9 @@ try:
         input_data = json.loads(file.read().strip('\0').strip())
     if isinstance(input_data['input'][sys.argv[1]], dict) and "filename" in input_data['input'][sys.argv[1]] and "value" in input_data['input'][sys.argv[1]]:
         # Do not use print as it does not support binary
-        sys.stdout.write(base64.b64decode(input_data['input'][sys.argv[1]]["value"]))
+        sys.stdout.buffer.write(base64.b64decode(input_data['input'][sys.argv[1]]["value"]))
     else:
-        print(input_data['input'][sys.argv[1]].encode('utf-8'))
+        print(input_data['input'][sys.argv[1]])
 except IOError as e:
     sys.stderr.write("Input file not found")
     sys.exit(2)
