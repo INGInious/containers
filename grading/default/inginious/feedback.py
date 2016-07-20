@@ -17,7 +17,7 @@ def load_feedback():
     else:
         cont = '{}'
     try:
-        result = json.loads(cont)
+        result = json.loads(cont) if cont else {}
     except ValueError as e:
         result = {"result":"crash", "text":"Feedback file has been modified by user !"}
     return result
