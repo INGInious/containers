@@ -1,4 +1,9 @@
-#!/usr/bin/python
+#!/bin/python3.5
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
 import os
 import sys
 import json
@@ -7,8 +12,8 @@ import inginious
 from inginious import tests
 
 def usage():
-    print "Usage : definetest tag value"
-    print "All parameters are optional."
+    print("Usage : definetest tag value")
+    print("All parameters are optional.")
     sys.exit(1)
 
 # Read arguments from the command line

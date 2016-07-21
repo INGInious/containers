@@ -1,4 +1,9 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
 import os
 import sys
 import json
@@ -14,7 +19,7 @@ def load_tests():
         cont = '{}'
     try:
         result = json.loads(cont)
-    except ValueError, e:
+    except ValueError as e:
         result = {"result":"crash", "text":"Tests file has been modified by user !"}
     return result
 

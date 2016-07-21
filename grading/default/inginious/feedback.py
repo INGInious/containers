@@ -1,7 +1,12 @@
-#!/usr/bin/python
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
 import json
 import os
 import sys
+
 def load_feedback():
     """ Open existing feedback file """
     result = {}
@@ -12,8 +17,8 @@ def load_feedback():
     else:
         cont = '{}'
     try:
-        result = json.loads(cont)
-    except ValueError, e:
+        result = json.loads(cont) if cont else {}
+    except ValueError as e:
         result = {"result":"crash", "text":"Feedback file has been modified by user !"}
     return result
 
