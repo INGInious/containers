@@ -15,13 +15,10 @@ ADD ./runcmd /
 RUN chmod +x /runcmd
 CMD "/runcmd"
 
-# This container is a batch one
-LABEL org.inginious.batch=1
-
 #
 # Some Metadata for the container
 #
-LABEL org.inginious.batch.title="JPlag" \
+LABEL org.inginious.batch.name="JPlag" \
       org.inginious.batch.description="An automated tool that checks submissions for plagiarism. "
 
 # Submissions
