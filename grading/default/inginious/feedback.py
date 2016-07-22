@@ -34,8 +34,14 @@ def save_feedback(rdict):
     f.close()
 
 # Doing the real stuff
-def set_result(result):
+def set_global_result(result):
     """ Set global result value """
+    rdict = load_feedback()
+    rdict['result'] = result
+    save_feedback(rdict)
+
+def set_problem_result(result, problem_id):
+    """ Set problem specific result value """
     rdict = load_feedback()
     rdict['result'] = result
     save_feedback(rdict)
@@ -46,18 +52,18 @@ def set_grade(grade):
     rdict['grade'] = float(grade)
     save_feedback(rdict)
 
-def set_global_feedback(feedback):
+def set_global_feedback(feedback, append=False):
     """ Set global feedback in case of error """
     rdict = load_feedback()
-    rdict['text'] = feedback
+    rdict['text'] = rdict.get('text', '') + feedback if append else feedback
     save_feedback(rdict)
 
-def set_problem_feedback(feedback, problem_id):
+def set_problem_feedback(feedback, problem_id, append=False):
     """ Set problem specific feedback """
     rdict = load_feedback()
     if not 'problems' in rdict:
         rdict['problems'] = {}
-    rdict['problems'][problem_id] = feedback
+    rdict['problems'][problem_id] = rdict['problems'].get(problem_id, '') + feedback if append else feedback
     save_feedback(rdict)
 
 def set_custom_value(custom_name, custom_val):

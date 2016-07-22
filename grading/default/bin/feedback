@@ -7,54 +7,39 @@
 import os
 import sys
 import json
-import getopt
+import argparse
 import inginious
 from inginious import feedback
 
-def usage():
-    print("Usage : feedback [-r|--result=result] [-grade|--grade=grade] [-f|--feedback=feedback_text] [-i|--id=problem_id] [-p|--print] [" \
-          "-c|--custom=custom_name:custom_value] [-j|--custom-json=custom_name:custom_json]")
-    print("All parameters are optional.")
-    sys.exit(1)
 
-# Read arguments from the command line
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'r:f:i:p:g:c:j', ['result=', 'feedback=', 'id=', 'grade=', 'custom=', 'custom-json=', 'print'])
-    if not opts:
-        usage()
-except getopt.GetoptError as e:
-    print(e)
-    sys.exit(1)
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Set the result of the task or specified problem.\n')
+parser.add_argument('-r', '--result', help="result [success|failed|crash|timeout|overflow]", default='')
+parser.add_argument('-g', '--grade', help="grade/score", default='')
+parser.add_argument('-f', '--feedback', help="feedback text", default='')
+parser.add_argument('-i', '--id', help="problem id", default="")
+parser.add_argument('-e', '--escape', help="interprets backslash escapes", action='store_true')
+parser.add_argument('-p', '--print', help="print JSON feedback", action='store_true')
+parser.add_argument('-c', '--custom', help="custom k/v 'custom_name:custom_value'", default='')
+parser.add_argument('-j', '--custom-json', dest='custom_json', help="custom JSON k/v 'custom_name:custom_json'", default='')
+args = parser.parse_args()
 
-result = ''
-feedback = ''
-problem = ''
-grade = None
-getjson = False
-custom_str = None
-custom_json = False
-
-for opt, arg in opts:
-    if opt in ('-r', '--result'):
-        result = arg
-    elif opt in ('-g', '--grade'):
-        grade = arg
-    elif opt in ('-f', '--feedback'):
-        feedback = arg
-    elif opt in ('-i', '--id'):
-        problem = arg
-    elif opt in ('-p', '--print'):
-        getjson = True
-    elif opt in ('-c', '--custom', '-j', '--custom-json'):
-        custom_str = arg
-        custom_json = opt in ('-j', '--custom-json')
+result = args.result
+feedback = args.feedback.encode('utf-8').decode('unicode_escape') if args.escape else args.feedback
+problem = args.id
+grade = args.grade
+getjson = args.print
+custom_str = args.custom if not args.custom_json else args.custom_json
+custom_json = True if args.custom_json else False
 
 # Doing the real stuff
 
 if result != '':
-    inginious.feedback.set_result(result)
+    if problem == '':
+        inginious.feedback.set_global_result(result)
+    else:
+        inginious.feedback.set_problem_result(result, problem)
 
-if grade is not None:
+if grade:
     inginious.feedback.set_grade(grade)
     
 if feedback != '':
@@ -63,7 +48,7 @@ if feedback != '':
     else:
         inginious.feedback.set_problem_feedback(feedback, problem)
 
-if custom_str != None:
+if custom_str:
     try:
         custom_str = custom_str.split(':')
         custom_name = custom_str[0]
