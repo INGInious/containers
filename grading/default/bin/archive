@@ -8,40 +8,21 @@ import os
 import re
 import sys
 import shutil
-import getopt
+import argparse
 
-def usage():
-    print("Usage : archive [-o|--outsubdir ]output_subdir [-a|--add ]filepath [-r|--remove ]filepath")
-    print("--outsubdir will put the file in the specified sub-directory in the output archive")
-    print("If specified whith --remove, it prefixes the filepath")
-    sys.exit(1)
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
+                                 description='Adds or deletes files from the output archive.',
+                                 epilog='If specified whith --remove, it prefixes the filepath')
+parser.add_argument('-o', '--outsubdir', help="put the file in the specified sub-directory in the output archive", default="")
+parser.add_argument('-a', '--add', help="add the given filepath to archive", default="")
+parser.add_argument('-r', '--remove', help="remove the given filepath to archive", default="")
+args = parser.parse_args()
 
-# Read arguments from the command line
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'a:r:o:', ['add=', 'remove=','outsubdir='])
-    if not opts:
-        usage()
-except getopt.GetoptError as e:
-    print(e)
-    sys.exit(1)
-
-add = False
-remove = False
-addfile = ''
-rmfile = ''
-outsubdir = ''
-
-for opt, arg in opts:
-    if opt in ('-r', '--remove'):
-        remove = True
-        rmfile = arg
-    elif opt in ('-a', '--add'):
-        add = True
-        addfile = arg
-    elif opt in ('-o', '--outsubdir'):
-        outsubdir = arg
+addfile = args.add
+rmfile = args.remove
+outsubdir = args.outsubdir
         
-if add:
+if addfile:
     try:
         os.makedirs('/.__output/' + outsubdir)
     except OSError as e:
@@ -53,7 +34,7 @@ if add:
         print(e)
         sys.exit(2)
 
-if remove:
+if rmfile:
     try:
         os.remove('/.__output/' + outsubdir + '/' + rmfile)
     except IOError as e:

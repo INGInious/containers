@@ -9,28 +9,26 @@ import re
 import sys
 import codecs
 import json
-import getopt
+import argparse
 import inginious
 import base64
 from inginious import templateparser
 
-def usage():
-    print("Usage : getinput problem_id")
-    sys.exit(1)
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Get data associated with an input field.\n')
+parser.add_argument('problem', help="problem id")
+args = parser.parse_args()
 
-# Read arguments from the command line
-if not sys.argv[1:]:
-    usage()
+problem = args.problem
 
 # Retrieves the input data from INGInious and open input file
 try:
     with open('/.__input/__inputdata.json', 'r') as file:
         input_data = json.loads(file.read().strip('\0').strip())
-    if isinstance(input_data['input'][sys.argv[1]], dict) and "filename" in input_data['input'][sys.argv[1]] and "value" in input_data['input'][sys.argv[1]]:
+    if isinstance(input_data['input'][problem], dict) and "filename" in input_data['input'][problem] and "value" in input_data['input'][problem]:
         # Do not use print as it does not support binary
-        sys.stdout.buffer.write(base64.b64decode(input_data['input'][sys.argv[1]]["value"]))
+        sys.stdout.buffer.write(base64.b64decode(input_data['input'][problem]["value"]))
     else:
-        print(input_data['input'][sys.argv[1]])
+        print(input_data['input'][problem])
 except IOError as e:
     sys.stderr.write("Input file not found")
     sys.exit(2)

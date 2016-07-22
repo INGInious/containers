@@ -11,32 +11,19 @@ import re
 import sys
 import codecs
 import json
-import getopt
+import argparse
 import inginious
 from inginious import templateparser
 
-def usage():
-    print("Usage : parsetemplate [-o|--output ]output_file input_file")
-    print("JSON must be passed trough stdin")
-    sys.exit(1)
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
+                                 description='Parse the template file and generate an output file.',
+                                 epilog='Input data must have been passed through INGInious program.')
+parser.add_argument('-o', '--output', help="output filename", default="")
+parser.add_argument('input', help="input filename")
+args = parser.parse_args()
 
-# Read arguments from the command line
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'o:', ['output='])
-    if not args:
-        usage()
-except getopt.GetoptError as e:
-    print(e)
-    sys.exit(1)
-
-outfile=''
-for opt, arg in opts:
-    if opt in ('-o', '--output'):
-        outfile = arg
-    else:
-        usage()
-
-infile = args[0]
+outfile = args.output
+infile = args.input
 if outfile == '':
     outfile=infile
 
