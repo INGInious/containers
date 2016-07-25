@@ -76,4 +76,3 @@ if custom_str:
 
 if getjson:
     print(json.dumps(inginious.feedback.get_feedback()))
-
