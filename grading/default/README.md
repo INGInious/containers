@@ -8,6 +8,4 @@ Default container (ingi/inginious-c-default)
 
 The default container image.
 
-Contains basic INGInious commands and can execute tasks written in shell, bash, or python.
-
-All container images written for INGInious should inherit from this container image.
+It can execute tasks written in shell, bash, or python (2 and 3).

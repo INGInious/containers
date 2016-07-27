@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-grading=$(ls -1d grading/*/ | rev | cut -c 2- | rev | grep -v "grading/default" | sed 's/^grading\/\(.*\)$/\1/')
-grading=$(printf "default\n$grading")
+grading=$(ls -1d grading/*/ | rev | cut -c 2- | rev | grep -v "grading/base" | sed 's/^grading\/\(.*\)$/\1/')
+grading=$(printf "base\n$grading")
 batch=$(ls -1d batch/*/ | rev | cut -c 2- | rev | sed 's/^batch\/\(.*\)$/\1/')
 
 for container in $grading; do

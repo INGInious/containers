@@ -1,0 +1,345 @@
+#!/bin/python3.5
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
+import json
+import logging
+import sys
+import shutil
+import os
+import os.path
+import stat
+import resource
+import subprocess
+import inginious.tests
+import inginious.feedback
+import time
+import tempfile
+import tarfile
+import base64
+import msgpack
+import asyncio
+import zmq
+import zmq.asyncio
+from msgpack import Unpacker
+
+class INGIniousMainRunner(object):
+    def __init__(self, ctx, loop):
+        self._ctx = ctx
+        self._loop = loop
+        self._logger = logging.getLogger("inginious.container")
+
+    def copytree(self, src, dst, symlinks=False, ignore=None):
+        """ Custom copy tree to allow to copy into existing directories """
+        for item in os.listdir(src):
+            s = os.path.join(src, item)
+            d = os.path.join(dst, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, symlinks, ignore)
+            else:
+                shutil.copy2(s, d)
+
+    def setDirectoryRights(self, path):
+        os.chmod(path, 0o777)
+        os.chown(path, 4242, 4242)
+        for root, dirs, files in os.walk(path):
+            for d in dirs:
+                os.chmod(os.path.join(root, d), 0o777)
+                os.chown(os.path.join(root, d), 4242, 4242)
+            for f in files:
+                os.chmod(os.path.join(root, f), 0o777)
+                os.chown(os.path.join(root, f), 4242, 4242)
+            
+    def setlimits(self):
+        os.setgid(4242)
+        os.setuid(4242)
+        resource.setrlimit(resource.RLIMIT_NPROC, (1000, 1000))
+    
+    def setExecutable(self, filename):
+        st = os.stat(filename)
+        os.chmod(filename, st.st_mode | stat.S_IEXEC)
+
+    def executeProcess(self, args,stdinString="",as_root=False):
+        if not isinstance(args, list):
+            args = [args]
+        stdin = tempfile.TemporaryFile()
+        stdin.write(stdinString.encode('utf-8'))
+        stdin.seek(0)
+
+        stdout = tempfile.TemporaryFile()
+        stderr = tempfile.TemporaryFile()
+        if as_root:
+            p = subprocess.Popen(args, stdin=stdin, stdout=stdout, stderr=stderr)
+        else:
+            self.setExecutable(args[0])
+            p = subprocess.Popen(args, preexec_fn=self.setlimits, stdin=stdin, stdout=stdout, stderr=stderr)
+        while p.poll() is None:
+            time.sleep(0.2)
+        stdout.seek(0)
+        stderr.seek(0)
+        return stdout.read(), stderr.read()
+
+    def b64tarfile(self, source_dir):
+        with tarfile.open('/.__output/archive.tgz', "w:gz") as tar:
+            tar.add(source_dir, arcname='/')
+
+        with open('/.__output/archive.tgz', "rb") as tar:
+            encoded_string = base64.b64encode(tar.read())
+
+        return encoded_string.decode('utf-8')
+
+    async def stdio(self):
+        """
+        :return: (reader, writer) connected to stdin/stdout
+        """
+        loop = asyncio.get_event_loop()
+
+        reader = asyncio.StreamReader()
+        reader_protocol = asyncio.StreamReaderProtocol(reader)
+
+        writer_transport, writer_protocol = await loop.connect_write_pipe(asyncio.streams.FlowControlMixin, os.fdopen(1, 'wb'))
+        writer = asyncio.StreamWriter(writer_transport, writer_protocol, None, loop)
+
+        await loop.connect_read_pipe(lambda: reader_protocol, sys.stdin)
+
+        return reader, writer
+
+    async def handle_stdin(self, reader: asyncio.StreamReader):
+        """
+        Send stdin to inproc://stdin
+        """
+        socket = self._ctx.socket(zmq.PUB)
+        socket.bind("inproc://stdin")
+        try:
+            while not reader.at_eof():
+                s = await reader.read(1)
+                await socket.send(s)
+        except:
+            pass
+
+    async def send_intern_message(self, msg):
+        await self.internal_socket_send.send(msgpack.dumps(msg, encoding="utf8", use_bin_type=True))
+        await self.internal_socket_send.recv()  # ignore return
+
+    async def serve(self):
+        stdin_sr, self.stdout = await self.stdio()
+        self._loop.create_task(self.handle_stdin(stdin_sr))
+
+        stdin = self._ctx.socket(zmq.SUB)
+        stdin.connect("inproc://stdin")
+        stdin.setsockopt(zmq.SUBSCRIBE, b'')
+
+        self.intern = self._ctx.socket(zmq.ROUTER)
+        self.intern.bind("ipc:///sockets/main.sock")
+
+        self.internal_socket_send = self._ctx.socket(zmq.REQ)
+        self.internal_socket_send.connect("ipc:///sockets/main.sock")
+
+        self.running_student_container = {} # socket_id : addr
+
+        poller = zmq.asyncio.Poller()
+        poller.register(stdin, zmq.POLLIN)
+        poller.register(self.intern, zmq.POLLIN)
+
+        unpacker = Unpacker(encoding="utf8", use_list=False)
+
+        try:
+            while True:
+                socks = await poller.poll()
+                socks = dict(socks)
+
+                # New message from agent
+                if stdin in socks:
+                    msg_part = await stdin.recv()
+                    unpacker.feed(msg_part)
+                    for message in unpacker:
+                        await self.handle_stdin_message(message)
+
+                # New message from process in the container
+                if self.intern in socks:
+                    addr, empty, msg_enc = await self.intern.recv_multipart()
+                    msg = msgpack.loads(msg_enc, encoding="utf8", use_list=False)
+                    close = await self.handle_intern_message(addr, msg)
+                    if close:
+                        return
+        except asyncio.CancelledError:
+            return
+        except KeyboardInterrupt:
+            return
+
+    async def write_stdout(self, o):
+        self.stdout.write(msgpack.dumps(o, encoding="utf8", use_bin_type=True))
+        await self.stdout.drain()
+
+    async def handle_stdin_message(self, message):
+        self._logger.info("received message %s", message["type"])
+        if message["type"] == "start":
+            self._loop.create_task(self.start_cmd(message))
+        if message["type"] == "run_student_started":
+            if message["socket_id"] in self.running_student_container:
+                addr = self.running_student_container[message["socket_id"]]
+                await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "run_student_started"}, encoding="utf8", use_bin_type=True)])
+        if message["type"] == "run_student_retval":
+            if message["socket_id"] in self.running_student_container:
+                addr = self.running_student_container[message["socket_id"]]
+                del self.running_student_container[message["socket_id"]]
+                await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "run_student_retval", "retval": message["retval"]},
+                                                                           encoding="utf8", use_bin_type=True)])
+
+    async def handle_intern_message(self, addr, message):
+        if message["type"] == "ssh_key":
+            # copy the dict manually to ensure the corectness of the message
+            await self.write_stdout({"type": "ssh_key", "key": message["key"]})
+            await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "ok"}, encoding="utf8", use_bin_type=True)])
+            return False
+        if message["type"] == "run_student":
+            # copy the dict manually to ensure the corectness of the message
+            self.running_student_container[message["socket_id"]] = addr
+            await self.write_stdout({"type": "run_student", "environment": message["environment"],
+                                     "time_limit": message["time_limit"], "hard_time_limit": message["hard_time_limit"],
+                                     "memory_limit": message["memory_limit"], "share_network": message["share_network"],
+                                     "socket_id": message["socket_id"]})
+            return False
+        if message["type"] == "run_student_ask_retval":
+            # ignore, just a dummy message
+            pass
+        if message["type"] == "done":
+            await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "ok"}, encoding="utf8", use_bin_type=True)])
+            return True
+
+    async def start_cmd(self, data):
+        result = await self._loop.run_in_executor(None, lambda: self._start_cmd_sync(data))
+        await self.write_stdout({"type": "result", "result": result})
+        await self.send_intern_message({"type": "done"})
+
+    def _start_cmd_sync(self, data):
+        self._logger.info("starting run")
+        # Determining if debug mode or not
+        debug = (sys.argv[1:] and sys.argv[1] == '--debug') or data.get("debug", False)
+
+        # Create input data directory
+        if not os.path.exists("/.__input"):
+            os.mkdir("/.__input")
+        f = open('/.__input/__inputdata.json', 'wb')
+        f.write(json.dumps(data).encode("utf8"))
+        f.close()
+
+        # Create tests directory
+        if not os.path.exists("/.__tests"):
+            os.mkdir('/.__tests')
+
+        # Create output directory
+        if not os.path.exists("/.__output"):
+            os.mkdir("/.__output")
+
+        # Touch __feedback.json (to set the rights)
+        open('/.__output/__feedback.json', 'w').close()
+
+        # Verify that task directory exists
+        if not os.path.exists("/task"):
+            os.mkdir("/task")
+
+        # Assert that the directory .ssh does not exists
+        if os.path.exists("/task/.ssh"):
+            shutil.rmtree("/task/.ssh")
+
+        #Set rights on some files
+        self.setDirectoryRights("/tmp")
+        self.setDirectoryRights("/task")
+        self.setDirectoryRights("/.__tests")
+        self.setDirectoryRights("/.__output")
+
+        #Launch everything
+        stdout, stderr = "", ""
+        if debug != "ssh": #normal start
+            if os.path.exists("/task/run"):
+                os.chdir("/task")
+                try:
+                    stdout, stderr = self.executeProcess("/task/run")
+                except:
+                    inginious.feedback.set_result('crash')
+                    inginious.feedback.set_global_feedback("An error occured while running the grading script. It is possible that it is non-executable or made a timeout")
+            else:
+                inginious.feedback.set_result('crash')
+                inginious.feedback.set_global_feedback("'/task/run' could not be found")
+        else: #start the ssh server
+            os.mkdir("/task/.ssh")
+            self.executeProcess(["/usr/bin/ssh-keygen", "-t", "rsa", "-b", "1024", "-N", '', "-f", "/task/.ssh/id_rsa"], as_root=True)
+
+            # Do the chmod after to avoid race conditions between the GC of python (closing the file opened by chmod) and Linux.
+            os.chown("/task/.ssh", 4242, 4242)
+            os.chown("/task/.ssh/id_rsa", 4242, 4242)
+            os.chown("/task/.ssh/id_rsa.pub", 4242, 4242)
+
+            self.executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
+            self.executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "AuthorizedKeysFile=.ssh/id_rsa.pub", "-o", "PermitRootLogin=no", "-o",
+                                 "PasswordAuthentication=no", "-o", "StrictModes=no"], as_root=True)
+            with open('/task/.ssh/id_rsa') as private_key:
+                self._loop.call_soon_threadsafe(self.send_intern_message({"type": "ssh_key", "ssh_key": private_key.read()}))
+
+            # Set defaults
+            inginious.feedback.set_result('crash')
+            inginious.feedback.set_global_feedback("[SSH Debug] Not feedback was set")
+
+            # Wait until someone connects to the server
+            connected_workers = 0
+            attempts = 0
+            while connected_workers == 0 and attempts < 120:
+                time.sleep(1)
+                stdout, stderr = self.executeProcess(["/bin/bash", "-c", "ps -f -C sshd | grep 'worker@pts' | wc -l"], as_root=True)
+                connected_workers = int(stdout)
+                attempts += 1
+
+            # If someone is connected, wait until no one remains
+            if connected_workers != 0:
+                attempts = 0
+                while connected_workers != 0 and attempts < 60*30:
+                    time.sleep(1)
+                    stdout, stderr = self.executeProcess(["/bin/bash", "-c", "ps -f -C sshd | grep 'worker@pts' | wc -l"], as_root=True)
+                    connected_workers = int(stdout)
+                    attempts += 1
+            else:
+                inginious.feedback.set_result('crash')
+                inginious.feedback.set_global_feedback('[SSH Debug] Nobody connected to the SSH server.')
+
+            stdout, stderr = "", ""
+
+        # Produce feedback
+        feedback = inginious.feedback.get_feedback()
+        tests_results = inginious.tests.get_tests_results()
+        if not feedback:
+            result = {"result":"crash", "text":"No feedback was given !", "problems":{}}
+            if debug:
+                result['stdout'] = stdout.decode('utf-8', 'replace')
+                result['stderr'] = stderr.decode('utf-8', 'replace')
+                result['tests'] = tests_results
+            self.setDirectoryRights('/task')
+            self._logger.info("returning results")
+            return result
+        else:
+            if debug:
+                feedback['stdout'] = stdout.decode('utf-8', 'replace')
+                feedback['stderr'] = stderr.decode('utf-8', 'replace')
+                feedback['tests'] = tests_results
+            feedback['archive'] = self.b64tarfile('/.__output')
+            self.setDirectoryRights('/task')
+            self._logger.info("returning results")
+            return feedback
+
+
+logger = logging.getLogger("inginious")
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+context = zmq.asyncio.Context()
+loop = zmq.asyncio.ZMQEventLoop()
+asyncio.set_event_loop(loop)
+loop.run_until_complete(INGIniousMainRunner(context, loop).serve())
+loop.close()
+context.destroy()

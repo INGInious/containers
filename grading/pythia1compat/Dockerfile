@@ -1,6 +1,6 @@
 # DOCKER-VERSION 1.1.0
 
-FROM    ingi/inginious-c-default
+FROM    ingi/inginious-c-base
 
 # Install Oz
 RUN     yum -y install tcl tk boost
