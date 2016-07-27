@@ -7,21 +7,17 @@
 import os
 import sys
 import json
-import getopt
+import argparse
 import inginious
 from inginious import tests
 
-def usage():
-    print("Usage : definetest tag value")
-    print("All parameters are optional.")
-    sys.exit(1)
+parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Set the tag/value of a test.\n')
+parser.add_argument('tag', help="tag of the test")
+parser.add_argument('value', help="value associated with the tag")
+args = parser.parse_args()
 
-# Read arguments from the command line
-if len(sys.argv[1:]) < 2:
-    usage()
-
-tag = sys.argv[1]
-value = sys.argv[2]
+tag = args.tag
+value = args.value
 
 # Doing the real stuff
 inginious.tests.set_result(tag, value)
