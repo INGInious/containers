@@ -297,8 +297,9 @@ class INGIniousMainRunner(object):
             # generate the host keys
             self.executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
 
-            # remove /run/nologin
-            os.unlink("/run/nologin")
+            # remove /run/nologin if it exists
+            if os.path.exists("/run/nologin"):
+                os.unlink("/run/nologin")
 
             # Start the ssh server
             self.executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "PermitRootLogin=no", "-o", "PasswordAuthentication=yes",
