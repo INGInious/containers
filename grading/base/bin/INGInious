@@ -61,9 +61,12 @@ class INGIniousMainRunner(object):
         st = os.stat(filename)
         os.chmod(filename, st.st_mode | stat.S_IEXEC)
 
-    def executeProcess(self, args,stdinString="",as_root=False):
+    def executeProcess(self, args, stdinString="", as_root=False):
         if not isinstance(args, list):
             args = [args]
+
+        self._logger.debug("Running %s", str(args))
+
         stdin = tempfile.TemporaryFile()
         stdin.write(stdinString.encode('utf-8'))
         stdin.seek(0)
@@ -189,9 +192,10 @@ class INGIniousMainRunner(object):
                                                                            encoding="utf8", use_bin_type=True)])
 
     async def handle_intern_message(self, addr, message):
+        self._logger.info("received intern message %s", message)
         if message["type"] == "ssh_key":
             # copy the dict manually to ensure the corectness of the message
-            await self.write_stdout({"type": "ssh_key", "key": message["key"]})
+            await self.write_stdout({"type": "ssh_key", "ssh_key": message["ssh_key"]})
             await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "ok"}, encoding="utf8", use_bin_type=True)])
             return False
         if message["type"] == "run_student":
@@ -204,10 +208,11 @@ class INGIniousMainRunner(object):
             return False
         if message["type"] == "run_student_ask_retval":
             # ignore, just a dummy message
-            pass
+            return False
         if message["type"] == "done":
             await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "ok"}, encoding="utf8", use_bin_type=True)])
             return True
+        return False
 
     async def start_cmd(self, data):
         result = await self._loop.run_in_executor(None, lambda: self._start_cmd_sync(data))
@@ -260,7 +265,7 @@ class INGIniousMainRunner(object):
                 try:
                     open(spath, 'ab' if append else 'wb').write(b'\n' + open(os.path.join('/task/systemfiles/', name), 'rb').read())
                 except IOError:
-                    inginious.feedback.set_result('crash')
+                    inginious.feedback.set_global_result('crash')
                     inginious.feedback.set_global_feedback("Cannot read/use %s" % os.path.join('/task/systemfiles/', name))
                     ok_to_start = False
         os.chown('/etc/hosts', 0, 4242)
@@ -269,7 +274,7 @@ class INGIniousMainRunner(object):
         os.chmod('/etc/resolv.conf', 0o664)
 
         #Launch everything
-        stdout, stderr = "", ""
+        stdout, stderr = b"", b""
         if not ok_to_start:
             pass # do not start ;-)
         elif debug != "ssh": #normal start
@@ -278,28 +283,31 @@ class INGIniousMainRunner(object):
                 try:
                     stdout, stderr = self.executeProcess("/task/run")
                 except:
-                    inginious.feedback.set_result('crash')
+                    inginious.feedback.set_global_result('crash')
                     inginious.feedback.set_global_feedback("An error occured while running the grading script. It is possible that it is non-executable or made a timeout")
             else:
-                inginious.feedback.set_result('crash')
+                inginious.feedback.set_global_result('crash')
                 inginious.feedback.set_global_feedback("'/task/run' could not be found")
         else: #start the ssh server
-            os.mkdir("/task/.ssh")
-            self.executeProcess(["/usr/bin/ssh-keygen", "-t", "rsa", "-b", "1024", "-N", '', "-f", "/task/.ssh/id_rsa"], as_root=True)
+            # generate a password for the worker user
+            password, _ = self.executeProcess(["/usr/bin/openssl", "rand", "-base64", "10"], as_root=True)
+            password = password.decode('utf8').strip()
+            self.executeProcess(["/usr/bin/bash", "-c", "echo 'worker:%s' | chpasswd" % password], as_root=True)
 
-            # Do the chmod after to avoid race conditions between the GC of python (closing the file opened by chmod) and Linux.
-            os.chown("/task/.ssh", 4242, 4242)
-            os.chown("/task/.ssh/id_rsa", 4242, 4242)
-            os.chown("/task/.ssh/id_rsa.pub", 4242, 4242)
-
+            # generate the host keys
             self.executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
-            self.executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "AuthorizedKeysFile=.ssh/id_rsa.pub", "-o", "PermitRootLogin=no", "-o",
-                                 "PasswordAuthentication=no", "-o", "StrictModes=no"], as_root=True)
-            with open('/task/.ssh/id_rsa') as private_key:
-                self._loop.call_soon_threadsafe(self.send_intern_message({"type": "ssh_key", "ssh_key": private_key.read()}))
+
+            # remove /run/nologin
+            os.unlink("/run/nologin")
+
+            # Start the ssh server
+            self.executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "PermitRootLogin=no", "-o", "PasswordAuthentication=yes",
+                                 "-o", "StrictModes=no", "-o", "AllowUsers=worker"], as_root=True)
+
+            self._loop.call_soon_threadsafe(asyncio.ensure_future, self.send_intern_message({"type": "ssh_key", "ssh_key": password}))
 
             # Set defaults
-            inginious.feedback.set_result('crash')
+            inginious.feedback.set_global_result('crash')
             inginious.feedback.set_global_feedback("[SSH Debug] Not feedback was set")
 
             # Wait until someone connects to the server
@@ -320,10 +328,10 @@ class INGIniousMainRunner(object):
                     connected_workers = int(stdout)
                     attempts += 1
             else:
-                inginious.feedback.set_result('crash')
+                inginious.feedback.set_global_result('crash')
                 inginious.feedback.set_global_feedback('[SSH Debug] Nobody connected to the SSH server.')
 
-            stdout, stderr = "", ""
+            stdout, stderr = b"", b""
 
         # Produce feedback
         feedback = inginious.feedback.get_feedback()

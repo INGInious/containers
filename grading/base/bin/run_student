@@ -104,11 +104,6 @@ try:
     except:
         pass
 
-    try:
-        context.destroy()
-    except:
-        pass
-
     exit(message["retval"])
 except Exception as e:
     exit(254)
