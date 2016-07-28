@@ -251,9 +251,28 @@ class INGIniousMainRunner(object):
         self.setDirectoryRights("/.__tests")
         self.setDirectoryRights("/.__output")
 
+        ok_to_start = True
+
+        # Add some elements to /etc/hosts and /etc/resolv.conf if needed
+        system_files = {"hosts": ("/etc/hosts", True), "resolv.conf": ("/etc/resolv.conf", False)}
+        for name, (spath, append) in system_files.items():
+            if os.path.exists(os.path.join('/task/systemfiles/', name)):
+                try:
+                    open(spath, 'ab' if append else 'wb').write(b'\n' + open(os.path.join('/task/systemfiles/', name), 'rb').read())
+                except IOError:
+                    inginious.feedback.set_result('crash')
+                    inginious.feedback.set_global_feedback("Cannot read/use %s" % os.path.join('/task/systemfiles/', name))
+                    ok_to_start = False
+        os.chown('/etc/hosts', 0, 4242)
+        os.chown('/etc/resolv.conf', 0, 4242)
+        os.chmod('/etc/hosts', 0o664)
+        os.chmod('/etc/resolv.conf', 0o664)
+
         #Launch everything
         stdout, stderr = "", ""
-        if debug != "ssh": #normal start
+        if not ok_to_start:
+            pass # do not start ;-)
+        elif debug != "ssh": #normal start
             if os.path.exists("/task/run"):
                 os.chdir("/task")
                 try:

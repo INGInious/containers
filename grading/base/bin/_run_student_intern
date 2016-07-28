@@ -12,6 +12,9 @@ import threading
 import msgpack
 import array
 
+import resource
+
+
 def handle_signals(subprocess, socket):
     """ Handles signals given by run_student on the socket """
     while True:
@@ -30,6 +33,11 @@ def recv_fds(sock, msglen, maxfds):
             # Append data, ignoring any truncated integers at the end.
             fds.fromstring(cmsg_data[:len(cmsg_data) - (len(cmsg_data) % fds.itemsize)])
     return msg, list(fds)
+
+def setlimits():
+    os.setgid(4242)
+    os.setuid(4242)
+    resource.setrlimit(resource.RLIMIT_NPROC, (1000, 1000))
 
 # Connect to the socket
 client = socket.socket(socket.AF_UNIX)  # , socket.SOCK_CLOEXEC) # for linux only
@@ -57,12 +65,21 @@ while start_cmd is None:
         start_cmd = obj
 print("Unpacked start cmd")
 
+# Add some elements to /etc/hosts and /etc/resolv.conf if needed
+system_files = {"hosts": ("/etc/hosts", True), "resolv.conf": ("/etc/resolv.conf", False)}
+for name, (spath, append) in system_files.items():
+    if os.path.exists(os.path.join('/task/systemfiles/', name)):
+        try:
+            open(spath, 'ab' if append else 'wb').write(b'\n' + open(os.path.join('/task/systemfiles/', name), 'rb').read())
+        except IOError:
+            exit(254)
+
 # Start the process
 print("Chdir")
 os.chdir(start_cmd["working_dir"])
 print("Popen")
 print(fds)
-p = subprocess.Popen(shlex.split(start_cmd["command"]), stdin=fds[0], stdout=fds[1], stderr=fds[2])
+p = subprocess.Popen(shlex.split(start_cmd["command"]), preexec_fn=setlimits, stdin=fds[0], stdout=fds[1], stderr=fds[2])
 
 # Handle the signals
 print("Signal thread")
