@@ -9,7 +9,7 @@ ENV LC_ALL en_US.UTF-8
 RUN     yum clean metadata && \
         yum -y install https://centos7.iuscommunity.org/ius-release.rpm && \
         yum -y install python python-pip python35u zip unzip tar sed openssh-server openssl && \
-        pip install rpyc
+        pip install rpyc && ln -s /usr/bin/python3.5 /usr/bin/python3
 
 # Allow to run commands
 ADD     . /INGInious
