@@ -18,17 +18,19 @@ def load_input():
 
 def get_input(problem):
     """" Returns the specified problem answer in the form 
-         {"type": "text", "value": "VALUE"}
-         or {"type": "file", "filename":"FILENAME", value:BYTES}
-         
          problem: problem id
+         Returns string, or bytes if a file is loaded
     """
     input_data = load_input()
-    problem_input = input_data['input'][problem]
+    pbsplit = problem.split(":")
+    problem_input = input_data['input'][pbsplit[0]]
     if isinstance(problem_input, dict) and "filename" in problem_input and "value" in problem_input:
-        return {"type":"file", "filename": problem_input["filename"], "value": base64.b64decode(problem_input["value"])}
+        if len(pbsplit) > 1 and pbsplit[1] == 'filename':
+            return problem_input["filename"]
+        else:
+            return base64.b64decode(problem_input["value"])
     else:
-        return {"type":"text", "value": problem_input}
+        return problem_input
     
 def parse_template(input_filename, output_filename=''):
     """ Parses a template file

@@ -14,22 +14,18 @@ import inginious
 from inginious import input
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Get data associated with an input field.\n')
-parser.add_argument("-f", "--filename", help="returns the filename of the uploaded file", action='store_true')
 parser.add_argument('problem', help="problem id")
 args = parser.parse_args()
 
 problem = args.problem
-get_filename = args.filename
 
 # Do the real job
 try:
     result = inginious.input.get_input(problem)
-    if result["type"] == "file" and not get_filename:
-        sys.stdout.buffer.write(result["value"])
-    elif result["type"] == "file" and get_filename:
-        print(result["filename"])
-    else:
-        print(result["value"]) if not get_filename else ""
+    try:
+        sys.stdout.buffer.write(result)
+    except:
+        print(result)
 except IOError as e:
     sys.stderr.write("Input file not found")
     sys.exit(2)
