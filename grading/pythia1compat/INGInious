@@ -1,160 +1,328 @@
-#! /usr/bin/python
-import base64
-from inginious import feedback
-from inginious import tests
-import inginious
+#!/bin/python3.5
+# -*- coding: utf-8 -*-
+#
+# This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
+# more information about the licensing of this file.
+
 import json
-import os
-from os.path import isfile, join
+import logging
 import re
-import resource
-import shutil
-import signal
-import stat
-import subprocess
 import sys
-import tarfile
-import tempfile
+import shutil
+import os
+import os.path
+import stat
+import resource
+import subprocess
+
+import inginious.tests
+import inginious.feedback
 import time
+import tempfile
+import tarfile
+import base64
+import msgpack
+import asyncio
 
-def copytree(src, dst, symlinks=False, ignore=None):
-    """ Custom copy tree to allow to copy into existing directories """
-    for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore)
+import struct
+import zmq
+import zmq.asyncio
+from msgpack import Unpacker
+
+
+class INGIniousMainRunner(object):
+    def __init__(self, ctx, loop):
+        self._ctx = ctx
+        self._loop = loop
+        self._logger = logging.getLogger("inginious.container")
+        self._logger.info("Hello")
+
+    def copytree(self, src, dst, symlinks=False, ignore=None):
+        """ Custom copy tree to allow to copy into existing directories """
+        for item in os.listdir(src):
+            s = os.path.join(src, item)
+            d = os.path.join(dst, item)
+            if os.path.isdir(s):
+                shutil.copytree(s, d, symlinks, ignore)
+            else:
+                shutil.copy2(s, d)
+
+    def setDirectoryRights(self, path):
+        os.chmod(path, 0o777)
+        os.chown(path, 4242, 4242)
+        for root, dirs, files in os.walk(path):
+            for d in dirs:
+                os.chmod(os.path.join(root, d), 0o777)
+                os.chown(os.path.join(root, d), 4242, 4242)
+            for f in files:
+                os.chmod(os.path.join(root, f), 0o777)
+                os.chown(os.path.join(root, f), 4242, 4242)
+
+    def setlimits(self):
+        os.setgid(4242)
+        os.setuid(4242)
+        resource.setrlimit(resource.RLIMIT_NPROC, (1000, 1000))
+
+    def setExecutable(self, filename):
+        st = os.stat(filename)
+        os.chmod(filename, st.st_mode | stat.S_IEXEC)
+
+    def executeProcess(self, args, stdinString="", as_root=False):
+        if not isinstance(args, list):
+            args = [args]
+
+        self._logger.debug("Running %s", str(args))
+
+        stdin = tempfile.TemporaryFile()
+        stdin.write(stdinString.encode('utf-8'))
+        stdin.seek(0)
+
+        stdout = tempfile.TemporaryFile()
+        stderr = tempfile.TemporaryFile()
+        if as_root:
+            p = subprocess.Popen(args, stdin=stdin, stdout=stdout, stderr=stderr)
         else:
-            shutil.copy2(s, d)
+            self.setExecutable(args[0])
+            p = subprocess.Popen(args, preexec_fn=self.setlimits, stdin=stdin, stdout=stdout, stderr=stderr)
+        while p.poll() is None:
+            time.sleep(0.2)
+        stdout.seek(0)
+        stderr.seek(0)
+        return stdout.read(), stderr.read()
 
-def setDirectoryRights(path):
-    os.chmod(path, 0o777)
-    os.chown(path, 4242, 4242)
-    for root, dirs, files in os.walk(path):  
-        for d in dirs:
-            os.chmod(os.path.join(root, d), 0o777)
-            os.chown(os.path.join(root, d), 4242, 4242)
-        for f in files:
-            os.chmod(os.path.join(root, f), 0o777)
-            os.chown(os.path.join(root, f), 4242, 4242)
-            
-def setlimits():
-    os.setgid(4242)
-    os.setuid(4242)
-    resource.setrlimit(resource.RLIMIT_NPROC, (1000, 1000))
-    
-def setExecutable(filename):
-    st = os.stat(filename)
-    os.chmod(filename, st.st_mode | stat.S_IEXEC)
+    def b64tarfile(self, source_dir):
+        with tarfile.open('/.__output/archive.tgz', "w:gz") as tar:
+            tar.add(source_dir, arcname='/')
 
-def executeProcess(filename,stdinString):
-    setExecutable(filename)
-    stdin = tempfile.TemporaryFile()
-    stdin.write(stdinString)
-    stdin.seek(0)
-    
-    stdout = tempfile.TemporaryFile()
-    stderr = tempfile.TemporaryFile()
-    p = subprocess.Popen([filename], preexec_fn=setlimits, stdin=stdin, stdout=stdout, stderr=stderr)
-    start = time.time()
-    while p.poll() is None:
-        time.sleep(0.2)
-    stdout.seek(0)
-    stderr.seek(0)
-    
-    status = p.returncode-128
-    if status == signal.SIGXCPU:
-        raise Exception("Timeout")
-    
-    return stdout.read(), stderr.read()
+        with open('/.__output/archive.tgz', "rb") as tar:
+            encoded_string = base64.b64encode(tar.read())
 
-def b64tarfile(source_dir):
-    encoded_string = ''
-    
-    with tarfile.open('/.__output/archive.tgz', "w:gz") as tar:
-        tar.add(source_dir, arcname='/')
-        
-    with open('/.__output/archive.tgz', "rb") as tar:
-        encoded_string = base64.b64encode(tar.read())
-        
-    return encoded_string
+        return encoded_string.decode('utf-8')
 
-# Get input data
-stdin = sys.stdin.read().strip('\0').strip()
-data = json.loads(stdin)
-input_data = data["input"]
-limits = data["limits"]
+    async def stdio(self):
+        """
+        :return: (reader, writer) connected to stdin/stdout
+        """
+        loop = asyncio.get_event_loop()
 
-# Determining if debug mode or not
-debug = (sys.argv[1:] and sys.argv[1] == '--debug') or data.get("debug", False)
+        reader = asyncio.StreamReader()
+        reader_protocol = asyncio.StreamReaderProtocol(reader)
 
-# Create tests directory
-os.mkdir('/.__tests')
+        writer_transport, writer_protocol = await loop.connect_write_pipe(asyncio.streams.FlowControlMixin, os.fdopen(1, 'wb'))
+        writer = asyncio.StreamWriter(writer_transport, writer_protocol, None, loop)
 
-# Create output directory
-os.mkdir("/.__output")
+        await loop.connect_read_pipe(lambda: reader_protocol, sys.stdin)
 
-# Verify that task directory exists
-if not os.path.exists("/task"):
-    os.mkdir("/task")
+        return reader, writer
 
-#Set rights on some files
-setDirectoryRights("/tmp")
-setDirectoryRights("/task")
-setDirectoryRights("/.__tests")
-setDirectoryRights("/.__output")
+    async def handle_stdin(self, reader: asyncio.StreamReader):
+        """
+        Handle messages from the agent
+        """
+        try:
+            while not reader.at_eof():
+                buf = bytearray()
+                while len(buf) != 4:
+                    buf += await reader.read(4 - len(buf))
+                length = struct.unpack('I', bytes(buf))[0]
+                buf = bytearray()
+                while len(buf) != length:
+                    buf += await reader.read(length - len(buf))
+                message = msgpack.unpackb(bytes(buf), encoding="utf8", use_list=False)
+                await self.handle_stdin_message(message)
+        except asyncio.CancelledError:
+            return
+        except KeyboardInterrupt:
+            return
+        except:
+            self._logger.exception("Exception occured while reading stdin")
+            os._exit(1)  # DIE!
 
-#Launch everything
-if os.path.exists("/task/run"):
-    os.chdir("/task")
-    stdout, stderr= "", ""
-    try:
-        stdout, stderr = executeProcess("/task/run", input_data['student_response']+'\n')
-    except:
-        result={"result":"timeout","text":"'/task/run' did a timeout","problems":{}}
-        if debug:
-            result['stdout'] = stdout
-            result['stderr'] = stderr
-        print json.dumps(result)
-        setDirectoryRights('/task')
-        exit()
-else:
-    result = {"result":"crash","text":"'/task/run' couldn't be found","problems":{}}
-    print json.dumps(result)
-    setDirectoryRights('/task')
-    exit()
+    async def send_intern_message(self, msg):
+        await self.internal_socket_send.send(msgpack.dumps(msg, encoding="utf8", use_bin_type=True))
+        await self.internal_socket_send.recv()  # ignore return
 
-# Copy required files in output folder
-for filepath in ['/tmp/work/new_file.oz', '/tmp/work/new_file.ozf', '/tmp/work/errC.txt', '/tmp/work/out.txt', '/tmp/work/out.txt']:
-    if os.path.exists(filepath):
-        shutil.copy(filepath, '/.__output')
+    async def serve(self):
+        self._logger.info("Starting serve")
+        stdin_sr, self.stdout = await self.stdio()
+        self._loop.create_task(self.handle_stdin(stdin_sr))
 
-# Produce feedback
-stdout = "["+re.sub('\} *\n* *\{','},{',stdout)+"]"
-tests_results = inginious.tests.get_tests_results()
-try:
-    feedback = json.loads(stdout)
-except:
-    print json.dumps({"result":"crash", "text":"Unable to read feedback: " + stdout, "problems":{}})
-    setDirectoryRights('/task')
-    exit()
+        self.intern = self._ctx.socket(zmq.ROUTER)
+        self.intern.bind("ipc:///sockets/main.sock")
 
-if not feedback:
-    print json.dumps({"result":"crash", "text":"No feedback was given !", "problems":{}})
-    setDirectoryRights('/task')
-    exit()
-else:
-    output = {"result":'success','text':'','archive':b64tarfile('/.__output'),'problems':{}}
-    if debug:
-        output['stdout'] = stdout
-        output['stderr'] = stderr
-        output['tests'] = tests_results
-    for f in feedback:
-        if not f['correct']:
-            output['result'] = 'failed'
-        if f['msg'] != "":
-            if output['text'] != "":
-                output['text'] += "<br/>"
-            output['text'] += f['msg']
-    print json.dumps(output)
-    setDirectoryRights('/task')
+        self.internal_socket_send = self._ctx.socket(zmq.REQ)
+        self.internal_socket_send.connect("ipc:///sockets/main.sock")
+
+        self.running_student_container = {}  # socket_id : addr
+
+        poller = zmq.asyncio.Poller()
+        poller.register(self.intern, zmq.POLLIN)
+
+        self._logger.info("Serving...")
+        try:
+            while True:
+                socks = await poller.poll()
+                socks = dict(socks)
+
+                # New message from process in the container
+                if self.intern in socks:
+                    addr, empty, msg_enc = await self.intern.recv_multipart()
+                    msg = msgpack.loads(msg_enc, encoding="utf8", use_list=False)
+                    close = await self.handle_intern_message(addr, msg)
+                    if close:
+                        return
+        except asyncio.CancelledError:
+            return
+        except KeyboardInterrupt:
+            return
+        except:
+            self._logger.exception("An exception occured while serving")
+
+    async def write_stdout(self, o):
+        msg = msgpack.dumps(o, encoding="utf8", use_bin_type=True)
+        self.stdout.write(struct.pack('I', len(msg)))
+        self.stdout.write(msg)
+        await self.stdout.drain()
+
+    async def handle_stdin_message(self, message):
+        self._logger.info("received message %s", message["type"])
+        try:
+            if message["type"] == "start":
+                self._loop.create_task(self.start_cmd(message))
+            if message["type"] == "run_student_started":
+                if message["socket_id"] in self.running_student_container:
+                    addr = self.running_student_container[message["socket_id"]]
+                    await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "run_student_started"}, encoding="utf8", use_bin_type=True)])
+            if message["type"] == "run_student_retval":
+                if message["socket_id"] in self.running_student_container:
+                    addr = self.running_student_container[message["socket_id"]]
+                    del self.running_student_container[message["socket_id"]]
+                    await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "run_student_retval", "retval": message["retval"]},
+                                                                               encoding="utf8", use_bin_type=True)])
+        except:
+            self._logger.exception("An exception occured while reading stdin")
+
+    async def handle_intern_message(self, addr, message):
+        self._logger.info("received intern message %s", message)
+        try:
+            if message["type"] == "ssh_key":
+                # copy the dict manually to ensure the corectness of the message
+                await self.write_stdout({"type": "ssh_key", "ssh_key": message["ssh_key"]})
+                await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "ok"}, encoding="utf8", use_bin_type=True)])
+                return False
+            if message["type"] == "run_student":
+                # copy the dict manually to ensure the corectness of the message
+                self.running_student_container[message["socket_id"]] = addr
+                await self.write_stdout({"type": "run_student", "environment": message["environment"],
+                                         "time_limit": message["time_limit"], "hard_time_limit": message["hard_time_limit"],
+                                         "memory_limit": message["memory_limit"], "share_network": message["share_network"],
+                                         "socket_id": message["socket_id"]})
+                return False
+            if message["type"] == "run_student_ask_retval":
+                # ignore, just a dummy message
+                return False
+            if message["type"] == "done":
+                await self.intern.send_multipart([addr, b'', msgpack.dumps({"type": "ok"}, encoding="utf8", use_bin_type=True)])
+                return True
+            return False
+        except:
+            self._logger.exception("Exception occured while handling an internal message")
+
+    async def start_cmd(self, data):
+        result = await self._loop.run_in_executor(None, lambda: self._start_cmd_sync(data))
+        await self.write_stdout({"type": "result", "result": result})
+        await self.send_intern_message({"type": "done"})
+
+    def _start_cmd_sync(self, data):
+        try:
+            self._logger.info("starting run")
+            # Determining if debug mode or not
+            debug = (sys.argv[1:] and sys.argv[1] == '--debug') or data.get("debug", False)
+
+            # Create tests directory
+            os.mkdir('/.__tests')
+
+            # Create output directory
+            os.mkdir("/.__output")
+
+            # Verify that task directory exists
+            if not os.path.exists("/task"):
+                os.mkdir("/task")
+
+            # Set rights on some files
+            self.setDirectoryRights("/tmp")
+            self.setDirectoryRights("/task")
+            self.setDirectoryRights("/.__tests")
+            self.setDirectoryRights("/.__output")
+
+            # Launch everything
+            if os.path.exists("/task/run"):
+                os.chdir("/task")
+                stdout, stderr = "", ""
+                try:
+                    stdout, stderr = self.executeProcess("/task/run", data["input"]['student_response'] + '\n')
+                    stdout = stdout.decode('utf8')
+                    stderr = stderr.decode('utf8')
+                except:
+                    result = {"result": "timeout", "text": "'/task/run' did a timeout", "problems": {}}
+                    if debug:
+                        result['stdout'] = stdout
+                        result['stderr'] = stderr
+                    self.setDirectoryRights('/task')
+                    return result
+            else:
+                result = {"result": "crash", "text": "'/task/run' couldn't be found", "problems": {}}
+                self.setDirectoryRights('/task')
+                return result
+
+            # Copy required files in output folder
+            for filepath in ['/tmp/work/new_file.oz', '/tmp/work/new_file.ozf', '/tmp/work/errC.txt', '/tmp/work/out.txt', '/tmp/work/out.txt']:
+                if os.path.exists(filepath):
+                    shutil.copy(filepath, '/.__output')
+
+            # Produce feedback
+            stdout = "[" + re.sub('\} *\n* *\{', '},{', stdout) + "]"
+            tests_results = inginious.tests.get_tests_results()
+            try:
+                feedback = json.loads(stdout)
+            except:
+                self.setDirectoryRights('/task')
+                return {"result": "crash", "text": "Unable to read feedback: " + stdout, "problems": {}}
+
+            if not feedback:
+                self.setDirectoryRights('/task')
+                return {"result": "crash", "text": "No feedback was given !", "problems": {}}
+            else:
+                output = {"result": 'success', "text": '', 'archive': self.b64tarfile('/.__output'), 'problems': {}}
+                if debug:
+                    output['stdout'] = stdout
+                    output['stderr'] = stderr
+                    output['tests'] = tests_results
+                for f in feedback:
+                    if not f['correct']:
+                        output['result'] = 'failed'
+                    if f['msg'] != "":
+                        if output['text'] != "":
+                            output['text'] += "<br/>"
+                        output['text'] += f['msg']
+                self.setDirectoryRights('/task')
+                return output
+        except Exception as e:
+            self._logger.exception("Exception while running start_cmd")
+            return {"result": "crash", "text": "Exception occured in container (%s)" % str(e), "problems": {}}
+
+
+logger = logging.getLogger("inginious")
+logger.setLevel(logging.DEBUG)
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+
+context = zmq.asyncio.Context()
+loop = zmq.asyncio.ZMQEventLoop()
+asyncio.set_event_loop(loop)
+loop.run_until_complete(INGIniousMainRunner(context, loop).serve())
+loop.close()
+context.destroy()
