@@ -6,14 +6,10 @@
 #
 # Tool to import answer from standard input to the template files given in arguments
 
-import os
-import re
 import sys
-import codecs
-import json
 import argparse
 import inginious
-from inginious import templateparser
+from inginious import input
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
                                  description='Parse the template file and generate an output file.',
@@ -24,29 +20,13 @@ args = parser.parse_args()
 
 outfile = args.output
 infile = args.input
-if outfile == '':
-    outfile=infile
 
-# Retrieves the input data from INGInious and open input file
+# Do the real job
 try:
-    with open('/.__input/__inputdata.json', 'r') as file:
-        input_data = json.loads(file.read().strip('\0').strip())
-    with codecs.open(infile, 'r', 'utf-8') as file:
-        content = file.read()
-    content = inginious.templateparser.parseTemplate(content, input_data)
+    inginious.input.parse_template(infile, outfile)
 except IOError as e:
-    print("Input file not found")
+    sys.stderr.write("Input file not found")
     sys.exit(2)
 except ValueError as e:
-    print("Input is not compatible")
+    sys.stderr.write("Input is not compatible")
     sys.exit(2)
-
-# Ensure directory of resulting file exists
-try:
-    os.makedirs(os.path.dirname(outfile))
-except OSError as e:
-    pass
-
-# Write file
-with codecs.open(outfile, 'w', 'utf-8') as file:
-    file.write(content)
