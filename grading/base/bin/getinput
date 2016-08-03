@@ -1,4 +1,4 @@
-#!/bin/python3.5
+#!/bin/python3
 # -*- coding: utf-8 -*-
 #
 # This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
@@ -11,8 +11,7 @@ import codecs
 import json
 import argparse
 import inginious
-import base64
-from inginious import templateparser
+from inginious import input
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description='Get data associated with an input field.\n')
 parser.add_argument('problem', help="problem id")
@@ -20,15 +19,13 @@ args = parser.parse_args()
 
 problem = args.problem
 
-# Retrieves the input data from INGInious and open input file
+# Do the real job
 try:
-    with open('/.__input/__inputdata.json', 'r') as file:
-        input_data = json.loads(file.read().strip('\0').strip())
-    if isinstance(input_data['input'][problem], dict) and "filename" in input_data['input'][problem] and "value" in input_data['input'][problem]:
-        # Do not use print as it does not support binary
-        sys.stdout.buffer.write(base64.b64decode(input_data['input'][problem]["value"]))
-    else:
-        print(input_data['input'][problem])
+    result = inginious.input.get_input(problem)
+    try:
+        sys.stdout.buffer.write(result)
+    except:
+        print(result)
 except IOError as e:
     sys.stderr.write("Input file not found")
     sys.exit(2)
