@@ -43,7 +43,10 @@ def set_global_result(result):
 def set_problem_result(result, problem_id):
     """ Set problem specific result value """
     rdict = load_feedback()
-    rdict['result'] = result
+    if not 'problems' in rdict:
+        rdict['problems'] = {}
+    cur_val = rdict['problems'].get(problem_id, '')
+    rdict['problems'][problem_id] = [result, cur_val] if type(cur_val) == str else [result, cur_val[1]]
     save_feedback(rdict)
 
 def set_grade(grade):
@@ -63,7 +66,8 @@ def set_problem_feedback(feedback, problem_id, append=False):
     rdict = load_feedback()
     if not 'problems' in rdict:
         rdict['problems'] = {}
-    rdict['problems'][problem_id] = rdict['problems'].get(problem_id, '') + feedback if append else feedback
+    cur_val = rdict['problems'].get(problem_id, '')
+    rdict['problems'][problem_id] = (cur_val + feedback if append else feedback) if type(cur_val) == str else [cur_val[0], (cur_val[1] + feedback if append else feedback)]
     save_feedback(rdict)
 
 def set_custom_value(custom_name, custom_val):
