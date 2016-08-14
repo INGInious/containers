@@ -1,14 +1,14 @@
 # DOCKER-VERSION 1.1.0
 
 FROM    ingi/inginious-c-base
+LABEL org.inginious.grading.name="pythia1compat"
 
 # Install Oz
 RUN     yum -y install tcl tk boost
 
 ADD     . /mozartRPM
 
-RUN     rpm -ivh /mozartRPM/mozart2-2.0.0-alpha.0+build.4091.61fe075-dirty-x86_64-linux.rpm && \
-        rpm -ivh /mozartRPM/python3-3.4.1-12.fc21.x86_64.rpm /mozartRPM/python3-libs-3.4.1-12.fc21.x86_64.rpm /mozartRPM/python3-setuptools-2.0-8.fc21.noarch.rpm /mozartRPM/python3-pip-1.5.6-2.fc21.noarch.rpm
+RUN     rpm -ivh /mozartRPM/mozart2-2.0.0-alpha.0+build.4091.61fe075-dirty-x86_64-linux.rpm
 
 # Environment variables
 RUN     echo "export OZHOME=/opt/mozart2" >> /etc/profile.d/oz.sh && \

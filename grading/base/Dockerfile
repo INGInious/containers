@@ -9,7 +9,7 @@ ENV LC_ALL en_US.UTF-8
 RUN     yum clean metadata && \
         yum -y install https://centos7.iuscommunity.org/ius-release.rpm && \
         yum -y install python python35u-pip python35u zip unzip tar sed openssh-server openssl bind-utils && \
-        pip3.5 install msgpack-python pyzmq && \
+        pip3.5 install msgpack-python pyzmq && ln -s /usr/bin/python3.5 /usr/bin/python3 && \
         yum clean all
 
 # Allow to run commands

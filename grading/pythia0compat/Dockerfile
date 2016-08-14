@@ -1,6 +1,7 @@
 # DOCKER-VERSION 1.1.0
 
 FROM    debian:jessie
+LABEL org.inginious.grading.name="pythia0compat"
 
 # Update packages if it is needed and install python, needed for scripts used in Pythia
 RUN     apt-get update && \
@@ -10,8 +11,8 @@ RUN     apt-get update && \
         libc-bin libgcc1 libstdc++6 libmpfr4 libgmp-dev libgmp10 zlib1g \
         libgomp1 libc6-dev openjdk-7-jdk openjdk-7-jre-headless openjdk-7-jre-lib \
         tzdata-java tzdata libc6 libc-bin libgcc1 zlib1g libnss3-1d libnspr4-0d \
-        libsqlite3-0 python-pip && \
-        pip install xmltodict && \
+        libsqlite3-0 python-pip python3-pip libzmq3-dev && \
+        pip3 install xmltodict msgpack-python pyzmq && \
         ln -s /usr/lib/jvm/java-6-openjdk/bin/java /bin/java && \
         ln -s /usr/lib/jvm/java-6-openjdk/bin/javac /bin/javac
 
@@ -30,4 +31,4 @@ RUN     mkdir -p /usr/lib/python2.7/dist-packages/lib && \
         addgroup --gid 4242 worker && \
         useradd --uid 4242 --gid 4242 worker
 
-CMD ["python", "/pythia/pythia.py"]
+CMD ["python3", "/pythia/pythia.py"]
