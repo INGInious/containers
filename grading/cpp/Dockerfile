@@ -5,5 +5,5 @@ FROM    ingi/inginious-c-base
 LABEL org.inginious.grading.name="cpp"
 
 # Add gcc
-RUN     yum install -y gcc cpp make valgrind binutils libstdc++ clang clang-devel llvm automake check check-devel CUnit CUnit-devel zlib-devel openssl-devel time && \
+RUN     yum install -y gcc gdb cpp make valgrind binutils libstdc++ clang clang-devel llvm automake check check-devel CUnit CUnit-devel zlib-devel openssl-devel time && \
         yum clean all
