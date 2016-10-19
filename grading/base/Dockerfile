@@ -31,5 +31,8 @@ RUN     rm -R /INGInious
 RUN     groupadd --gid 4242 worker && \
         useradd --uid 4242 --gid 4242 worker --home-dir /task
 
-CMD ["INGInious"]
+# Set locale params for SSH debug
+RUN     echo -e "export LANG=en_US.UTF-8\nexport LANGUAGE=en_US:en\nexport LC_ALL=en_US.UTF-8\n" > /etc/profile
+RUN     sed -i.bak '/^AcceptEnv/ d' /etc/ssh/sshd_config
 
+CMD ["INGInious"]

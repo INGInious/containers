@@ -6,7 +6,6 @@
 import os
 import re
 import json
-import codecs
 import base64
 
 def load_input():
@@ -41,8 +40,8 @@ def parse_template(input_filename, output_filename=''):
         output_filename: if not specified, overwrite input file
     """
     data = load_input()
-    with codecs.open(input_filename, 'r', 'utf-8') as file:
-        template = file.read()
+    with open(input_filename, 'rb') as file:
+        template = file.read().decode("utf-8")
     
     # Check if 'input' in data
     if not 'input' in data:
@@ -74,5 +73,5 @@ def parse_template(input_filename, output_filename=''):
         pass
 
     # Write file
-    with codecs.open(output_filename, 'w', 'utf-8') as file:
-        file.write(template)
+    with open(output_filename, 'wb') as file:
+        file.write(template.encode("utf-8"))

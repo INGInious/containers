@@ -25,7 +25,7 @@ try:
     try:
         sys.stdout.buffer.write(result)
     except:
-        print(result)
+        sys.stdout.buffer.write(result.encode("utf-8"))
 except IOError as e:
     sys.stderr.write("Input file not found")
     sys.exit(2)

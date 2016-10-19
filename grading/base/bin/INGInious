@@ -82,8 +82,7 @@ class INGIniousMainRunner(object):
         else:
             self.setExecutable(args[0])
             p = subprocess.Popen(args, preexec_fn=self.setlimits, stdin=stdin, stdout=stdout, stderr=stderr)
-        while p.poll() is None:
-            time.sleep(0.2)
+        p.wait()
         stdout.seek(0)
         stderr.seek(0)
         return stdout.read(), stderr.read()
@@ -177,7 +176,7 @@ class INGIniousMainRunner(object):
             self._logger.exception("An exception occured while serving")
 
     async def write_stdout(self, o):
-        msg = msgpack.dumps(o, encoding="utf8", use_bin_type=True)
+        msg = msgpack.dumps(o, encoding="utf-8", use_bin_type=True)
         self.stdout.write(struct.pack('I', len(msg)))
         self.stdout.write(msg)
         await self.stdout.drain()
@@ -227,157 +226,154 @@ class INGIniousMainRunner(object):
             self._logger.exception("Exception occured while handling an internal message")
 
     async def start_cmd(self, data):
-        result = await self._loop.run_in_executor(None, lambda: self._start_cmd_sync(data))
-        await self.write_stdout({"type": "result", "result": result})
+        try:
+            result = await self._loop.run_in_executor(None, lambda: self._start_cmd_sync(data))
+            await self.write_stdout({"type": "result", "result": result})
+        except Exception as e:
+            self._logger.exception("Exception while running start_cmd")
+            await self.write_stdout({"type": "result", "result": {"result": "crash", "text": "Exception occured in container (%s)"%str(e), "problems": {}}})
+
         await self.send_intern_message({"type": "done"})
 
     def _start_cmd_sync(self, data):
-        try:
-            self._logger.info("starting run")
-            # Determining if debug mode or not
-            debug = (sys.argv[1:] and sys.argv[1] == '--debug') or data.get("debug", False)
+        self._logger.info("starting run")
+        # Determining if debug mode or not
+        debug = (sys.argv[1:] and sys.argv[1] == '--debug') or data.get("debug", False)
 
-            # Create input data directory
-            if not os.path.exists("/.__input"):
-                os.mkdir("/.__input")
-            f = open('/.__input/__inputdata.json', 'w')
-            f.write(json.dumps(data))
-            f.close()
+        # Create input data directory
+        if not os.path.exists("/.__input"):
+            os.mkdir("/.__input")
+        f = open('/.__input/__inputdata.json', 'w')
+        f.write(json.dumps(data))
+        f.close()
 
-            # Create tests directory
-            if not os.path.exists("/.__tests"):
-                os.mkdir('/.__tests')
+        # Create tests directory
+        if not os.path.exists("/.__tests"):
+            os.mkdir('/.__tests')
 
-            # Create output directory
-            if not os.path.exists("/.__output"):
-                os.mkdir("/.__output")
+        # Create output directory
+        if not os.path.exists("/.__output"):
+            os.mkdir("/.__output")
 
-            # Touch __feedback.json (to set the rights)
-            open('/.__output/__feedback.json', 'w').close()
+        # Touch __feedback.json (to set the rights)
+        open('/.__output/__feedback.json', 'w').close()
 
-            # Verify that task directory exists
-            if not os.path.exists("/task"):
-                os.mkdir("/task")
+        # Verify that task directory exists
+        if not os.path.exists("/task"):
+            os.mkdir("/task")
 
-            # Assert that the directory .ssh does not exists
-            if os.path.exists("/task/.ssh"):
-                shutil.rmtree("/task/.ssh")
+        # Assert that the directory .ssh does not exists
+        if os.path.exists("/task/.ssh"):
+            shutil.rmtree("/task/.ssh")
 
-            #Set rights on some files
-            self.setDirectoryRights("/tmp")
-            self.setDirectoryRights("/task")
-            self.setDirectoryRights("/.__tests")
-            self.setDirectoryRights("/.__output")
+        #Set rights on some files
+        self.setDirectoryRights("/tmp")
+        self.setDirectoryRights("/task")
+        self.setDirectoryRights("/.__tests")
+        self.setDirectoryRights("/.__output")
 
-            ok_to_start = True
+        ok_to_start = True
 
-            # Add some elements to /etc/hosts and /etc/resolv.conf if needed
-            system_files = {"hosts": ("/etc/hosts", True), "resolv.conf": ("/etc/resolv.conf", False)}
-            for name, (spath, append) in system_files.items():
-                if os.path.exists(os.path.join('/task/systemfiles/', name)):
-                    try:
-                        open(spath, 'ab' if append else 'wb').write(b'\n' + open(os.path.join('/task/systemfiles/', name), 'rb').read())
-                    except IOError:
-                        inginious.feedback.set_global_result('crash')
-                        inginious.feedback.set_global_feedback("Cannot read/use %s" % os.path.join('/task/systemfiles/', name))
-                        ok_to_start = False
-            os.chown('/etc/hosts', 0, 4242)
-            os.chown('/etc/resolv.conf', 0, 4242)
-            os.chmod('/etc/hosts', 0o664)
-            os.chmod('/etc/resolv.conf', 0o664)
-
-            #Ensure the worker can read the main socket
-            try:
-                os.chown('/sockets/main.sock', 4242, 4242)
-                os.chmod('/sockets/main.sock', 0o775)
-            except OSError:
-                pass
-
-            #Launch everything
-            stdout, stderr = b"", b""
-            if not ok_to_start:
-                pass # do not start ;-)
-            elif debug != "ssh": #normal start
-                if os.path.exists("/task/run"):
-                    os.chdir("/task")
-                    try:
-                        stdout, stderr = self.executeProcess("/task/run")
-                    except:
-                        inginious.feedback.set_global_result('crash')
-                        inginious.feedback.set_global_feedback("An error occured while running the grading script. It is possible that it is non-executable or made a timeout")
-                else:
+        # Add some elements to /etc/hosts and /etc/resolv.conf if needed
+        system_files = {"hosts": ("/etc/hosts", True), "resolv.conf": ("/etc/resolv.conf", False)}
+        for name, (spath, append) in system_files.items():
+            if os.path.exists(os.path.join('/task/systemfiles/', name)):
+                try:
+                    open(spath, 'ab' if append else 'wb').write(b'\n' + open(os.path.join('/task/systemfiles/', name), 'rb').read())
+                except IOError:
                     inginious.feedback.set_global_result('crash')
-                    inginious.feedback.set_global_feedback("'/task/run' could not be found")
-            else: #start the ssh server
-                # generate a password for the worker user
-                password, _ = self.executeProcess(["/usr/bin/openssl", "rand", "-base64", "10"], as_root=True)
-                password = password.decode('utf8').strip()
-                self.executeProcess(["/usr/bin/bash", "-c", "echo 'worker:%s' | chpasswd" % password], as_root=True)
+                    inginious.feedback.set_global_feedback("Cannot read/use %s" % os.path.join('/task/systemfiles/', name))
+                    ok_to_start = False
+        os.chown('/etc/hosts', 0, 4242)
+        os.chown('/etc/resolv.conf', 0, 4242)
+        os.chmod('/etc/hosts', 0o664)
+        os.chmod('/etc/resolv.conf', 0o664)
 
-                # generate the host keys
-                self.executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
+        #Ensure the worker can read the main socket
+        try:
+            os.chown('/sockets/main.sock', 4242, 4242)
+            os.chmod('/sockets/main.sock', 0o775)
+        except OSError:
+            pass
 
-                # remove /run/nologin if it exists
-                if os.path.exists("/run/nologin"):
-                    os.unlink("/run/nologin")
-
-                # Start the ssh server
-                self.executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "PermitRootLogin=no", "-o", "PasswordAuthentication=yes",
-                                     "-o", "StrictModes=no", "-o", "AllowUsers=worker"], as_root=True)
-
-                self._loop.call_soon_threadsafe(asyncio.ensure_future, self.send_intern_message({"type": "ssh_key", "ssh_key": password}))
-
-                # Set defaults
+        #Launch everything
+        stdout, stderr = b"", b""
+        if not ok_to_start:
+            pass # do not start ;-)
+        elif debug != "ssh": #normal start
+            if os.path.exists("/task/run"):
+                os.chdir("/task")
+                try:
+                    stdout, stderr = self.executeProcess("/task/run")
+                except:
+                    inginious.feedback.set_global_result('crash')
+                    inginious.feedback.set_global_feedback("An error occured while running the grading script. It is possible that it is non-executable or made a timeout")
+            else:
                 inginious.feedback.set_global_result('crash')
-                inginious.feedback.set_global_feedback("[SSH Debug] Not feedback was set")
+                inginious.feedback.set_global_feedback("'/task/run' could not be found")
+        else: #start the ssh server
+            # generate a password for the worker user
+            password, _ = self.executeProcess(["/usr/bin/openssl", "rand", "-base64", "10"], as_root=True)
+            password = password.decode('utf8').strip()
+            self.executeProcess(["/usr/bin/bash", "-c", "echo 'worker:%s' | chpasswd" % password], as_root=True)
 
-                # Wait until someone connects to the server
-                connected_workers = 0
+            # generate the host keys
+            self.executeProcess(["/usr/bin/ssh-keygen", "-A"], as_root=True)
+
+            # remove /run/nologin if it exists
+            if os.path.exists("/run/nologin"):
+                os.unlink("/run/nologin")
+
+            # Start the ssh server
+            self.executeProcess(["/usr/sbin/sshd", "-p", "22", "-o", "PermitRootLogin=no", "-o", "PasswordAuthentication=yes",
+                                 "-o", "StrictModes=no", "-o", "AllowUsers=worker"], as_root=True)
+
+            self._loop.call_soon_threadsafe(asyncio.ensure_future, self.send_intern_message({"type": "ssh_key", "ssh_key": password}))
+
+            # Wait until someone connects to the server
+            connected_workers = 0
+            attempts = 0
+            while connected_workers == 0 and attempts < 120:
+                time.sleep(1)
+                stdout, stderr = self.executeProcess(["/bin/bash", "-c", "ps -f -C sshd | grep 'worker@pts' | wc -l"], as_root=True)
+                connected_workers = int(stdout)
+                attempts += 1
+
+            # If someone is connected, wait until no one remains
+            if connected_workers != 0:
                 attempts = 0
-                while connected_workers == 0 and attempts < 120:
+                while connected_workers != 0 and attempts < 60*30:
                     time.sleep(1)
                     stdout, stderr = self.executeProcess(["/bin/bash", "-c", "ps -f -C sshd | grep 'worker@pts' | wc -l"], as_root=True)
                     connected_workers = int(stdout)
                     attempts += 1
-
-                # If someone is connected, wait until no one remains
-                if connected_workers != 0:
-                    attempts = 0
-                    while connected_workers != 0 and attempts < 60*30:
-                        time.sleep(1)
-                        stdout, stderr = self.executeProcess(["/bin/bash", "-c", "ps -f -C sshd | grep 'worker@pts' | wc -l"], as_root=True)
-                        connected_workers = int(stdout)
-                        attempts += 1
-                else:
-                    inginious.feedback.set_global_result('crash')
-                    inginious.feedback.set_global_feedback('[SSH Debug] Nobody connected to the SSH server.')
-
-                stdout, stderr = b"", b""
-
-            # Produce feedback
-            feedback = inginious.feedback.get_feedback()
-            tests_results = inginious.tests.get_tests_results()
-            if not feedback:
-                result = {"result":"crash", "text":"No feedback was given !", "problems":{}}
-                if debug:
-                    result['stdout'] = stdout.decode('utf-8', 'replace')
-                    result['stderr'] = stderr.decode('utf-8', 'replace')
-                    result['tests'] = tests_results
-                self.setDirectoryRights('/task')
-                self._logger.info("returning results")
-                return result
             else:
-                if debug:
-                    feedback['stdout'] = stdout.decode('utf-8', 'replace')
-                    feedback['stderr'] = stderr.decode('utf-8', 'replace')
-                    feedback['tests'] = tests_results
-                feedback['archive'] = self.b64tarfile('/.__output')
-                self.setDirectoryRights('/task')
-                self._logger.info("returning results")
-                return feedback
-        except Exception as e:
-            self._logger.exception("Exception while running start_cmd")
-            return {"result": "crash", "text": "Exception occured in container (%s)"%str(e), "problems": {}}
+                inginious.feedback.set_global_result('crash')
+                inginious.feedback.set_global_feedback('[SSH Debug] Nobody connected to the SSH server.')
+
+            stdout, stderr = b"", b""
+
+        # Produce feedback
+        feedback = inginious.feedback.get_feedback()
+        tests_results = inginious.tests.get_tests_results()
+        if not feedback:
+            result = {"result":"crash", "text":"No feedback was given !", "problems":{}}
+            if debug:
+                result['stdout'] = stdout.decode('utf-8', 'replace')
+                result['stderr'] = stderr.decode('utf-8', 'replace')
+                result['tests'] = tests_results
+            self.setDirectoryRights('/task')
+            self._logger.info("returning results")
+            return result
+        else:
+            if debug:
+                feedback['stdout'] = stdout.decode('utf-8', 'replace')
+                feedback['stderr'] = stderr.decode('utf-8', 'replace')
+                feedback['tests'] = tests_results
+            feedback['archive'] = self.b64tarfile('/.__output')
+            self.setDirectoryRights('/task')
+            self._logger.info("returning results")
+            return feedback
 
 
 logger = logging.getLogger("inginious")
