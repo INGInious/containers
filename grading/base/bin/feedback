@@ -24,7 +24,7 @@ parser.add_argument('-j', '--custom-json', dest='custom_json', help="custom JSON
 args = parser.parse_args()
 
 result = args.result
-feedback = args.feedback.encode('utf-8').decode('unicode_escape') if args.escape else args.feedback
+feedback = args.feedback.encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8') if args.escape else args.feedback
 problem = args.id
 grade = args.grade
 getjson = args.print

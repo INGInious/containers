@@ -21,7 +21,7 @@ args = parser.parse_args()
 
 language = args.language
 code = args.code if args.code else sys.stdin.read()
-text = code.encode('utf-8').decode('unicode_escape') if args.escape else code
+text = code.encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8') if args.escape else code
 
 # Do the real stuff 
 print(rst.get_codeblock(language, text))

@@ -26,7 +26,7 @@ problem = args.id
 
 # Doing the real stuff
 
-feedback = message.encode('utf-8').decode('unicode_escape') if args.escape else message
+feedback = message.encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8') if args.escape else message
 
 if problem == '':
     inginious.feedback.set_global_feedback(feedback, append)

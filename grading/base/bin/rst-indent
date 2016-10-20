@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 amount = args.amount
 message = args.message if args.message else sys.stdin.read()
-text = message.encode('utf-8').decode('unicode_escape') if args.escape else message
+text = message.encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8') if args.escape else message
 indent_char = args.indent_char
 
 # Do the real stuff 

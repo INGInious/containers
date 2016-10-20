@@ -23,7 +23,7 @@ args = parser.parse_args()
 cssclass = args.cssclass
 title = args.title
 message = args.message if args.message else sys.stdin.read()
-text = message.encode('utf-8').decode('unicode_escape') if args.escape else message
+text = message.encode('utf-8').decode('unicode-escape').encode('latin1').decode('utf-8') if args.escape else message
 
 # Do the real stuff 
 print(rst.get_admonition(cssclass, title, text))
