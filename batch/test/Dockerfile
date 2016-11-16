@@ -8,7 +8,7 @@ LABEL org.inginious.batch=1
 #
 # Some Metadata for the container
 #
-LABEL org.inginious.batch.title="Test Batch Container"
+LABEL org.inginious.batch.name="Test Batch Container"
 LABEL org.inginious.batch.description="A simple test backend container that put a simple website in its results."
 
 # Course files
