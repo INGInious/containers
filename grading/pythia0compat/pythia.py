@@ -243,7 +243,7 @@ class INGIniousMainRunner(object):
             tar.add(source_dir, arcname='/', recursive=True)
 
         with open('/job/output/files/archive.tgz', "rb") as tar:
-            encoded_string = base64.b64encode(tar.read())
+            encoded_string = base64.b64encode(tar.read()).decode("utf-8")
 
         return encoded_string
 
@@ -301,7 +301,7 @@ class INGIniousMainRunner(object):
                     stderr = stderr.decode("utf8")
                 except:
                     self.setDirectoryRights('/task')
-                    return {"result": "crash", "text": "Dataset.sh did a timeout", "problems": {}, "v0out": stdOutputData}
+                    return {"result": "crash", "text": "Dataset.sh did a timeout", "problems": {}, "stdout": stdOutputData["stdout"]}
                 stdOutputData["stdout"] = stdOutputData["stdout"] + "DATASET: " + stdout + "\n"
                 stdOutputData["stderr"] = stdOutputData["stderr"] + "DATASET: " + stderr + "\n"
 
@@ -314,7 +314,7 @@ class INGIniousMainRunner(object):
                     stderr = stderr.decode("utf8")
                 except:
                     self.setDirectoryRights('/task')
-                    return {"result": "timeout", "text": "Your code did a timeout", "problems": {}, "v0out": stdOutputData}
+                    return {"result": "timeout", "text": "Your code did a timeout", "problems": {}, "stdout": stdOutputData["stdout"]}
                 stdOutputData["stdout"] = stdOutputData["stdout"] + "RUN: " + stdout + "\n"
                 stdOutputData["stderr"] = stdOutputData["stderr"] + "RUN: " + stderr + "\n"
 
@@ -330,7 +330,7 @@ class INGIniousMainRunner(object):
                 stderr = stderr.decode("utf8")
             except:
                 self.setDirectoryRights('/task')
-                return {"result": "crash", "text": "Feedback.sh did a timeout", "problems": {}, "v0out": stdOutputData}
+                return {"result": "crash", "text": "Feedback.sh did a timeout", "problems": {}, "stdout": stdOutputData["stdout"]}
             stdOutputData["stdout"] = stdOutputData["stdout"] + "FEEDBACK: " + stdout + "\n"
             stdOutputData["stderr"] = stdOutputData["stderr"] + "FEEDBACK: " + stderr + "\n"
 
@@ -351,16 +351,16 @@ class INGIniousMainRunner(object):
                             problems = {feedback["question"]["@id"]: feedback["question"]["#text"]}
                     self.setDirectoryRights('/task')
                     return {"result": ("success" if feedback["verdict"] == "OK" else "failed"), "text": text, "problems": problems,
-                            "v0out": stdOutputData, "archive": archivetosend}
+                            "stdout": stdOutputData["stdout"], "archive": archivetosend}
                 except Exception as e:
                     self.setDirectoryRights('/task')
                     self._logger.exception("Exception during XML parsing")
                     return {"result": "crash", "text": "The grader gave a badly formatted XML feedback ("+str(e)+")", "problems": {},
-                            "v0out": stdOutputData,
+                            "stdout": stdOutputData["stdout"],
                                 "archive": archivetosend}
             else:
                 self.setDirectoryRights('/task')
-                return {"result": "crash", "text": "The grader did not give any output", "problems": {}, "v0out": stdOutputData,
+                return {"result": "crash", "text": "The grader did not give any output", "problems": {}, "stdout": stdOutputData["stdout"],
                             "archive": archivetosend}
         except Exception as e:
             self._logger.exception("Exception while running start_cmd")
