@@ -3,6 +3,11 @@
 FROM    debian:jessie
 LABEL org.inginious.grading.name="pythia0compat"
 
+RUN apt-get update -qq && apt-get install -y locales -qq && locale-gen en_US.UTF-8 en_us && dpkg-reconfigure locales && dpkg-reconfigure locales && locale-gen C.UTF-8 && /usr/sbin/update-locale LANG=C.UTF-8
+ENV LANG C.UTF-8
+ENV LANGUAGE C.UTF-8
+ENV LC_ALL C.UTF-8
+
 # Update packages if it is needed and install python, needed for scripts used in Pythia
 RUN     apt-get update && \
         apt-get -y upgrade && \ 
