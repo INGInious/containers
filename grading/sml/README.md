@@ -8,6 +8,9 @@ SML container (ingi/inginious-c-sml)
 
 A container image containing SML/NJ.
 
+SML is installed in /usr/local/sml with the executable at `/usr/local/sml/bin/sml` and symlinked to
+`/usr/local/bin/sml` so it will be in the path.
+
 Contributed by [David H. Brown](mailto:david_h_brown@uri.edu).
 
 There doesn't seem to be a yum package for sml, so I installed it the "hard way," first yum-installing gcc and 
