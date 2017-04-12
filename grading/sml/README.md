@@ -8,8 +8,8 @@ SML container (ingi/inginious-c-sml)
 
 A container image containing SML/NJ.
 
-SML is installed in /usr/local/sml with the executable at `/usr/local/sml/bin/sml` and symlinked to
-`/usr/local/bin/sml` so it will be in the path.
+SML is installed in `/usr/local/sml` with the executable at `/usr/local/sml/bin/sml` and symlinked to
+`/usr/local/bin/sml` so you can type just `sml` and it will be in the path.
 
 Contributed by [David H. Brown](mailto:david_h_brown@uri.edu).
 
