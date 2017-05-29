@@ -17,3 +17,4 @@ There doesn't seem to be a yum package for sml, so I installed it the "hard way,
 the 32-bit libraries, then curl to get SML/NJ version 110.80 (will probably need to be updated in the future),
 running the installer, and then removing things I was sure I no longer needed. I am new at making docker containers,
 so suggestions for anything else I can/should clean up are very welcome. 
+Thanks, [anthonygego](https://github.com/anthonygego), for tips on how to make a more efficient Dockerfile.
