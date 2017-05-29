@@ -1,0 +1,51 @@
+#! /bin/bash
+
+mkdir ./workdir
+mkdir ./workdir/course
+mkdir ./workdir/submissions
+mkdir ./output
+tar -zxf ./input/course.tgz -C /workdir/course > /dev/null 2> /dev/null
+tar -zxf ./input/submissions.tgz -C ./workdir/submissions > /dev/null 2> /dev/null
+#I got per user, the task call in the file.
+taskid=$(cat ./input/task.txt)
+#if possible, bcl to run all tasks of the exam -> TODO
+for userdir in `find ./workdir/submissions/ -mindepth 1 -maxdepth 1 -type d`
+do
+	username=${userdir#"./workdir/submissions/"}
+	if [ ! -e "./workdir/submissions/$username/$taskid" ]
+	then
+	    	>&2 echo "Task id $taskid not found in submissions for student $username"
+		continue
+	fi
+	mkdir ./output/$username
+	mkdir ./output/$username/$taskid
+	#From here, I have to parse each file to get the code of the student.
+	for subId in `find ./workdir/submissions/$username/$taskid/ -mindepth 1 -maxdepth 1 -type d`
+	do
+		submissionId=${subId#"./workdir/submissions/$username/$taskid/"}
+		mkdir ./output/$username/$taskid/$submissionId/
+		touch ./output/$username/$taskid/$submissionId/student_code.c
+		#parsing submission.test file to get the method from the student
+		#TODO this parsing works only for the asm question, improve this to fit all questions
+		#pay attention to the tabs before the name of the method and "montest". Sed doesn't escape this		
+		sed -n '/^        int fct(int a){/, /^    montest:/p' ./workdir/submissions/$username/$taskid/$submissionId/submission.test > ./output/$username/$taskid/$submissionId/student_codeOUT.c
+		#parsing to remove the first line		
+		sed '$d' ./output/$username/$taskid/$submissionId/student_codeOUT.c > ./output/$username/$taskid/$submissionId/student_code.c
+		rm ./output/$username/$taskid/$submissionId/student_codeOUT.c
+		#remove the tabs
+		mv ./output/$username/$taskid/$submissionId/student_code.c ./output/$username/$taskid/$submissionId/myfile.txt
+		cut -c 9- ./output/$username/$taskid/$submissionId/myfile.txt > ./output/$username/$taskid/$submissionId/student_code.c && rm -f ./output/$username/$taskid/$submissionId/myfile.txt
+		#cp the course's files to the submission's dir of the student.
+		cp ./workdir/course/* ./output/$username/$taskid/$submissionId/
+		#run the makefile
+		make -f ./output/$username/$taskid/$submissionId/Makefile
+		#try to run the tests of tests.c
+		./output/$username/$taskid/$submissionId/run
+		#check necessity to remove files after.
+		#Verify the result. How is it save?
+		#How to manage the output
+	done
+done
+
+
+
