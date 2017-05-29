@@ -17,3 +17,4 @@ Contributed by [David H. Brown](mailto:david_h_brown@uri.edu).
 
 I think I cleaned up after installation pretty well, but I am new at making docker containers,
 so suggestions for improvement up are very welcome.
+Thanks, [anthonygego](https://github.com/anthonygego), for tips on how to make a more efficient Dockerfile.
