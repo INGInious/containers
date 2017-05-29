@@ -7,19 +7,25 @@ FROM    ingi/inginious-c-base
 LABEL   org.inginious.grading.name="sml"
 
 # Installing SML/NJ requires glibc with 32-bit support
-RUN     yum -y install gcc
-RUN     yum -y install glibc-devel.i686 libgcc.i686
+RUN yum -y install gcc && \
+  yum -y install glibc-devel.i686 libgcc.i686 && \
 
 # Add SML/NJ
-WORKDIR /usr/local/sml
-RUN     curl -O http://www.smlnj.org/dist/working/110.78/config.tgz
-RUN     tar xzvf config.tgz
-RUN     rm config.tgz
-RUN     config/install.sh
+#RUN     declare -x SMLROOT="/usr/local/sml"
+  mkdir /usr/local/sml && \
+  cd /usr/local/sml && \
+#RUN     declare -x SMLROOT="/sml"
+#RUN     mkdir sml
+#RUN     cd sml
+  curl -O http://www.smlnj.org/dist/working/110.78/config.tgz && \
+  tar xzvf config.tgz && \
+  rm config.tgz && \
+  config/install.sh && \
 
 # clean up
-RUN     yum -y remove gcc glibc-devel.i686 libgcc.i686
-RUN     rm -rf config
-RUN     rm -f *.tgz
-RUN     ln -sf /usr/local/sml/bin/sml /usr/local/bin/sml
-WORKDIR ~
+  yum -y remove gcc glibc-devel.i686 libgcc.i686 && \
+  rm -rf config && \
+  rm -f *.tgz && \
+  ln -sf /usr/local/sml/bin/sml /usr/local/bin/sml && \
+  cd ~
+
