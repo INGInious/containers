@@ -6,7 +6,7 @@ This container is part of [INGInious](https://github.com/UCL-INGI/INGInious), an
 SML container (ingi/inginious-c-sml)
 ------------------------------------
 
-A container image containing SML/NJ.
+A container image containing [SML/NJ](http://smlnj.org/).
 
 SML is installed in `/usr/local/sml` with the executable at `/usr/local/sml/bin/sml` and symlinked to
 `/usr/local/bin/sml` so you can type just `sml` and it will be in the path.
