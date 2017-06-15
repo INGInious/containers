@@ -216,12 +216,26 @@ def grade_with_partial_scores(code, language_name, test_cases, weights=None, opt
     feedback.set_grade(score * 100.0 / total_sum)
     feedback.set_global_feedback(feedback_str)
 
-def grade_problem_with_partial_scores(problem_id, language_name, test_cases, weights=None,
+def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None, weights=None,
     options=None):
     """
     Similar to grade_with_partial_scores(), but extracts the code from the problem with the given
-    id.
+    id. If language_name is None, it will be automatically inferred from the problem with the given
+    id (assuming it's a "code multiple language" problem)
     """
     code = input.get_input(problem_id)
 
-    return grade_with_partial_scores(code, language_name, test_cases, weights, options)
+    if language_name is None:
+        language_name = input.get_input(problem_id + "/language")
+
+    return grade_with_partial_scores(code, test_cases, language_name, weights, options)
+
+def generate_test_files_tuples(n):
+    """
+    Generates a list of test cases with the following convention:
+    [("in01.txt", "out01.txt"), ("in02.txt", "out02.txt"), ..., ("in<n>.txt", "out<n>.txt")]
+
+    n: the number of test cases
+    """
+
+    return [("in%02d.txt" % (i,), "out%02d.txt" % (i,)) for i in range(1, n + 1)]

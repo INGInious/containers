@@ -60,11 +60,16 @@ _ALL_LANGUAGES = {
     "python3": LambdaLanguage("py", lambda _: None, lambda file_name: ["python3", file_name]),
     "java": LambdaLanguage("java", lambda file_name: ["javac", file_name],
         lambda _: ["java", "Main"]),
+    "java7": LambdaLanguage("java", lambda file_name: ["javac", file_name, "-source", "1.7",
+        "-target", "1.7"], lambda _: ["java", "Main"]),
     "c++": LambdaLanguage("cpp", lambda file_name: ["g++", file_name, "-o", "student_program"],
         lambda _: ["./student_program"]),
     "c": LambdaLanguage("c", lambda file_name: ["gcc", file_name, "-o", "student_program"],
         lambda _: ["./student_program"]),
 }
+
+# Set up aliases
+_ALL_LANGUAGES["cpp"] = _ALL_LANGUAGES["c++"]
 
 def language_exists(name):
     return name in _ALL_LANGUAGES
