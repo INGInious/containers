@@ -108,10 +108,9 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
         diff = None
         if compute_diff and result != GraderResult.COMPILATION_ERROR:
             diff_generator = difflib.unified_diff(expected_output.split('\n'), stdout.split('\n'),
-                n=diff_context_lines)
+                n=diff_context_lines, fromfile='expected_output', tofile='your_output')
 
-            # Omit the file names headers
-            start = 3
+            start = 0
             diff_output = '\n'.join(itertools.islice(diff_generator, start,
                 start + diff_max_lines if diff_max_lines is not None else sys.maxsize))
 
@@ -194,6 +193,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
 
             if input_file_name in output_diff_for:
                 panel_id = "collapseDiff" + str(i)
+                block_id = "diffBlock" + str(i)
                 diff_result = (
                     debug_info.get("files_feedback", {}).get(input_file_name, {}).get("diff", None)
                 )
@@ -208,8 +208,9 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
                       Expand diff
                     </a>
                     <div class="collapse" id="{2}">
-                      <pre>{3}</pre>
-                    </div></li></ul>""".format(i + 1, result.name, panel_id, diff_result)
+                      <pre id="{4}">{3}</pre>
+                    </div></li></ul><script>updateDiffBlock("{4}");</script>""".format(
+                        i + 1, result.name, panel_id, diff_result, block_id)
                 else:
                     diff_html = """<ul><li><strong>Test {0}: {1} </strong></li></ul>""".format(
                         i + 1, result.name)
