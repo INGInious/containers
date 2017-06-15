@@ -56,7 +56,7 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
 
     if debug_info is not None:
         if "files_feedback" not in debug_info:
-            debug_info["files_feedback"] = []
+            debug_info["files_feedback"] = {}
 
     command = language.get_compilation_command(code_file)
     if command is not None:
@@ -107,7 +107,8 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
     if debug_info is not None and result != GraderResult.ACCEPTED:
         diff = None
         if compute_diff and result != GraderResult.COMPILATION_ERROR:
-            diff_generator = difflib.unified_diff(stdout, expected_output, n=diff_context_lines)
+            diff_generator = difflib.unified_diff(expected_output.split('\n'), stdout.split('\n'),
+                n=diff_context_lines)
 
             # Omit the file names headers
             start = 3
@@ -121,13 +122,13 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
 
             diff = diff_output
 
-        debug_info["files_feedback"].append({
+        debug_info["files_feedback"][input_file_name] = {
             "input_file": input_file_name,
             "stdout": stdout,
             "stderr": stderr,
             "return_code": return_code,
             "diff": diff,
-        })
+        }
 
     return result
 
@@ -141,7 +142,7 @@ def _compute_feedback(code_file, language, test_cases, options):
 
     return grader_results, debug_info
 
-def grade_with_partial_scores(code, language_name, test_cases, weights=None, options=None):
+def grade_with_partial_scores(code, test_cases, language_name, weights=None, options=None):
     """
     Partially grade the specified code with the given test cases and weights.
 
@@ -189,18 +190,30 @@ def grade_with_partial_scores(code, language_name, test_cases, weights=None, opt
         feedback_str = "**Compilation error**:\n\n" + _html_to_rst("<pre>%s</pre>" % (compilation_output,))
     else:
         def generate_feedback_for_test(i, result):
+            input_file_name = test_cases[i][0]
 
-            if test_cases[i][0] in output_diff_for:
+            if input_file_name in output_diff_for:
                 panel_id = "collapseDiff" + str(i)
-                diff_html = """<ul><li><strong>Test {0}: {1} </strong>
-                    <a class="btn btn-default btn-link btn-xs" role="button"
-                    data-toggle="collapse" href="#{2}" aria-expanded="false" aria-controls="{2}">
-                  Expand diff
-                </a>
-                <div class="collapse" id="{2}">
-                  <pre>{3}</pre>
-                </div></li></ul>""".format(i + 1, result.name, panel_id,
-                    debug_info.get("files_feedback", [])[i]["diff"])
+                diff_result = (
+                    debug_info.get("files_feedback", {}).get(input_file_name, {}).get("diff", None)
+                )
+
+                diff_available = diff_result is not None
+                diff_html = None
+
+                if diff_available:
+                    diff_html = """<ul><li><strong>Test {0}: {1} </strong>
+                        <a class="btn btn-default btn-link btn-xs" role="button"
+                        data-toggle="collapse" href="#{2}" aria-expanded="false" aria-controls="{2}">
+                      Expand diff
+                    </a>
+                    <div class="collapse" id="{2}">
+                      <pre>{3}</pre>
+                    </div></li></ul>""".format(i + 1, result.name, panel_id, diff_result)
+                else:
+                    diff_html = """<ul><li><strong>Test {0}: {1} </strong></li></ul>""".format(
+                        i + 1, result.name)
+
                 feedback = _html_to_rst(diff_html)
             else:
                 feedback = '- **Test %d: %s**' % (i + 1, result.name)
