@@ -7,6 +7,7 @@ import rst
 import difflib
 import itertools
 import sys
+import html
 from . import languages
 
 CODE_WORKING_DIR = 'student/'
@@ -123,10 +124,10 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
 
         debug_info["files_feedback"][input_file_name] = {
             "input_file": input_file_name,
-            "stdout": stdout,
-            "stderr": stderr,
+            "stdout": html.escape(stdout),
+            "stderr": html.escape(stderr),
             "return_code": return_code,
-            "diff": diff,
+            "diff": html.escape(diff),
         }
 
     return result
