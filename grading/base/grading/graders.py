@@ -21,9 +21,6 @@ class GraderResult(Enum):
     TIME_LIMIT_EXCEEDED = 6
     INTERNAL_ERROR = 7
 
-def _html_to_rst(html):
-    return '\n\n.. raw:: html\n\n' + rst.indent_block(1, html) + '\n'
-
 def _check_output(actual_output, expected_output):
     """
     Compares the output of a program against an expected output. Returns true if the actual and the
@@ -192,7 +189,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
 
     if GraderResult.COMPILATION_ERROR in results:
         compilation_output = debug_info.get("compilation_output", "")
-        feedback_str = "**Compilation error**:\n\n" + _html_to_rst("<pre>%s</pre>" % (compilation_output,))
+        feedback_str = "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
     else:
         def generate_feedback_for_test(i, result):
             input_file_name = test_cases[i][0]
@@ -221,7 +218,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
                     diff_html = """<ul><li><strong>Test {0}: {1} </strong></li></ul>""".format(
                         i + 1, result.name)
 
-                feedback = _html_to_rst(diff_html)
+                feedback = rst.get_html_block(diff_html)
             else:
                 feedback = '- **Test %d: %s**' % (i + 1, result.name)
 
