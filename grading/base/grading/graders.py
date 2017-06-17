@@ -111,7 +111,8 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
             diff_generator = difflib.unified_diff(expected_output.split('\n'), stdout.split('\n'),
                 n=diff_context_lines, fromfile='expected_output', tofile='your_output')
 
-            start = 0
+            # Remove file names (legend will be added in the frontend)
+            start = 2
             diff_output = '\n'.join(itertools.islice(diff_generator, start,
                 start + diff_max_lines if diff_max_lines is not None else sys.maxsize))
 
