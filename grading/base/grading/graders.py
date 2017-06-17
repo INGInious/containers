@@ -46,6 +46,9 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
         - compute_diff: bool. Whether or not to compute diff for admins. Defaults to True
         - diff_max_lines: int. The maximum number of lines of diff to be saved, or None if unbounded.
         - diff_context_lines: int. The lines of context to be included for diff.
+        - check_output: function. A custom function that compares the program output against the
+            expected output. This function takes two strings (actual and expected output) and returns
+            a boolean that indicates whether the outputs match.
     """
 
     if options is None:
@@ -54,6 +57,7 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
     compute_diff = options.get("compute_diff", True)
     diff_max_lines = options.get("diff_max_lines", 100)
     diff_context_lines = options.get("diff_context_lines", 3)
+    check_output = options.get("check_output", _check_output)
 
     if debug_info is not None:
         if "files_feedback" not in debug_info:
@@ -88,7 +92,7 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
             stderr = completed_process.stderr.decode()
             return_code = 0
 
-            output_matches = _check_output(stdout, expected_output)
+            output_matches = check_output(stdout, expected_output)
             result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
 
         except subprocess.CalledProcessError as e:
