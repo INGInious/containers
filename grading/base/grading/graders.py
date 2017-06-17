@@ -207,7 +207,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
                     diff_html = """<ul><li><strong>Test {0}: {1} </strong>
                         <a class="btn btn-default btn-link btn-xs" role="button"
                         data-toggle="collapse" href="#{2}" aria-expanded="false" aria-controls="{2}">
-                      Expand diff
+                      Toggle diff
                     </a>
                     <div class="collapse" id="{2}">
                       <pre id="{4}">{3}</pre>
