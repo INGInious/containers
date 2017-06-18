@@ -29,6 +29,64 @@ def _check_output(actual_output, expected_output):
 
     return actual_output == expected_output
 
+def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_lines):
+    """
+    Computes a diff between the program output and the expected output.
+    This function will strip the diff to diff_max_lines, and provide a context of diff_context_lines
+    for each difference found.
+    """
+    
+    diff_generator = difflib.unified_diff(expected_output.split('\n'), actual_output.split('\n'),
+        n=diff_context_lines, fromfile='expected_output', tofile='your_output')
+
+    # Remove file names (legend will be added in the frontend)
+    start = 2
+    diff_output = '\n'.join(itertools.islice(diff_generator, start,
+        start + diff_max_lines if diff_max_lines is not None else sys.maxsize))
+
+    end_of_diff_reached = next(diff_generator, None) is None
+
+    if not end_of_diff_reached:
+        diff_output += '\n...'
+
+    return diff_output
+
+def _compile_code_if_necessary(code_file, language):
+    """
+    If the language requires a compilation step, compiles the provided code.
+
+    Returns a tuple of a boolean and a string (or None) indicating whether the compilation was
+    successful or not and the compilation output (or None if there is no output)
+    """
+
+    command = language.get_compilation_command(code_file)
+
+    if command is not None:
+        try:
+            subprocess.run(["run_student"] + command, stderr=subprocess.PIPE,
+                check=True, cwd=CODE_WORKING_DIR)
+        except subprocess.CalledProcessError as e:
+            return False, e.stderr.decode()
+
+    return True, None
+
+def _run_code(code_file, language, input_file_name):
+    """
+    Runs the provided code with the given input file.
+    Returns a tuple of (return_code, stdout, stderr).
+    """
+
+    with open(input_file_name, "r") as input_file:
+        command = language.get_execution_command(code_file)
+        completed_process = subprocess.run(["run_student"] + command,
+            stdin=input_file, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
+            cwd=CODE_WORKING_DIR)
+        stdout = completed_process.stdout.decode()
+        stderr = completed_process.stderr.decode()
+        return_code = completed_process.returncode
+
+        return return_code, stdout, stderr
+
 def _compute_single_feedback(code_file, language, input_file_name, expected_output_file_name,
     debug_info=None, options=None):
     """
@@ -56,69 +114,37 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
         if "files_feedback" not in debug_info:
             debug_info["files_feedback"] = {}
 
-    command = language.get_compilation_command(code_file)
-    if command is not None:
-        try:
-            subprocess.run(["run_student"] + command, stderr=subprocess.PIPE,
-                check=True, cwd=CODE_WORKING_DIR)
-        except subprocess.CalledProcessError as e:
-            if debug_info is not None:
-                debug_info["compilation_output"] = e.stderr.decode()
-            return GraderResult.COMPILATION_ERROR
+    compilation_successful, compilation_output = _compile_code_if_necessary(code_file, language)
+    if not compilation_successful:
+        if debug_info is not None:
+            debug_info["compilation_output"] = compilation_output
 
-    result = None
-    stdout = None
-    stderr = None
-    return_code = None
+        return GraderResult.COMPILATION_ERROR
+
     expected_output = None
 
     with open(expected_output_file_name) as expected_output_file:
         expected_output = expected_output_file.read()
 
-    with open(input_file_name, "r") as input_file:
-        try:
-            command = language.get_execution_command(code_file)
-            completed_process = subprocess.run(["run_student"] + command,
-                stdin=input_file, stderr=subprocess.PIPE, stdout=subprocess.PIPE, check=True,
-                cwd=CODE_WORKING_DIR)
-            stdout = completed_process.stdout.decode()
-            stderr = completed_process.stderr.decode()
-            return_code = 0
+    return_code, stdout, stderr = _run_code(code_file, language, input_file_name)
+    result = None
 
-            output_matches = check_output(stdout, expected_output)
-            result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
-
-        except subprocess.CalledProcessError as e:
-            return_code = e.returncode
-            stderr = e.stderr.decode()
-            stdout = e.stdout.decode()
-
-            if return_code == 252:
-                result = GraderResult.MEMORY_LIMIT_EXCEEDED
-            elif return_code == 253:
-                result = GraderResult.TIME_LIMIT_EXCEEDED
-            elif return_code == 254:
-                result = GraderResult.INTERNAL_ERROR
-            else:
-                result = GraderResult.RUNTIME_ERROR
+    if return_code == 0:
+        output_matches = check_output(stdout, expected_output)
+        result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
+    elif return_code == 252:
+        result = GraderResult.MEMORY_LIMIT_EXCEEDED
+    elif return_code == 253:
+        result = GraderResult.TIME_LIMIT_EXCEEDED
+    elif return_code == 254:
+        result = GraderResult.INTERNAL_ERROR
+    else:
+        result = GraderResult.RUNTIME_ERROR
 
     if debug_info is not None and result != GraderResult.ACCEPTED:
         diff = None
         if compute_diff and result != GraderResult.COMPILATION_ERROR:
-            diff_generator = difflib.unified_diff(expected_output.split('\n'), stdout.split('\n'),
-                n=diff_context_lines, fromfile='expected_output', tofile='your_output')
-
-            # Remove file names (legend will be added in the frontend)
-            start = 2
-            diff_output = '\n'.join(itertools.islice(diff_generator, start,
-                start + diff_max_lines if diff_max_lines is not None else sys.maxsize))
-
-            end_of_diff_reached = next(diff_generator, None) is None
-
-            if not end_of_diff_reached:
-                diff_output += '\n...'
-
-            diff = diff_output
+            diff = _compute_diff(stdout, expected_output, diff_context_lines, diff_max_lines)
 
         debug_info["files_feedback"][input_file_name] = {
             "input_file": input_file_name,
