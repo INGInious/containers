@@ -56,20 +56,26 @@ class LambdaLanguage(ProgrammingLanguage):
         return self._file_extension
 
 _ALL_LANGUAGES = {
-    "python": LambdaLanguage("py", lambda _: None, lambda file_name: ["python", file_name]),
+    "python2": LambdaLanguage("py", lambda _: None, lambda file_name: ["python", file_name]),
     "python3": LambdaLanguage("py", lambda _: None, lambda file_name: ["python3", file_name]),
-    "java": LambdaLanguage("java", lambda file_name: ["javac", file_name],
+    "java8": LambdaLanguage("java", lambda file_name: ["javac", file_name],
         lambda _: ["java", "Main"]),
     "java7": LambdaLanguage("java", lambda file_name: ["javac", file_name, "-source", "1.7",
         "-target", "1.7"], lambda _: ["java", "Main"]),
-    "c++": LambdaLanguage("cpp", lambda file_name: ["g++", file_name, "-o", "student_program"],
+    "c++11": LambdaLanguage("cpp", lambda file_name: ["g++", file_name, "-o", "student_program",
+        "-std=c++11"],
         lambda _: ["./student_program"]),
-    "c": LambdaLanguage("c", lambda file_name: ["gcc", file_name, "-o", "student_program"],
+    "c11": LambdaLanguage("c", lambda file_name: ["gcc", file_name, "-o", "student_program",
+        "-std=c11"],
         lambda _: ["./student_program"]),
 }
 
 # Set up aliases
+_ALL_LANGUAGES["java"] = _ALL_LANGUAGES["java8"]
+_ALL_LANGUAGES["c++"] = _ALL_LANGUAGES["c++11"]
 _ALL_LANGUAGES["cpp"] = _ALL_LANGUAGES["c++"]
+_ALL_LANGUAGES["python"] = _ALL_LANGUAGES["python2"]
+_ALL_LANGUAGES["c"] = _ALL_LANGUAGES["c11"]
 
 def language_exists(name):
     return name in _ALL_LANGUAGES
