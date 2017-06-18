@@ -26,6 +26,7 @@ def _check_output(actual_output, expected_output):
     Compares the output of a program against an expected output. Returns true if the actual and the
     expected output match.
     """
+
     return actual_output == expected_output
 
 def _compute_single_feedback(code_file, language, input_file_name, expected_output_file_name,
@@ -39,13 +40,8 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
     input_file_name: The test case input file name.
     expected_output_file_name: The test case output file name.
     debug_info: An optional dictionary to write debug information
-    options: An optional dictionary with grader settings. Currently supported options are
-        - compute_diff: bool. Whether or not to compute diff for admins. Defaults to True
-        - diff_max_lines: int. The maximum number of lines of diff to be saved, or None if unbounded.
-        - diff_context_lines: int. The lines of context to be included for diff.
-        - check_output: function. A custom function that compares the program output against the
-            expected output. This function takes two strings (actual and expected output) and returns
-            a boolean that indicates whether the outputs match.
+    options: An optional dictionary with grader settings. See grade_with_partial_scores() for
+        details.
     """
 
     if options is None:
@@ -135,6 +131,15 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
     return result
 
 def _compute_feedback(code_file, language, test_cases, options):
+    """
+    Computes the grader feedback for the given code against each of the provided test cases.
+
+    code_file: The name of the file containing the code.
+    language: A ProgrammingLanguage instance associated to the language the code is written in.
+    test_cases: A list of tuples (input_file_name, output_file_name) describing the cases the code
+        will be tested against.
+    options: A dictionary with the grader options. It will be forwarded to _compute_single_feedback().
+    """
     grader_results = []
     debug_info = {}
 
@@ -148,6 +153,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
     """
     Partially grade the specified code with the given test cases and weights.
 
+    code: A string containing the code to be graded.
     test_cases: A list of tuples (input_file_name, output_file_name). Must have at least one test
         case.
     language_name: The name of the programming language the code is written in.
@@ -156,8 +162,12 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
     options: A dictionary of settings for the grader. This function accepts the following options:
         - output_diff_for: list with the names of the input files for which the diff will be shown
             to the user. Defaults to an empty list. Only valid if compute_diff is True.
-
-        The remaining options will be forwarded to _compute_single_feedback.
+        - compute_diff: bool. Whether or not to compute diff for admins. Defaults to True
+        - diff_max_lines: int. The maximum number of lines of diff to be saved, or None if unbounded.
+        - diff_context_lines: int. The lines of context to be included for diff.
+        - check_output: function. A custom function that compares the program output against the
+            expected output. This function takes two strings (actual and expected output) and returns
+            a boolean that indicates whether the outputs match.
     """
 
     assert code is not None
@@ -238,8 +248,17 @@ def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None
     """
     Similar to grade_with_partial_scores(), but extracts the code from the problem with the given
     id. If language_name is None, it will be automatically inferred from the problem with the given
-    id (assuming it's a "code multiple language" problem)
+    id (assuming it's a "code multiple language" problem).
+
+    problem_id: The id of the problem where the code (and optionally the language) will be extracted
+        from.
+    test_cases: Same as in grade_with_partial_scores().
+    language_name: The name of the language that the code is written in. If None, it will be
+        extracted from the problem with id problem_id.
+    weights: Same as in grade_with_partial_scores().
+    options: Same as in grade_with_partial_scores().
     """
+
     code = input.get_input(problem_id)
 
     if language_name is None:
