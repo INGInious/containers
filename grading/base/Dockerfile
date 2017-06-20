@@ -1,8 +1,8 @@
 # DOCKER-VERSION 1.1.0
 FROM    centos
 
-ENV LANG en_US.UTF-8  
-ENV LANGUAGE en_US:en  
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # Install python, needed for scripts used in INGInious
@@ -22,7 +22,11 @@ RUN     chmod -R 755 /INGInious/bin && \
 RUN     chmod -R 644 /INGInious/inginious && \
         mkdir -p /usr/lib/python3.5/site-packages/inginious && \
         cp -R /INGInious/inginious/*.py  /usr/lib/python3.5/site-packages/inginious && \
-        echo "inginious" > /usr/lib/python3.5/site-packages/inginious.pth
+        echo "inginious" > /usr/lib/python3.5/site-packages/inginious.pth && \
+        chmod -R 644 /INGInious/grading && \
+        mkdir -p /usr/lib/python3.5/site-packages/grading && \
+        cp -R /INGInious/grading/*.py  /usr/lib/python3.5/site-packages/grading && \
+        echo "grading" > /usr/lib/python3.5/site-packages/grading.pth
 
 # Delete unneeded folders
 RUN     rm -R /INGInious
