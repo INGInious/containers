@@ -8,7 +8,7 @@ import difflib
 import itertools
 import sys
 import html
-from . import languages
+from . import runners
 
 CODE_WORKING_DIR = 'student/'
 
@@ -51,50 +51,15 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
 
     return diff_output
 
-def _compile_code_if_necessary(code_file, language):
-    """
-    If the language requires a compilation step, compiles the provided code.
 
-    Returns a tuple of a boolean and a string (or None) indicating whether the compilation was
-    successful or not and the compilation output (or None if there is no output)
-    """
-
-    command = language.get_compilation_command(code_file)
-
-    if command is not None:
-        try:
-            subprocess.run(["run_student"] + command, stderr=subprocess.PIPE,
-                check=True, cwd=CODE_WORKING_DIR)
-        except subprocess.CalledProcessError as e:
-            return False, e.stderr.decode()
-
-    return True, None
-
-def _run_code(code_file, language, input_file_name):
-    """
-    Runs the provided code with the given input file.
-    Returns a tuple of (return_code, stdout, stderr).
-    """
-
-    with open(input_file_name, "r") as input_file:
-        command = language.get_execution_command(code_file)
-        completed_process = subprocess.run(["run_student"] + command,
-            stdin=input_file, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-            cwd=CODE_WORKING_DIR)
-        stdout = completed_process.stdout.decode()
-        stderr = completed_process.stderr.decode()
-        return_code = completed_process.returncode
-
-        return return_code, stdout, stderr
-
-def _compute_single_feedback(code_file, language, input_file_name, expected_output_file_name,
+def _compute_single_feedback(code, runner, input_file_name, expected_output_file_name,
     debug_info=None, options=None):
     """
     Runs the script in file_name and returns a GraderResult depending on the output for
     input_file_name.
 
-    code_file: The file name with the code.
-    language: A ProgrammingLanguage instance.
+    code: A string with the code to run.
+    runner: A CodeRunner instance.
     input_file_name: The test case input file name.
     expected_output_file_name: The test case output file name.
     debug_info: An optional dictionary to write debug information
@@ -114,19 +79,23 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
         if "files_feedback" not in debug_info:
             debug_info["files_feedback"] = {}
 
-    compilation_successful, compilation_output = _compile_code_if_necessary(code_file, language)
-    if not compilation_successful:
-        if debug_info is not None:
-            debug_info["compilation_output"] = compilation_output
+    return_code, stdout, stderr = None, None, None
+    with open(input_file_name, 'r') as input_file:
+        try:
+            return_code, stdout, stderr = runner.run_code(code, input_file)
+        except runners.CompilationError as e:
+            if debug_info is not None:
+                debug_info["compilation_output"] = e.compilation_output
 
-        return GraderResult.COMPILATION_ERROR
+            return GraderResult.COMPILATION_ERROR
+        except runners.ProjectError as e:
+            return GraderResult.INTERNAL_ERROR
 
     expected_output = None
 
     with open(expected_output_file_name) as expected_output_file:
         expected_output = expected_output_file.read()
 
-    return_code, stdout, stderr = _run_code(code_file, language, input_file_name)
     result = None
 
     if return_code == 0:
@@ -143,7 +112,7 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
 
     if debug_info is not None and result != GraderResult.ACCEPTED:
         diff = None
-        if compute_diff and result != GraderResult.COMPILATION_ERROR:
+        if compute_diff:
             diff = _compute_diff(stdout, expected_output, diff_context_lines, diff_max_lines)
 
         debug_info["files_feedback"][input_file_name] = {
@@ -156,12 +125,12 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
 
     return result
 
-def _compute_feedback(code_file, language, test_cases, options):
+def _compute_feedback(code, runner, test_cases, options):
     """
     Computes the grader feedback for the given code against each of the provided test cases.
 
-    code_file: The name of the file containing the code.
-    language: A ProgrammingLanguage instance associated to the language the code is written in.
+    code: A string with the code to run.
+    runner: A CodeRunner instance associated to run the code with.
     test_cases: A list of tuples (input_file_name, output_file_name) describing the cases the code
         will be tested against.
     options: A dictionary with the grader options. It will be forwarded to _compute_single_feedback().
@@ -170,7 +139,7 @@ def _compute_feedback(code_file, language, test_cases, options):
     debug_info = {}
 
     for input_file_name, output_file_name in test_cases:
-        grader_results.append(_compute_single_feedback(code_file, language, input_file_name,
+        grader_results.append(_compute_single_feedback(code, runner, input_file_name,
             output_file_name, debug_info, options))
 
     return grader_results, debug_info
@@ -211,12 +180,9 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
 
     output_diff_for = set(options.get("output_diff_for", []))
 
-    language = languages.get_language_from_name(language_name)
-    file_name = 'Main.' + language.get_file_extension()
-    with open(CODE_WORKING_DIR + file_name, 'w') as f:
-        f.write(code)
+    runner = runners.get_runner_from_name(language_name)
 
-    results, debug_info = _compute_feedback(file_name, language, test_cases, options)
+    results, debug_info = _compute_feedback(code, runner, test_cases, options)
     passing = sum(1 for result in results if result == GraderResult.ACCEPTED)
     score = sum(weights[i] for i, result in enumerate(results) if result == GraderResult.ACCEPTED)
     total_sum = sum(weight for weight in weights)
