@@ -8,6 +8,7 @@ import difflib
 import itertools
 import sys
 import html
+import tempfile
 from . import projects
 
 CODE_WORKING_DIR = 'student/'
@@ -20,6 +21,18 @@ class GraderResult(Enum):
     MEMORY_LIMIT_EXCEEDED = 5
     TIME_LIMIT_EXCEEDED = 6
     INTERNAL_ERROR = 7
+
+def _parse_non_zero_return_code(return_code):
+    assert return_code != 0
+
+    if return_code == 252:
+        return GraderResult.MEMORY_LIMIT_EXCEEDED
+    elif return_code == 253:
+        return GraderResult.TIME_LIMIT_EXCEEDED
+    elif return_code == 254:
+        return GraderResult.INTERNAL_ERROR
+    else:
+        return GraderResult.RUNTIME_ERROR
 
 def _check_output(actual_output, expected_output):
     """
@@ -50,7 +63,6 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
         diff_output += '\n...'
 
     return diff_output
-
 
 def _compute_single_feedback(project, input_file_name, expected_output_file_name,
     debug_info=None, options=None):
@@ -99,14 +111,8 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
     if return_code == 0:
         output_matches = check_output(stdout, expected_output)
         result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
-    elif return_code == 252:
-        result = GraderResult.MEMORY_LIMIT_EXCEEDED
-    elif return_code == 253:
-        result = GraderResult.TIME_LIMIT_EXCEEDED
-    elif return_code == 254:
-        result = GraderResult.INTERNAL_ERROR
     else:
-        result = GraderResult.RUNTIME_ERROR
+        result = _parse_non_zero_return_code(return_code)
 
     if debug_info is not None and result != GraderResult.ACCEPTED:
         diff = None
@@ -141,6 +147,49 @@ def _compute_feedback(project, test_cases, options):
             output_file_name, debug_info, options))
 
     return grader_results, debug_info
+
+def _generate_feedback_for_compilation_error(compilation_output):
+    return "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
+
+def run_against_custom_input(project, custom_input):
+    """
+    Runs the given project against a custom input.
+
+    Arguments:
+    project -- A Project instance.
+    custom_input -- A String with the input to be sent to the project.
+    """
+
+    result = None
+    feedback_str = None
+
+    custom_input_file_name = 'custom_input.txt'
+    with open(custom_input_file_name, 'w') as input_file:
+        input_file.write(custom_input)
+
+    with open(custom_input_file_name, 'r') as input_file:
+        try:
+            return_code, stdout, stderr = project.run(input_file)
+
+            if return_code == 0:
+                result = GraderResult.ACCEPTED
+                feedback_str = "Your code run successfully. Check your output below\n"
+            else:
+                result = _parse_non_zero_return_code(return_code)
+                feedback_str = rst.get_html_block(
+                    "Your code did not run successfully: <strong>%s</strong>" % (result.name,))
+
+            # Save stdout and stderr so the UI can show it easily
+            feedback.set_custom_value("custom_stdout", stdout)
+            feedback.set_custom_value("custom_stderr", stderr)
+        except projects.CompilationError as e:
+            compilation_output = e.compilation_output
+            feedback_str = _generate_feedback_for_compilation_error(compilation_output)
+            result = GraderResult.COMPILATION_ERROR
+
+    feedback.set_global_result("success" if result == GraderResult.ACCEPTED else "failed")
+    feedback.set_grade(100.0 if result == GraderResult.ACCEPTED else 0.0)
+    feedback.set_global_feedback(feedback_str)
 
 def grade_with_partial_scores(project, test_cases, weights=None, options=None):
     """
@@ -186,7 +235,7 @@ def grade_with_partial_scores(project, test_cases, weights=None, options=None):
 
     if GraderResult.COMPILATION_ERROR in results:
         compilation_output = debug_info.get("compilation_output", "")
-        feedback_str = "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
+        feedback_str = _generate_feedback_for_compilation_error(compilation_output)
     else:
         def generate_feedback_for_test(i, result):
             input_file_name = test_cases[i][0]
@@ -230,12 +279,12 @@ def grade_with_partial_scores(project, test_cases, weights=None, options=None):
     feedback.set_grade(score * 100.0 / total_sum)
     feedback.set_global_feedback(feedback_str)
 
-def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None, weights=None,
-    options=None):
+def handle_problem_action(problem_id, test_cases, language_name=None, options=None, weights=None):
     """
-    Similar to grade_with_partial_scores(), but extracts the code from the problem with the given
-    id. If language_name is None, it will be automatically inferred from the problem with the given
-    id (assuming it's a "code multiple language" problem).
+    Decides whether to grade the given problem against the test cases, or run it against a
+    user-provided custom input according to the task action. If language_name is None, it will be
+    automatically inferred from the problem with the given id (assuming it's a
+    "code multiple language" problem).
 
     problem_id: The id of the problem where the code (and optionally the language) will be extracted
         from.
@@ -246,6 +295,11 @@ def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None
     options: Same as in grade_with_partial_scores().
     """
 
+    action = input.get_input("@action")
+    custom_input = input.get_input(problem_id + "/input")
+
+    assert action in ["customtest", "submit"]
+
     code = input.get_input(problem_id)
 
     if language_name is None:
@@ -254,7 +308,11 @@ def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None
     project_factory = projects.get_factory_from_name(language_name)
     project = project_factory.create_from_code(code)
 
-    return grade_with_partial_scores(project, test_cases, weights, options)
+    if action == "customtest":
+        return run_against_custom_input(project, custom_input)
+    elif action == "submit":
+        return grade_with_partial_scores(project, test_cases, weights, options)
+
 
 def generate_test_files_tuples(n):
     """
