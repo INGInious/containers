@@ -8,7 +8,7 @@ import difflib
 import itertools
 import sys
 import html
-from . import runners
+from . import projects
 
 CODE_WORKING_DIR = 'student/'
 
@@ -35,7 +35,7 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
     This function will strip the diff to diff_max_lines, and provide a context of diff_context_lines
     for each difference found.
     """
-    
+
     diff_generator = difflib.unified_diff(expected_output.split('\n'), actual_output.split('\n'),
         n=diff_context_lines, fromfile='expected_output', tofile='your_output')
 
@@ -52,7 +52,7 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
     return diff_output
 
 
-def _compute_single_feedback(code, runner, input_file_name, expected_output_file_name,
+def _compute_single_feedback(project, input_file_name, expected_output_file_name,
     debug_info=None, options=None):
     """
     Runs the script in file_name and returns a GraderResult depending on the output for
@@ -82,14 +82,12 @@ def _compute_single_feedback(code, runner, input_file_name, expected_output_file
     return_code, stdout, stderr = None, None, None
     with open(input_file_name, 'r') as input_file:
         try:
-            return_code, stdout, stderr = runner.run_code(code, input_file)
-        except runners.CompilationError as e:
+            return_code, stdout, stderr = project.run(input_file)
+        except projects.CompilationError as e:
             if debug_info is not None:
                 debug_info["compilation_output"] = e.compilation_output
 
             return GraderResult.COMPILATION_ERROR
-        except runners.ProjectError as e:
-            return GraderResult.INTERNAL_ERROR
 
     expected_output = None
 
@@ -125,7 +123,7 @@ def _compute_single_feedback(code, runner, input_file_name, expected_output_file
 
     return result
 
-def _compute_feedback(code, runner, test_cases, options):
+def _compute_feedback(project, test_cases, options):
     """
     Computes the grader feedback for the given code against each of the provided test cases.
 
@@ -139,19 +137,18 @@ def _compute_feedback(code, runner, test_cases, options):
     debug_info = {}
 
     for input_file_name, output_file_name in test_cases:
-        grader_results.append(_compute_single_feedback(code, runner, input_file_name,
+        grader_results.append(_compute_single_feedback(project, input_file_name,
             output_file_name, debug_info, options))
 
     return grader_results, debug_info
 
-def grade_with_partial_scores(code, test_cases, language_name, weights=None, options=None):
+def grade_with_partial_scores(project, test_cases, weights=None, options=None):
     """
     Partially grade the specified code with the given test cases and weights.
 
-    code: A string containing the code to be graded.
+    project: A Project instance with the project to grade.
     test_cases: A list of tuples (input_file_name, output_file_name). Must have at least one test
         case.
-    language_name: The name of the programming language the code is written in.
     weights: A list of weights for each test case. If None, all test_cases are assumed to have the
         same weight. If not None, it must have the same number of elements as test_cases.
     options: A dictionary of settings for the grader. This function accepts the following options:
@@ -165,7 +162,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
             a boolean that indicates whether the outputs match.
     """
 
-    assert code is not None
+    assert project is not None
     assert test_cases is not None and len(test_cases) > 0, \
         "test_cases must be provided and should have at least one test case"
 
@@ -180,9 +177,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
 
     output_diff_for = set(options.get("output_diff_for", []))
 
-    runner = runners.get_runner_from_name(language_name)
-
-    results, debug_info = _compute_feedback(code, runner, test_cases, options)
+    results, debug_info = _compute_feedback(project, test_cases, options)
     passing = sum(1 for result in results if result == GraderResult.ACCEPTED)
     score = sum(weights[i] for i, result in enumerate(results) if result == GraderResult.ACCEPTED)
     total_sum = sum(weight for weight in weights)
@@ -256,7 +251,10 @@ def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None
     if language_name is None:
         language_name = input.get_input(problem_id + "/language")
 
-    return grade_with_partial_scores(code, test_cases, language_name, weights, options)
+    project_factory = projects.get_factory_from_name(language_name)
+    project = project_factory.create_from_code(code)
+
+    return grade_with_partial_scores(project, test_cases, weights, options)
 
 def generate_test_files_tuples(n):
     """
