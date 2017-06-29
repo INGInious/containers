@@ -150,7 +150,7 @@ class JavaProjectFactory(ProjectFactory):
 
     def create_from_code(self, code):
         def run(input_file):
-            javac_command = ["javac", self._main_file_name]
+            javac_command = ["javac", "-source", self._source, self._main_file_name]
             _run_in_sandbox(javac_command, stdin=input_file, cwd=CODE_WORKING_DIR)
 
             java_command = ["java", self._main_file_name.replace(".java", "")]
@@ -162,13 +162,11 @@ class JavaProjectFactory(ProjectFactory):
         return LambdaProject(run_function=run)
 
     def create_from_directory(self, directory):
-        build_directory = tempfile.mkdtemp(dir=directory)
+        build_directory = os.path.join(directory, "build")
+        if not os.path.exists(build_directory):
+            os.makedirs(build_directory)
 
         def run(input_file):
-            build_directory = os.path.join(directory, "build")
-            if not os.path.exists(build_directory):
-                os.makedirs(build_directory)
-
             javac_command = ["javac", "-source", self._source, "-d", "build", "-cp", self._classpath + "/*",
                     "-sourcepath", self._sourcepath, os.path.join(self._sourcepath, self._main_file_name)]
             _run_in_sandbox(javac_command, stdin=input_file, cwd=directory)
