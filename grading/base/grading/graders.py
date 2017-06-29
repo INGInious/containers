@@ -2,6 +2,7 @@ from inginious import input, feedback
 from enum import Enum
 import subprocess
 import io
+import os
 import json
 import rst
 import difflib
@@ -10,6 +11,7 @@ import sys
 import html
 import tempfile
 from . import projects
+from zipfile import ZipFile
 
 CODE_WORKING_DIR = 'student/'
 
@@ -296,7 +298,6 @@ def handle_problem_action(problem_id, test_cases, language_name=None, options=No
     """
 
     action = input.get_input("@action")
-    custom_input = input.get_input(problem_id + "/input")
 
     assert action in ["customtest", "submit"]
 
@@ -304,15 +305,28 @@ def handle_problem_action(problem_id, test_cases, language_name=None, options=No
 
     if language_name is None:
         language_name = input.get_input(problem_id + "/language")
+    problem_type = input.get_input(problem_id + "/type")
 
-    project_factory = projects.get_factory_from_name(language_name)
-    project = project_factory.create_from_code(code)
+    project = None
+
+    if problem_type == 'code-multiple-languages':
+        project_factory = projects.get_factory_from_name(language_name)
+        project = project_factory.create_from_code(code)
+
+    elif problem_type == 'code-file-multiple-languages':
+        project_directory = os.path.join(CODE_WORKING_DIR, "code")
+        with open(project_directory + ".zip", 'wb') as project_file:
+            project_file.write(code)
+        ZipFile(project_directory + ".zip").extractall(path=CODE_WORKING_DIR)
+
+        project_factory = projects.get_factory_from_name(language_name)
+        project = project_factory.create_from_directory(project_directory)
 
     if action == "customtest":
+        custom_input = input.get_input(problem_id + "/input")
         return run_against_custom_input(project, custom_input)
     elif action == "submit":
         return grade_with_partial_scores(project, test_cases, weights, options)
-
 
 def generate_test_files_tuples(n):
     """

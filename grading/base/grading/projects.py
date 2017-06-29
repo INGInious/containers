@@ -99,7 +99,7 @@ class PythonProjectFactory(ProjectFactory):
 
     def __init__(self, main_file_name='main.py', python_binary='python', additional_flags=None):
         """
-        Initializes an instance of PythonRunner with the given options.
+        Initializes an instance of PythonProjectFactory with the given options.
 
         Arguments:
         main_file_name -- The name of the file to run. If running a code, this will also be the name
@@ -128,13 +128,64 @@ class PythonProjectFactory(ProjectFactory):
         return LambdaProject(run_function=run)
 
 
+class JavaProjectFactory(ProjectFactory):
+    """
+    Implementation of ProjectFactory for Java.
+    """
+
+    def __init__(self, main_file_name='Main.java', source='1.7', sourcepath="src",
+                                                                 classpath="lib"):
+        """
+        Initializes an instance of JavaProjectFactory with the given options.
+
+        Arguments:
+        main_file_name -- The name of the file to run. If running a code, this will also be the name
+            of the file where the code will be stored.
+        """
+
+        self._main_file_name = main_file_name
+        self._source = source
+        self._sourcepath = sourcepath
+        self._classpath = classpath
+
+    def create_from_code(self, code):
+        def run(input_file):
+            javac_command = ["javac", self._main_file_name]
+            _run_in_sandbox(javac_command, stdin=input_file, cwd=CODE_WORKING_DIR)
+
+            java_command = ["java", self._main_file_name.replace(".java", "")]
+            return _run_in_sandbox(java_command, stdin=input_file, cwd=CODE_WORKING_DIR)
+
+        with open(os.path.join(CODE_WORKING_DIR, self._main_file_name), 'w') as main_file:
+            main_file.write(code)
+
+        return LambdaProject(run_function=run)
+
+    def create_from_directory(self, directory):
+        build_directory = tempfile.mkdtemp(dir=directory)
+
+        def run(input_file):
+            build_directory = os.path.join(directory, "build")
+            if not os.path.exists(build_directory):
+                os.makedirs(build_directory)
+
+            javac_command = ["javac", "-source", self._source, "-d", "build", "-cp", self._classpath + "/*",
+                    "-sourcepath", self._sourcepath, os.path.join(self._sourcepath, self._main_file_name)]
+            _run_in_sandbox(javac_command, stdin=input_file, cwd=directory)
+
+            java_command = ["java", "-cp" , "build" + ":" + self._classpath + "/*",
+                            self._main_file_name.replace(".java", "")]
+            return _run_in_sandbox(java_command, stdin=input_file, cwd=directory)
+
+        return LambdaProject(run_function=run)
+
+
 _ALL_FACTORIES = {
     "python2": PythonProjectFactory(),
-    "python3": PythonProjectFactory(python_binary='python3')
+    "python3": PythonProjectFactory(python_binary='python3'),
+    "java7": JavaProjectFactory(),
+    "java8": JavaProjectFactory(source="1.8")
 }
-
-# Set up aliases
-_ALL_FACTORIES["python"] = _ALL_FACTORIES["python2"]
 
 def factory_exists(name):
     return name in _ALL_FACTORIES
