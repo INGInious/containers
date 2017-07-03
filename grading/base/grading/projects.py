@@ -134,7 +134,7 @@ class JavaProjectFactory(ProjectFactory):
     Implementation of ProjectFactory for Java.
     """
 
-    def __init__(self, main_class='Main', source='1.8', sourcepath="src", classpath="lib"):
+    def __init__(self, main_class='Main', source_version='1.8', sourcepath="src", classpath="lib"):
         """
         Initializes an instance of JavaProjectFactory with the given options.
 
@@ -145,15 +145,14 @@ class JavaProjectFactory(ProjectFactory):
 
         self._main_class = main_class
         self._main_file_name = self._main_class + ".java"
-        self._source = source
+        self._source_version = source_version
         self._sourcepath = sourcepath
         self._classpath = classpath
 
     def create_from_code(self, code):
         project_directory = tempfile.mkdtemp(dir=CODE_WORKING_DIR)
         source_directory = os.path.join(project_directory, self._sourcepath)
-        if not os.path.exists(source_directory):
-            os.makedirs(source_directory)
+        os.makedirs(source_directory)
 
         with open(os.path.join(source_directory, self._main_file_name), 'w') as main_file:
             main_file.write(code)
@@ -166,18 +165,16 @@ class JavaProjectFactory(ProjectFactory):
             os.makedirs(build_directory)
 
         def run(input_file):
-            task_absolute_path = os.getcwd()
-            os.chdir(directory)
-            source_files = glob(os.path.join("**/*.java"), recursive=True)
-            os.chdir(task_absolute_path)
+            source_files = glob(os.path.join(os.path.abspath(directory), "**/*.java"), recursive=True)
 
-            javac_command = ["javac", "-source", self._source, "-d", "build", "-cp", self._classpath + "/*",
+            javac_command = ["javac", "-source", self._source_version, "-d", "build", "-cp", self._classpath + "/*",
                     "-sourcepath", self._sourcepath] + source_files
             return_code, stdout, stderr = _run_in_sandbox(javac_command, stdin=input_file, cwd=directory)
             if return_code != 0:
                 raise CompilationError(stderr)
 
-            java_command = ["java", "-cp" , "build" + ":" + self._classpath + "/*", self._main_class]
+            classpath_entries = ["build", self._classpath, self._classpath + "/*"]
+            java_command = ["java", "-cp" , os.pathsep.join(classpath_entries), self._main_class]
             return _run_in_sandbox(java_command, stdin=input_file, cwd=directory)
 
         return LambdaProject(run_function=run)
@@ -186,7 +183,7 @@ class JavaProjectFactory(ProjectFactory):
 _ALL_FACTORIES = {
     "python2": PythonProjectFactory(),
     "python3": PythonProjectFactory(python_binary='python3'),
-    "java7": JavaProjectFactory(source="1.7"),
+    "java7": JavaProjectFactory(source_version="1.7"),
     "java8": JavaProjectFactory()
 }
 

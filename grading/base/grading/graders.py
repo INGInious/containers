@@ -312,12 +312,12 @@ def handle_problem_action(problem_id, test_cases, language_name=None, options=No
         project = project_factory.create_from_code(code)
 
     elif problem_type == 'code-file-multiple-languages':
-        unzip_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
-        project_directory = os.path.join(unzip_directory, "code")
+        project_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
 
         with open(project_directory + ".zip", 'wb') as project_file:
             project_file.write(code)
-        ZipFile(project_directory + ".zip").extractall(path=unzip_directory)
+        with ZipFile(project_directory + ".zip") as project_file:
+            project_file.extractall(path=project_directory)
 
         project = project_factory.create_from_directory(project_directory)
 
