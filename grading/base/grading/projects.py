@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from glob import glob
 import os
 import tempfile
 import subprocess
@@ -133,8 +134,7 @@ class JavaProjectFactory(ProjectFactory):
     Implementation of ProjectFactory for Java.
     """
 
-    def __init__(self, main_file_name='Main.java', source='1.7', sourcepath="src",
-                                                                 classpath="lib"):
+    def __init__(self, main_class='Main', source='1.8', sourcepath="src", classpath="lib"):
         """
         Initializes an instance of JavaProjectFactory with the given options.
 
@@ -143,23 +143,22 @@ class JavaProjectFactory(ProjectFactory):
             of the file where the code will be stored.
         """
 
-        self._main_file_name = main_file_name
+        self._main_class = main_class
+        self._main_file_name = self._main_class + ".java"
         self._source = source
         self._sourcepath = sourcepath
         self._classpath = classpath
 
     def create_from_code(self, code):
-        def run(input_file):
-            javac_command = ["javac", "-source", self._source, self._main_file_name]
-            _run_in_sandbox(javac_command, stdin=input_file, cwd=CODE_WORKING_DIR)
+        project_directory = tempfile.mkdtemp(dir=CODE_WORKING_DIR)
+        source_directory = os.path.join(project_directory, self._sourcepath)
+        if not os.path.exists(source_directory):
+            os.makedirs(source_directory)
 
-            java_command = ["java", self._main_file_name.replace(".java", "")]
-            return _run_in_sandbox(java_command, stdin=input_file, cwd=CODE_WORKING_DIR)
-
-        with open(os.path.join(CODE_WORKING_DIR, self._main_file_name), 'w') as main_file:
+        with open(os.path.join(source_directory, self._main_file_name), 'w') as main_file:
             main_file.write(code)
 
-        return LambdaProject(run_function=run)
+        return self.create_from_directory(project_directory)
 
     def create_from_directory(self, directory):
         build_directory = os.path.join(directory, "build")
@@ -167,12 +166,18 @@ class JavaProjectFactory(ProjectFactory):
             os.makedirs(build_directory)
 
         def run(input_file):
-            javac_command = ["javac", "-source", self._source, "-d", "build", "-cp", self._classpath + "/*",
-                    "-sourcepath", self._sourcepath, os.path.join(self._sourcepath, self._main_file_name)]
-            _run_in_sandbox(javac_command, stdin=input_file, cwd=directory)
+            task_absolute_path = os.getcwd()
+            os.chdir(directory)
+            source_files = glob(os.path.join("**/*.java"), recursive=True)
+            os.chdir(task_absolute_path)
 
-            java_command = ["java", "-cp" , "build" + ":" + self._classpath + "/*",
-                            self._main_file_name.replace(".java", "")]
+            javac_command = ["javac", "-source", self._source, "-d", "build", "-cp", self._classpath + "/*",
+                    "-sourcepath", self._sourcepath] + source_files
+            return_code, stdout, stderr = _run_in_sandbox(javac_command, stdin=input_file, cwd=directory)
+            if return_code != 0:
+                raise CompilationError(stderr)
+
+            java_command = ["java", "-cp" , "build" + ":" + self._classpath + "/*", self._main_class]
             return _run_in_sandbox(java_command, stdin=input_file, cwd=directory)
 
         return LambdaProject(run_function=run)
@@ -181,8 +186,8 @@ class JavaProjectFactory(ProjectFactory):
 _ALL_FACTORIES = {
     "python2": PythonProjectFactory(),
     "python3": PythonProjectFactory(python_binary='python3'),
-    "java7": JavaProjectFactory(),
-    "java8": JavaProjectFactory(source="1.8")
+    "java7": JavaProjectFactory(source="1.7"),
+    "java8": JavaProjectFactory()
 }
 
 def factory_exists(name):

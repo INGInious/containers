@@ -13,8 +13,6 @@ import tempfile
 from . import projects
 from zipfile import ZipFile
 
-CODE_WORKING_DIR = 'student/'
-
 class GraderResult(Enum):
     ACCEPTED = 1
     COMPILATION_ERROR = 2
@@ -308,18 +306,19 @@ def handle_problem_action(problem_id, test_cases, language_name=None, options=No
     problem_type = input.get_input(problem_id + "/type")
 
     project = None
+    project_factory = projects.get_factory_from_name(language_name)
 
     if problem_type == 'code-multiple-languages':
-        project_factory = projects.get_factory_from_name(language_name)
         project = project_factory.create_from_code(code)
 
     elif problem_type == 'code-file-multiple-languages':
-        project_directory = os.path.join(CODE_WORKING_DIR, "code")
+        unzip_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
+        project_directory = os.path.join(unzip_directory, "code")
+
         with open(project_directory + ".zip", 'wb') as project_file:
             project_file.write(code)
-        ZipFile(project_directory + ".zip").extractall(path=CODE_WORKING_DIR)
+        ZipFile(project_directory + ".zip").extractall(path=unzip_directory)
 
-        project_factory = projects.get_factory_from_name(language_name)
         project = project_factory.create_from_directory(project_directory)
 
     if action == "customtest":
