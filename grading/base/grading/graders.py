@@ -2,15 +2,16 @@ from inginious import input, feedback
 from enum import Enum
 import subprocess
 import io
+import os
 import json
 import rst
 import difflib
 import itertools
 import sys
 import html
-from . import languages
-
-CODE_WORKING_DIR = 'student/'
+import tempfile
+from . import projects
+from zipfile import ZipFile
 
 class GraderResult(Enum):
     ACCEPTED = 1
@@ -20,6 +21,18 @@ class GraderResult(Enum):
     MEMORY_LIMIT_EXCEEDED = 5
     TIME_LIMIT_EXCEEDED = 6
     INTERNAL_ERROR = 7
+
+def _parse_non_zero_return_code(return_code):
+    assert return_code != 0
+
+    if return_code == 252:
+        return GraderResult.MEMORY_LIMIT_EXCEEDED
+    elif return_code == 253:
+        return GraderResult.TIME_LIMIT_EXCEEDED
+    elif return_code == 254:
+        return GraderResult.INTERNAL_ERROR
+    else:
+        return GraderResult.RUNTIME_ERROR
 
 def _check_output(actual_output, expected_output):
     """
@@ -35,7 +48,7 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
     This function will strip the diff to diff_max_lines, and provide a context of diff_context_lines
     for each difference found.
     """
-    
+
     diff_generator = difflib.unified_diff(expected_output.split('\n'), actual_output.split('\n'),
         n=diff_context_lines, fromfile='expected_output', tofile='your_output')
 
@@ -51,50 +64,14 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
 
     return diff_output
 
-def _compile_code_if_necessary(code_file, language):
-    """
-    If the language requires a compilation step, compiles the provided code.
-
-    Returns a tuple of a boolean and a string (or None) indicating whether the compilation was
-    successful or not and the compilation output (or None if there is no output)
-    """
-
-    command = language.get_compilation_command(code_file)
-
-    if command is not None:
-        try:
-            subprocess.run(["run_student"] + command, stderr=subprocess.PIPE,
-                check=True, cwd=CODE_WORKING_DIR)
-        except subprocess.CalledProcessError as e:
-            return False, e.stderr.decode()
-
-    return True, None
-
-def _run_code(code_file, language, input_file_name):
-    """
-    Runs the provided code with the given input file.
-    Returns a tuple of (return_code, stdout, stderr).
-    """
-
-    with open(input_file_name, "r") as input_file:
-        command = language.get_execution_command(code_file)
-        completed_process = subprocess.run(["run_student"] + command,
-            stdin=input_file, stderr=subprocess.PIPE, stdout=subprocess.PIPE,
-            cwd=CODE_WORKING_DIR)
-        stdout = completed_process.stdout.decode()
-        stderr = completed_process.stderr.decode()
-        return_code = completed_process.returncode
-
-        return return_code, stdout, stderr
-
-def _compute_single_feedback(code_file, language, input_file_name, expected_output_file_name,
+def _compute_single_feedback(project, input_file_name, expected_output_file_name,
     debug_info=None, options=None):
     """
     Runs the script in file_name and returns a GraderResult depending on the output for
     input_file_name.
 
-    code_file: The file name with the code.
-    language: A ProgrammingLanguage instance.
+    code: A string with the code to run.
+    runner: A CodeRunner instance.
     input_file_name: The test case input file name.
     expected_output_file_name: The test case output file name.
     debug_info: An optional dictionary to write debug information
@@ -114,36 +91,32 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
         if "files_feedback" not in debug_info:
             debug_info["files_feedback"] = {}
 
-    compilation_successful, compilation_output = _compile_code_if_necessary(code_file, language)
-    if not compilation_successful:
-        if debug_info is not None:
-            debug_info["compilation_output"] = compilation_output
+    return_code, stdout, stderr = None, None, None
+    with open(input_file_name, 'r') as input_file:
+        try:
+            return_code, stdout, stderr = project.run(input_file)
+        except projects.CompilationError as e:
+            if debug_info is not None:
+                debug_info["compilation_output"] = e.compilation_output
 
-        return GraderResult.COMPILATION_ERROR
+            return GraderResult.COMPILATION_ERROR
 
     expected_output = None
 
     with open(expected_output_file_name) as expected_output_file:
         expected_output = expected_output_file.read()
 
-    return_code, stdout, stderr = _run_code(code_file, language, input_file_name)
     result = None
 
     if return_code == 0:
         output_matches = check_output(stdout, expected_output)
         result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
-    elif return_code == 252:
-        result = GraderResult.MEMORY_LIMIT_EXCEEDED
-    elif return_code == 253:
-        result = GraderResult.TIME_LIMIT_EXCEEDED
-    elif return_code == 254:
-        result = GraderResult.INTERNAL_ERROR
     else:
-        result = GraderResult.RUNTIME_ERROR
+        result = _parse_non_zero_return_code(return_code)
 
     if debug_info is not None and result != GraderResult.ACCEPTED:
         diff = None
-        if compute_diff and result != GraderResult.COMPILATION_ERROR:
+        if compute_diff:
             diff = _compute_diff(stdout, expected_output, diff_context_lines, diff_max_lines)
 
         debug_info["files_feedback"][input_file_name] = {
@@ -156,12 +129,12 @@ def _compute_single_feedback(code_file, language, input_file_name, expected_outp
 
     return result
 
-def _compute_feedback(code_file, language, test_cases, options):
+def _compute_feedback(project, test_cases, options):
     """
     Computes the grader feedback for the given code against each of the provided test cases.
 
-    code_file: The name of the file containing the code.
-    language: A ProgrammingLanguage instance associated to the language the code is written in.
+    code: A string with the code to run.
+    runner: A CodeRunner instance associated to run the code with.
     test_cases: A list of tuples (input_file_name, output_file_name) describing the cases the code
         will be tested against.
     options: A dictionary with the grader options. It will be forwarded to _compute_single_feedback().
@@ -170,19 +143,61 @@ def _compute_feedback(code_file, language, test_cases, options):
     debug_info = {}
 
     for input_file_name, output_file_name in test_cases:
-        grader_results.append(_compute_single_feedback(code_file, language, input_file_name,
+        grader_results.append(_compute_single_feedback(project, input_file_name,
             output_file_name, debug_info, options))
 
     return grader_results, debug_info
 
-def grade_with_partial_scores(code, test_cases, language_name, weights=None, options=None):
+def _generate_feedback_for_compilation_error(compilation_output):
+    return "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
+
+def run_against_custom_input(project, custom_input):
+    """
+    Runs the given project against a custom input.
+
+    Arguments:
+    project -- A Project instance.
+    custom_input -- A String with the input to be sent to the project.
+    """
+
+    result = None
+    feedback_str = None
+
+    custom_input_file_name = 'custom_input.txt'
+    with open(custom_input_file_name, 'w') as input_file:
+        input_file.write(custom_input)
+
+    with open(custom_input_file_name, 'r') as input_file:
+        try:
+            return_code, stdout, stderr = project.run(input_file)
+
+            if return_code == 0:
+                result = GraderResult.ACCEPTED
+                feedback_str = "Your code run successfully. Check your output below\n"
+            else:
+                result = _parse_non_zero_return_code(return_code)
+                feedback_str = rst.get_html_block(
+                    "Your code did not run successfully: <strong>%s</strong>" % (result.name,))
+
+            # Save stdout and stderr so the UI can show it easily
+            feedback.set_custom_value("custom_stdout", stdout)
+            feedback.set_custom_value("custom_stderr", stderr)
+        except projects.CompilationError as e:
+            compilation_output = e.compilation_output
+            feedback_str = _generate_feedback_for_compilation_error(compilation_output)
+            result = GraderResult.COMPILATION_ERROR
+
+    feedback.set_global_result("success" if result == GraderResult.ACCEPTED else "failed")
+    feedback.set_grade(100.0 if result == GraderResult.ACCEPTED else 0.0)
+    feedback.set_global_feedback(feedback_str)
+
+def grade_with_partial_scores(project, test_cases, weights=None, options=None):
     """
     Partially grade the specified code with the given test cases and weights.
 
-    code: A string containing the code to be graded.
+    project: A Project instance with the project to grade.
     test_cases: A list of tuples (input_file_name, output_file_name). Must have at least one test
         case.
-    language_name: The name of the programming language the code is written in.
     weights: A list of weights for each test case. If None, all test_cases are assumed to have the
         same weight. If not None, it must have the same number of elements as test_cases.
     options: A dictionary of settings for the grader. This function accepts the following options:
@@ -196,7 +211,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
             a boolean that indicates whether the outputs match.
     """
 
-    assert code is not None
+    assert project is not None
     assert test_cases is not None and len(test_cases) > 0, \
         "test_cases must be provided and should have at least one test case"
 
@@ -211,12 +226,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
 
     output_diff_for = set(options.get("output_diff_for", []))
 
-    language = languages.get_language_from_name(language_name)
-    file_name = 'Main.' + language.get_file_extension()
-    with open(CODE_WORKING_DIR + file_name, 'w') as f:
-        f.write(code)
-
-    results, debug_info = _compute_feedback(file_name, language, test_cases, options)
+    results, debug_info = _compute_feedback(project, test_cases, options)
     passing = sum(1 for result in results if result == GraderResult.ACCEPTED)
     score = sum(weights[i] for i, result in enumerate(results) if result == GraderResult.ACCEPTED)
     total_sum = sum(weight for weight in weights)
@@ -225,7 +235,7 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
 
     if GraderResult.COMPILATION_ERROR in results:
         compilation_output = debug_info.get("compilation_output", "")
-        feedback_str = "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
+        feedback_str = _generate_feedback_for_compilation_error(compilation_output)
     else:
         def generate_feedback_for_test(i, result):
             input_file_name = test_cases[i][0]
@@ -269,12 +279,12 @@ def grade_with_partial_scores(code, test_cases, language_name, weights=None, opt
     feedback.set_grade(score * 100.0 / total_sum)
     feedback.set_global_feedback(feedback_str)
 
-def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None, weights=None,
-    options=None):
+def handle_problem_action(problem_id, test_cases, language_name=None, options=None, weights=None):
     """
-    Similar to grade_with_partial_scores(), but extracts the code from the problem with the given
-    id. If language_name is None, it will be automatically inferred from the problem with the given
-    id (assuming it's a "code multiple language" problem).
+    Decides whether to grade the given problem against the test cases, or run it against a
+    user-provided custom input according to the task action. If language_name is None, it will be
+    automatically inferred from the problem with the given id (assuming it's a
+    "code multiple language" problem).
 
     problem_id: The id of the problem where the code (and optionally the language) will be extracted
         from.
@@ -285,12 +295,37 @@ def grade_problem_with_partial_scores(problem_id, test_cases, language_name=None
     options: Same as in grade_with_partial_scores().
     """
 
+    action = input.get_input("@action")
+
+    assert action in ["customtest", "submit"]
+
     code = input.get_input(problem_id)
 
     if language_name is None:
         language_name = input.get_input(problem_id + "/language")
+    problem_type = input.get_input(problem_id + "/type")
 
-    return grade_with_partial_scores(code, test_cases, language_name, weights, options)
+    project = None
+    project_factory = projects.get_factory_from_name(language_name)
+
+    if problem_type == 'code-multiple-languages':
+        project = project_factory.create_from_code(code)
+
+    elif problem_type == 'code-file-multiple-languages':
+        project_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
+
+        with open(project_directory + ".zip", 'wb') as project_file:
+            project_file.write(code)
+        with ZipFile(project_directory + ".zip") as project_file:
+            project_file.extractall(path=project_directory)
+
+        project = project_factory.create_from_directory(project_directory)
+
+    if action == "customtest":
+        custom_input = input.get_input(problem_id + "/input")
+        return run_against_custom_input(project, custom_input)
+    elif action == "submit":
+        return grade_with_partial_scores(project, test_cases, weights, options)
 
 def generate_test_files_tuples(n):
     """
