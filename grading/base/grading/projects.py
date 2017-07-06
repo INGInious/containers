@@ -266,7 +266,7 @@ _ALL_FACTORIES = {
     "cpp": CppProjectFactory(["-O2"]),
     "cpp11": CppProjectFactory(additional_flags=["-std=c++11", "-O2"]),
     "c": CProjectFactory(["-O2"]),
-    "c11": CppProjectFactory(additional_flags=["-std=c11", "-O2"])
+    "c11": CProjectFactory(additional_flags=["-std=c11", "-O2"])
 }
 
 def factory_exists(name):

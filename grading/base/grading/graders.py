@@ -173,7 +173,7 @@ def run_against_custom_input(project, custom_input):
 
             if return_code == 0:
                 result = GraderResult.ACCEPTED
-                feedback_str = "Your code run successfully. Check your output below\n"
+                feedback_str = "Your code finished successfully. Check your output below\n"
             else:
                 result = _parse_non_zero_return_code(return_code)
                 feedback_str = rst.get_html_block(
