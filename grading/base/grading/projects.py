@@ -169,7 +169,7 @@ class JavaProjectFactory(ProjectFactory):
 
             javac_command = ["javac", "-source", self._source_version, "-d", "build", "-cp", self._classpath + "/*",
                     "-sourcepath", self._sourcepath] + source_files
-            return_code, stdout, stderr = _run_in_sandbox(javac_command, stdin=input_file, cwd=directory)
+            return_code, stdout, stderr = _run_in_sandbox(javac_command, cwd=directory)
             if return_code != 0:
                 raise CompilationError(stderr)
 
@@ -180,11 +180,93 @@ class JavaProjectFactory(ProjectFactory):
         return LambdaProject(run_function=run)
 
 
+class MakefileProjectFactory(ProjectFactory):
+    """
+    Implementation of ProjectFactory for Makefile based projects.
+    """
+
+    def create_from_directory(self, directory):
+        def run(input_file):
+            compilation_command = ["make"]
+            return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=directory)
+            if return_code != 0:
+                raise CompilationError(stderr)
+
+            run_command = ["make", "run"]
+            return _run_in_sandbox(run_command, stdin=input_file, cwd=directory)
+
+        return LambdaProject(run_function=run)
+
+
+class CppProjectFactory(MakefileProjectFactory):
+    """
+    Implementation of ProjectFactory for C++.
+    """
+
+    def __init__(self, additional_flags=None):
+        """
+        Initializes an instance of CppProjectFactory with the given options.
+        """
+        if additional_flags is None:
+            additional_flags = []
+
+        self._additional_flags = additional_flags
+
+    def create_from_code(self, code):
+        project_directory = tempfile.mkdtemp(dir=CODE_WORKING_DIR)
+        with open(os.path.join(project_directory, "main.cpp"), 'w') as main_file:
+            main_file.write(code)
+
+        def run(input_file):
+            compilation_command = ["g++", "main.cpp", "-o", "main"] + self._additional_flags
+            return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=project_directory)
+            if return_code != 0:
+                raise CompilationError(stderr)
+
+            run_command = ["./main"]
+            return _run_in_sandbox(run_command, stdin=input_file, cwd=project_directory)
+
+        return LambdaProject(run_function=run)
+
+class CProjectFactory(MakefileProjectFactory):
+    """
+    Implementation of ProjectFactory for C.
+    """
+
+    def __init__(self, additional_flags=None):
+        """
+        Initializes an instance of CProjectFactory with the given options.
+        """
+        if additional_flags is None:
+            additional_flags = []
+
+        self._additional_flags = additional_flags
+
+    def create_from_code(self, code):
+        project_directory = tempfile.mkdtemp(dir=CODE_WORKING_DIR)
+        with open(os.path.join(project_directory, "main.c"), 'w') as main_file:
+            main_file.write(code)
+
+        def run(input_file):
+            compilation_command = ["gcc", "main.c", "-o", "main"] + self._additional_flags
+            return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=project_directory)
+            if return_code != 0:
+                raise CompilationError(stderr)
+
+            run_command = ["./main"]
+            return _run_in_sandbox(run_command, stdin=input_file, cwd=project_directory)
+
+        return LambdaProject(run_function=run)
+
 _ALL_FACTORIES = {
     "python2": PythonProjectFactory(),
     "python3": PythonProjectFactory(python_binary='python3'),
     "java7": JavaProjectFactory(source_version="1.7"),
-    "java8": JavaProjectFactory()
+    "java8": JavaProjectFactory(),
+    "cpp": CppProjectFactory(["-O2"]),
+    "cpp11": CppProjectFactory(additional_flags=["-std=c++11", "-O2"]),
+    "c": CProjectFactory(["-O2"]),
+    "c11": CppProjectFactory(additional_flags=["-std=c11", "-O2"])
 }
 
 def factory_exists(name):
