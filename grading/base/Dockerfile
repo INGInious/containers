@@ -9,7 +9,7 @@ ENV LC_ALL en_US.UTF-8
 RUN     yum clean metadata && \
         yum -y install https://centos7.iuscommunity.org/ius-release.rpm && \
         yum -y install python python35u-pip python35u zip unzip tar sed openssh-server openssl bind-utils iproute file && \
-        pip3.5 install msgpack-python pyzmq && ln -s /usr/bin/python3.5 /usr/bin/python3 && \
+        pip3.5 install msgpack-python pyzmq jinja2 && ln -s /usr/bin/python3.5 /usr/bin/python3 && \
         yum clean all
 
 # Allow to run commands
@@ -32,7 +32,7 @@ RUN     groupadd --gid 4242 worker && \
         useradd --uid 4242 --gid 4242 worker --home-dir /task
 
 # Set locale params for SSH debug
-RUN     echo -e "export LANG=en_US.UTF-8\nexport LANGUAGE=en_US:en\nexport LC_ALL=en_US.UTF-8\n" > /etc/profile
+RUN     echo -e "export IN_INGINIOUS=true\nexport LANG=en_US.UTF-8\nexport LANGUAGE=en_US:en\nexport LC_ALL=en_US.UTF-8\n" > /etc/profile
 RUN     sed -i.bak '/^AcceptEnv/ d' /etc/ssh/sshd_config
 
 CMD ["INGInious"]

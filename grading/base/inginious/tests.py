@@ -8,11 +8,16 @@ import os
 import sys
 import json
 
+import inginious
+
+_tests_dir = '/.__tests' if not inginious.DEBUG else './'
+_tests_file = os.path.join(_tests_dir, '__tests.json')
+
 def load_tests():
     """ Open existing tests file """
     result = {}
-    if os.path.exists('/.__tests/__tests.json'):
-        f = open('/.__tests/__tests.json', 'r')
+    if os.path.exists(_tests_file):
+        f = open(_tests_file, 'r')
         cont = f.read()
         f.close()
     else:
@@ -26,11 +31,11 @@ def load_tests():
 def save_tests(rdict):
     """ Save tests file """
     # Check for output folder
-    if not os.path.exists('/.__tests'):
-        os.makedirs('/.__tests/')
+    if not os.path.exists(_tests_dir):
+        os.makedirs(_tests_dir)
     
     jcont = json.dumps(rdict)
-    f = open('/.__tests/__tests.json', 'w')
+    f = open(_tests_file, 'w')
     f.write(jcont)
     f.close()
 

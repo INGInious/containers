@@ -8,12 +8,27 @@ import re
 import json
 import base64
 
+import inginious
+
+_input_file = '/.__input/__inputdata.json' if not inginious.DEBUG else './__inputdata.json'
+
 def load_input():
     """ Open existing input file """
-    file = open('/.__input/__inputdata.json', 'r')
+    file = open(_input_file, 'r')
     result = json.loads(file.read().strip('\0').strip())
     file.close()
     return result
+
+
+def get_username():
+    """ Returns the username of the current user being graded """
+    return get_input("@username")
+
+
+def get_lang():
+    """ Returns the username of the current user being graded """
+    return get_input("@lang")
+
 
 def get_input(problem):
     """" Returns the specified problem answer in the form 
@@ -30,7 +45,8 @@ def get_input(problem):
             return base64.b64decode(problem_input["value"])
     else:
         return problem_input
-    
+
+
 def parse_template(input_filename, output_filename=''):
     """ Parses a template file
         Replaces all occurences of @@problem_id@@ by the value

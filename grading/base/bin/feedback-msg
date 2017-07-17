@@ -4,12 +4,9 @@
 # This file is part of INGInious. See the LICENSE and the COPYRIGHTS files for
 # more information about the licensing of this file.
 
-import os
 import sys
-import json
 import argparse
-import inginious
-from inginious import feedback
+import inginious.feedback
 
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, 
                                  description='Set the feedback message of the task or specified problem.',
