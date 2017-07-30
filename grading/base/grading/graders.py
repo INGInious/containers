@@ -1,5 +1,4 @@
 from inginious import input, feedback
-from enum import Enum
 import subprocess
 import io
 import os
@@ -11,28 +10,8 @@ import sys
 import html
 import tempfile
 from . import projects
+from .results import GraderResult, parse_non_zero_return_code
 from zipfile import ZipFile
-
-class GraderResult(Enum):
-    ACCEPTED = 1
-    COMPILATION_ERROR = 2
-    RUNTIME_ERROR = 3
-    WRONG_ANSWER = 4
-    MEMORY_LIMIT_EXCEEDED = 5
-    TIME_LIMIT_EXCEEDED = 6
-    INTERNAL_ERROR = 7
-
-def _parse_non_zero_return_code(return_code):
-    assert return_code != 0
-
-    if return_code == 252:
-        return GraderResult.MEMORY_LIMIT_EXCEEDED
-    elif return_code == 253:
-        return GraderResult.TIME_LIMIT_EXCEEDED
-    elif return_code == 254:
-        return GraderResult.INTERNAL_ERROR
-    else:
-        return GraderResult.RUNTIME_ERROR
 
 def _check_output(actual_output, expected_output):
     """
@@ -112,7 +91,7 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
         output_matches = check_output(stdout, expected_output)
         result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
     else:
-        result = _parse_non_zero_return_code(return_code)
+        result = parse_non_zero_return_code(return_code)
 
     if debug_info is not None and result != GraderResult.ACCEPTED:
         diff = None
@@ -175,7 +154,7 @@ def run_against_custom_input(project, custom_input):
                 result = GraderResult.ACCEPTED
                 feedback_str = "Your code finished successfully. Check your output below\n"
             else:
-                result = _parse_non_zero_return_code(return_code)
+                result = parse_non_zero_return_code(return_code)
                 feedback_str = rst.get_html_block(
                     "Your code did not run successfully: <strong>%s</strong>" % (result.name,))
 

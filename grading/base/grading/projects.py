@@ -3,6 +3,7 @@ from glob import glob
 import os
 import tempfile
 import subprocess
+from .results import GraderResult, parse_non_zero_return_code
 
 CODE_WORKING_DIR = 'student/'
 
@@ -25,6 +26,21 @@ def _run_in_sandbox(command, **subprocess_options):
     return_code = completed_process.returncode
 
     return (return_code, stdout, stderr)
+
+def _get_compilation_message_from_return_code(return_code):
+    if return_code == 0:
+        return ""
+
+    result = parse_non_zero_return_code(return_code)
+
+    if result == GraderResult.MEMORY_LIMIT_EXCEEDED:
+        return "The memory limit was exceeded during compilation."
+    elif result == GraderResult.TIME_LIMIT_EXCEEDED:
+        return "The time limit was exceeded during compilation."
+    elif result in [GraderResult.INTERNAL_ERROR, GraderResult.RUNTIME_ERROR]:
+        return "Compilation failed."
+    else:
+        raise AssertionError("Unhandled grader result: " + str(result))
 
 class CompilationError(Exception):
     def __init__(self, compilation_output):
@@ -171,7 +187,7 @@ class JavaProjectFactory(ProjectFactory):
                     "-sourcepath", self._sourcepath] + source_files
             return_code, stdout, stderr = _run_in_sandbox(javac_command, cwd=directory)
             if return_code != 0:
-                raise CompilationError(stderr)
+                raise CompilationError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr)
 
             classpath_entries = ["build", self._classpath, self._classpath + "/*"]
             java_command = ["java", "-cp" , os.pathsep.join(classpath_entries), self._main_class]
@@ -221,7 +237,7 @@ class CppProjectFactory(MakefileProjectFactory):
             compilation_command = ["g++", "main.cpp", "-o", "main"] + self._additional_flags
             return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=project_directory)
             if return_code != 0:
-                raise CompilationError(stderr)
+                raise CompilationError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr)
 
             run_command = ["./main"]
             return _run_in_sandbox(run_command, stdin=input_file, cwd=project_directory)
@@ -251,7 +267,7 @@ class CProjectFactory(MakefileProjectFactory):
             compilation_command = ["gcc", "main.c", "-o", "main"] + self._additional_flags
             return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=project_directory)
             if return_code != 0:
-                raise CompilationError(stderr)
+                raise CompilationError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr)
 
             run_command = ["./main"]
             return _run_in_sandbox(run_command, stdin=input_file, cwd=project_directory)
