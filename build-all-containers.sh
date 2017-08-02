@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-grading=$(ls -1d grading/*/ | rev | cut -c 2- | rev | grep -v "grading/base" | sed 's/^grading\/\(.*\)$/\1/')
-grading=$(printf "base\n$grading")
+grading=$(ls -1d grading/*/ | rev | cut -c 2- | rev | sed 's/^grading\/\(.*\)$/\1/')
 
 for container in $grading; do
         echo "-------------------------------------------------------"
