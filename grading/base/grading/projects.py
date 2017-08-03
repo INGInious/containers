@@ -5,7 +5,7 @@ import tempfile
 import subprocess
 from .results import GraderResult, parse_non_zero_return_code
 
-CODE_WORKING_DIR = 'student/'
+CODE_WORKING_DIR = '/task/student/'
 
 def _run_in_sandbox(command, **subprocess_options):
     """
