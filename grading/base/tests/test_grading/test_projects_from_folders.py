@@ -54,3 +54,13 @@ def test_cpp_project():
         assert return_code == 0
         assert stdout == "Hello! This is a class\n"
         assert stderr == ""
+
+def test_cpp11_project():
+    with mock.patch('grading.projects._run_in_sandbox', run_command):
+        return_code, stdout, stderr = run_multiple_files_with_project_factory("cpp11",
+                "tests/test_grading/sample_code/projects/cpp11Project",
+                "tests/test_grading/sample_code/empty_input.txt")
+
+        assert return_code == 0
+        assert stdout == "I am a cpp11 Object!!!\n"
+        assert stderr == ""
