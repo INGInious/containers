@@ -27,9 +27,6 @@ def test_interpreter_antlr_project():
                 "tests/test_grading/sample_code/projects/qb64-parser",
                 "tests/test_grading/sample_code/projects/qb64-parser/casos/in0" + str(i) + ".txt")
 
-            print("stderr:" + stderr)
-            print("stdout:" + stdout)
-
             with open("tests/test_grading/sample_code/projects/qb64-parser/casos/out0" + str(i) + ".txt") as output_file:
                 output = output_file.read()
                 assert stdout == output
@@ -43,10 +40,17 @@ def test_psicoder_antlr_project():
                 "tests/test_grading/sample_code/projects/psiCoder-project",
                 "tests/test_grading/sample_code/projects/psiCoder-project/casos/in0" + str(i) + ".txt")
 
-            print("stderr:" + stderr)
-            print("stdout:" + stdout)
-
             with open("tests/test_grading/sample_code/projects/psiCoder-project/casos/out0" + str(i) + ".txt") as output_file:
                 output = output_file.read()
                 assert stdout == output
                 assert stderr == ""
+
+def test_cpp_project():
+    with mock.patch('grading.projects._run_in_sandbox', run_command):
+        return_code, stdout, stderr = run_multiple_files_with_project_factory("cpp",
+                "tests/test_grading/sample_code/projects/cppProject",
+                "tests/test_grading/sample_code/empty_input.txt")
+
+        assert return_code == 0
+        assert stdout == "Hello! This is a class\n"
+        assert stderr == ""
