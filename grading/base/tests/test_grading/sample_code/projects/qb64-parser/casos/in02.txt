@@ -1,0 +1,49 @@
+'ciclos
+
+dim i as integer
+for i = 0 to 10
+    print i ^ 2
+next
+
+i = i
+while i > 0
+    if i mod 3 = 0 then
+        print "mod 0"; i
+    elseif i mod 3 = 1 then
+        print "mod 1"; i
+    else
+        print "mod 2"; i
+    end if
+
+    var = 0
+    for j = 0 to 3
+        var = var + j
+    next
+
+    print var
+    i = i - 1
+wend
+
+print "do while, do until"
+i = 15
+do
+    if i mod 3 = 0 then
+        print "mod 0"
+    elseif i mod 3 = 1 then
+        print "mod 1"
+    else
+        print "mod 2"
+    end if
+    i = i - 1
+loop while i > 10
+
+do
+    if i mod 3 = 0 then
+        print "mod 0"
+    elseif i mod 3 = 1 then
+        print "mod 1"
+    else
+        print "mod 2"
+    end if
+    i = i - 1
+loop until i <= 15

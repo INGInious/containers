@@ -1,0 +1,9 @@
+9
+1
+670
+16
+70
+3823
+-834
+12
+<18,6> Error semantico: tipos de datos incompatibles. Se esperaba: string; se encontro: double.

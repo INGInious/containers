@@ -1,0 +1,24 @@
+dim i, j as integer
+for i = 0 to 6
+    for j = 7 to 0 step -1
+        select_case (i * j mod 5)
+    next
+next
+
+sub select_case (e)
+    dim easy as integer
+    easy = e
+    select case easy
+        case 0
+            print 0
+        case 1
+            print 1
+        case 2
+            print 2
+        case 3
+            print 3
+        case else
+            print "out of range"
+    end select
+end sub
+

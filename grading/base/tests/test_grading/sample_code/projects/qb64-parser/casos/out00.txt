@@ -1,0 +1,2 @@
+Hello 5.0
+<2,11> Error semantico: tipos de datos incompatibles. Se esperaba: double, integer, long, single; se encontro: string.

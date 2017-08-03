@@ -1,0 +1,31 @@
+interval  0 10
+interval  0 5
+interval  0 2
+interval  0 1
+merging  0 1
+merging  0 2
+interval  3 5
+interval  3 4
+merging  3 4
+merging  3 5
+merging  0 5
+interval  6 10
+interval  6 8
+interval  6 7
+merging  6 7
+merging  6 8
+interval  9 10
+merging  9 10
+merging  6 10
+merging  0 10
+1
+1
+2
+6
+24
+24
+24
+120
+40320
+362880
+479001600

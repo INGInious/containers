@@ -1,0 +1,40 @@
+0
+1
+4
+9
+16
+25
+36
+49
+64
+81
+100
+mod 2 11
+6
+mod 1 10
+6
+mod 0 9
+6
+mod 2 8
+6
+mod 1 7
+6
+mod 0 6
+6
+mod 2 5
+6
+mod 1 4
+6
+mod 0 3
+6
+mod 2 2
+6
+mod 1 1
+6
+do while, do until
+mod 0
+mod 2
+mod 1
+mod 0
+mod 2
+mod 1
