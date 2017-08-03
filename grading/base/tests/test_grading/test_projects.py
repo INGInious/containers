@@ -26,7 +26,7 @@ def run_code_with_project_factory(factory_name, code_file_name, input_file_name)
 def test_python2_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("python2",
-            "tests/test_grading/sample_code/python2.py",
+            "tests/test_grading/sample_code/hello_world/python2.py",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
@@ -36,7 +36,7 @@ def test_python2_factory():
 def test_python3_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("python3",
-            "tests/test_grading/sample_code/python3.py",
+            "tests/test_grading/sample_code/hello_world/python3.py",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
@@ -46,7 +46,7 @@ def test_python3_factory():
 def test_cpp_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("cpp",
-            "tests/test_grading/sample_code/cpp.cpp",
+            "tests/test_grading/sample_code/hello_world/cpp.cpp",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
@@ -56,7 +56,7 @@ def test_cpp_factory():
 def test_cpp11_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("cpp11",
-            "tests/test_grading/sample_code/cpp11.cpp",
+            "tests/test_grading/sample_code/hello_world/cpp11.cpp",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
@@ -66,7 +66,7 @@ def test_cpp11_factory():
 def test_java7_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("java7",
-            "tests/test_grading/sample_code/java7.java",
+            "tests/test_grading/sample_code/hello_world/java7.java",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
@@ -76,7 +76,7 @@ def test_java7_factory():
 def test_java8_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("java8",
-            "tests/test_grading/sample_code/java8.java",
+            "tests/test_grading/sample_code/hello_world/java8.java",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
@@ -86,7 +86,7 @@ def test_java8_factory():
 def test_c_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("c",
-            "tests/test_grading/sample_code/c.c",
+            "tests/test_grading/sample_code/hello_world/c.c",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
@@ -96,7 +96,7 @@ def test_c_factory():
 def test_c11_factory():
     with mock.patch('grading.projects._run_in_sandbox', run_command):
         return_code, stdout, stderr = run_code_with_project_factory("c11",
-            "tests/test_grading/sample_code/c11.c",
+            "tests/test_grading/sample_code/hello_world/c11.c",
             "tests/test_grading/sample_code/empty_input.txt")
 
         assert return_code == 0
