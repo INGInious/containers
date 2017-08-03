@@ -1,0 +1,16 @@
+#include <bits/stdc++.h>
+struct Point{
+int x;
+int y;
+double a, b, c;
+};
+double f(double n) {
+return (n*(n+1))/2;
+}
+int main(){
+Point p;
+p.x = 5;
+p.y = 10;
+std::cout<<p.x<<std::string (" ")<<p.y<<std::string ("\n");
+std::cout<<f(5);
+}

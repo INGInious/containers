@@ -1,0 +1,27 @@
+#include <bits/stdc++.h>
+double f(double x) {
+return 4*x*x*x*x-900*x*x*x+5*x*x-3*x+9;
+}
+double abs(double x) {
+double respuesta=x;
+if (x<0){
+respuesta =  -x;
+}
+return respuesta;
+}
+double bolzano(double bajo, double alto) {
+double medio;
+while (abs(alto-bajo)>0.0000001){
+medio = (alto+bajo)/2.0;
+if (f(medio)*f(bajo)<0){
+alto = medio;
+}
+else {
+bajo = medio;
+}
+}
+return medio;
+}
+int main(){
+std::cout<<bolzano(100,250);
+}
