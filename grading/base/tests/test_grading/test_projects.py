@@ -82,3 +82,23 @@ def test_java8_factory():
         assert return_code == 0
         assert stdout == "Hello world!\n"
         assert stderr == ""
+
+def test_c_factory():
+    with mock.patch('grading.projects._run_in_sandbox', run_command):
+        return_code, stdout, stderr = run_code_with_project_factory("c",
+            "tests/test_grading/sample_code/c.c",
+            "tests/test_grading/sample_code/empty_input.txt")
+
+        assert return_code == 0
+        assert stdout == "Hello world!\n"
+        assert stderr == ""
+
+def test_c11_factory():
+    with mock.patch('grading.projects._run_in_sandbox', run_command):
+        return_code, stdout, stderr = run_code_with_project_factory("c11",
+            "tests/test_grading/sample_code/c11.c",
+            "tests/test_grading/sample_code/empty_input.txt")
+
+        assert return_code == 0
+        assert stdout == "Hello world!\n"
+        assert stderr == ""
