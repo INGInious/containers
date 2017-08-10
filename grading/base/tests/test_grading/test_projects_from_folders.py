@@ -74,3 +74,13 @@ def test_python2_project():
         assert return_code == 0
         assert stdout == "Hello Dr Mauricio\n"
         assert stderr == ""
+
+def test_python3_project():
+    with mock.patch('grading.projects._run_in_sandbox', run_command):
+        return_code, stdout, stderr = run_multiple_files_with_project_factory("python3",
+                "tests/test_grading/sample_code/projects/python3Project",
+                "tests/test_grading/sample_code/empty_input.txt")
+
+        assert return_code == 0
+        assert stdout == "Frijoles Mauricio 1.5\n"
+        assert stderr == ""
