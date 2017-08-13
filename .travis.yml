@@ -1,0 +1,18 @@
+sudo: required
+
+language: python
+python:
+  - 3.5
+
+services:
+  - docker
+
+before_install:
+  - ./build-container.sh base
+  - ./build-container.sh multilang
+
+script:
+  - docker run -v $TRAVIS_BUILD_DIR/grading/base/inginious/:/python_lib/inginious
+    -v $TRAVIS_BUILD_DIR/grading/multilang/grading/:/python_lib/grading
+    -v $TRAVIS_BUILD_DIR/grading/multilang/tests/:/python_lib/tests
+    -it ingi/inginious-c-multilang "export PYTHON_PATH=/python_lib:$PYTHON_PATH; cd /python_lib; pip3.5 install pytest; pytest tests"
