@@ -5,10 +5,10 @@ from .helpers import run_project_with_project_factory
 def test_interpreter_antlr_project():
     for i in range(10):
         return_code, stdout, stderr = run_project_with_project_factory("java8",
-            "java7/qb64_parser_project",
-            "java7/qb64_parser_project/casos/in0" + str(i) + ".txt")
+            "java8/qb64_parser_project",
+            "java8/qb64_parser_project/casos/in0" + str(i) + ".txt")
 
-        with open("tests/test_grading/sample_code/java7/qb64_parser_project/casos/out0" + str(i) +
+        with open("tests/test_grading/sample_code/java8/qb64_parser_project/casos/out0" + str(i) +
             ".txt") as output_file:
             output = output_file.read()
             assert stdout == output
