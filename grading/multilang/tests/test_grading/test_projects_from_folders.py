@@ -1,86 +1,64 @@
-import grading.projects as projects
-import subprocess
-import os
-from unittest import mock
+import pytest
+from .helpers import run_project_with_project_factory
 
-def run_command(command, **subprocess_options):
-    completed_process = subprocess.run(command, stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE, **subprocess_options)
-
-    stdout = completed_process.stdout.decode()
-    stderr = completed_process.stderr.decode()
-    return_code = completed_process.returncode
-
-    return (return_code, stdout, stderr)
-
-def run_multiple_files_with_project_factory(factory_name, project_directory, input_file_name):
-    factory = projects.get_factory_from_name(factory_name)
-    project = factory.create_from_directory(project_directory)
-    with open(input_file_name) as input_file:
-        return project.run(input_file)
-
+@pytest.mark.usefixtures("fake_sandbox")
 def test_interpreter_antlr_project():
-    with mock.patch('grading.projects._run_in_sandbox', run_command):
+    for i in range(10):
+        return_code, stdout, stderr = run_project_with_project_factory("java8",
+            "java7/qb64_parser_project",
+            "java7/qb64_parser_project/casos/in0" + str(i) + ".txt")
 
-        for i in range(10):
-            return_code, stdout, stderr = run_multiple_files_with_project_factory("java8",
-                "tests/test_grading/sample_code/projects/qb64-parser",
-                "tests/test_grading/sample_code/projects/qb64-parser/casos/in0" + str(i) + ".txt")
+        with open("tests/test_grading/sample_code/java7/qb64_parser_project/casos/out0" + str(i) +
+            ".txt") as output_file:
+            output = output_file.read()
+            assert stdout == output
+            assert stderr == ""
 
-            with open("tests/test_grading/sample_code/projects/qb64-parser/casos/out0" + str(i) + ".txt") as output_file:
-                output = output_file.read()
-                assert stdout == output
-                assert stderr == ""
-
+@pytest.mark.usefixtures("fake_sandbox")
 def test_psicoder_antlr_project():
-    with mock.patch('grading.projects._run_in_sandbox', run_command):
+    for i in range(3):
+        return_code, stdout, stderr = run_project_with_project_factory("java7",
+            "java7/psiCoder_project",
+            "java7/psiCoder_project/casos/in0" + str(i) + ".txt")
 
-        for i in range(3):
-            return_code, stdout, stderr = run_multiple_files_with_project_factory("java7",
-                "tests/test_grading/sample_code/projects/psiCoder-project",
-                "tests/test_grading/sample_code/projects/psiCoder-project/casos/in0" + str(i) + ".txt")
+        with open("tests/test_grading/sample_code/java7/psiCoder_project/casos/out0" + str(i) +
+            ".txt") as output_file:
+            output = output_file.read()
+            assert stdout == output
+            assert stderr == ""
 
-            with open("tests/test_grading/sample_code/projects/psiCoder-project/casos/out0" + str(i) + ".txt") as output_file:
-                output = output_file.read()
-                assert stdout == output
-                assert stderr == ""
-
+@pytest.mark.usefixtures("fake_sandbox")
 def test_cpp_project():
-    with mock.patch('grading.projects._run_in_sandbox', run_command):
-        return_code, stdout, stderr = run_multiple_files_with_project_factory("cpp",
-                "tests/test_grading/sample_code/projects/cppProject",
-                "tests/test_grading/sample_code/empty_input.txt")
+    return_code, stdout, stderr = run_project_with_project_factory("cpp",
+            "cpp/simple_project", "empty_input.txt")
 
-        assert return_code == 0
-        assert stdout == "Hello! This is a class\n"
-        assert stderr == ""
+    assert return_code == 0
+    assert stdout == "Hello! This is a class\n"
+    assert stderr == ""
 
+@pytest.mark.usefixtures("fake_sandbox")
 def test_cpp11_project():
-    with mock.patch('grading.projects._run_in_sandbox', run_command):
-        return_code, stdout, stderr = run_multiple_files_with_project_factory("cpp11",
-                "tests/test_grading/sample_code/projects/cpp11Project",
-                "tests/test_grading/sample_code/empty_input.txt")
+    return_code, stdout, stderr = run_project_with_project_factory("cpp11",
+            "cpp11/simple_project", "empty_input.txt")
 
-        assert return_code == 0
-        assert stdout == "I am a cpp11 Object!!!\n"
-        assert stderr == ""
+    assert return_code == 0
+    assert stdout == "I am a cpp11 Object!!!\n"
+    assert stderr == ""
 
+@pytest.mark.usefixtures("fake_sandbox")
 def test_python2_project():
-    with mock.patch('grading.projects._run_in_sandbox', run_command):
-        return_code, stdout, stderr = run_multiple_files_with_project_factory("python2",
-                "tests/test_grading/sample_code/projects/python2Project",
-                "tests/test_grading/sample_code/projects/python2Project/doctor_name.txt")
+    return_code, stdout, stderr = run_project_with_project_factory("python2",
+            "python2/simple_project", "python2/simple_project/doctor_name.txt")
 
-        assert return_code == 0
-        assert stdout == "Hello Dr Mauricio\n"
-        assert stderr == ""
+    assert return_code == 0
+    assert stdout == "Hello Dr Mauricio\n"
+    assert stderr == ""
 
+@pytest.mark.usefixtures("fake_sandbox")
 def test_python3_project():
-    with mock.patch('grading.projects._run_in_sandbox', run_command):
-        return_code, stdout, stderr = run_multiple_files_with_project_factory("python3",
-                "tests/test_grading/sample_code/projects/python3Project",
-                "tests/test_grading/sample_code/empty_input.txt")
+    return_code, stdout, stderr = run_project_with_project_factory("python3",
+            "python3/simple_project", "empty_input.txt")
 
-        assert return_code == 0
-        assert stdout == "Frijoles Mauricio 1.5\n"
-        assert stderr == ""
+    assert return_code == 0
+    assert stdout == "Frijoles Mauricio 1.5\n"
+    assert stderr == ""
