@@ -22,11 +22,7 @@ RUN     chmod -R 755 /INGInious/bin && \
 RUN     chmod -R 644 /INGInious/inginious && \
         mkdir -p /usr/lib/python3.5/site-packages/inginious && \
         cp -R /INGInious/inginious/*.py  /usr/lib/python3.5/site-packages/inginious && \
-        echo "inginious" > /usr/lib/python3.5/site-packages/inginious.pth && \
-        chmod -R 644 /INGInious/grading && \
-        mkdir -p /usr/lib/python3.5/site-packages/grading && \
-        cp -R /INGInious/grading/*.py  /usr/lib/python3.5/site-packages/grading && \
-        echo "grading" > /usr/lib/python3.5/site-packages/grading.pth
+        echo "inginious" > /usr/lib/python3.5/site-packages/inginious.pth
 
 # Delete unneeded folders
 RUN     rm -R /INGInious

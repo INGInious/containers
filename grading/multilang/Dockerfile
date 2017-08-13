@@ -1,18 +1,23 @@
 # DOCKER-VERSION 1.1.0
 
-#inherit from the base container, which have all the needed script to launch tasks
+# Inherit from the base container, which has all the needed scripts to launch tasks
 FROM    ingi/inginious-c-base
 LABEL org.inginious.grading.name="multiple_languages"
 
 # Add java 1.8
-RUN yum -y install wget java-1.8.0-openjdk-devel && \
-    wget -P /usr/share/scala/lib -O scalacheck.jar https://www.scalacheck.org/files/scalacheck_2.12-1.13.4.jar && \
-    wget -P /usr/share http://search.maven.org/remotecontent?filepath=junit/junit/4.12/junit-4.12.jar && \
-    wget -P /usr/share http://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar && \
-    yum -y remove wget && \
-    rpm -ivh https://downloads.lightbend.com/scala/2.12.2/scala-2.12.2.rpm
+RUN yum -y install wget java-1.8.0-openjdk-devel
 
 # Add gcc
 RUN     yum install -y gcc gcc-c++ gdb cpp make valgrind binutils libstdc++ clang clang-devel llvm automake check check-devel CUnit CUnit-devel zlib-devel openssl-devel time jansson-devel
 
 RUN     yum clean all
+
+ADD     . /INGInious
+
+# Install grading library
+RUN     chmod -R 644 /INGInious/grading && \
+        mkdir -p /usr/lib/python3.5/site-packages/grading && \
+        cp -R /INGInious/grading  /usr/lib/python3.5/site-packages/grading/ && \
+        echo "grading" > /usr/lib/python3.5/site-packages/grading.pth
+
+RUN     rm -R /INGInious
