@@ -1,5 +1,6 @@
 import pytest
 from .helpers import run_code_with_project_factory, run_project_with_project_factory
+from grading.projects import CompilationError
 
 class TestPython2ProjectFactory(object):
     @pytest.mark.usefixtures("fake_sandbox")
@@ -86,6 +87,12 @@ class TestJava7ProjectFactory(object):
         assert return_code == 0
         assert stdout == "Hello world!\n"
         assert stderr == ""
+
+    @pytest.mark.usefixtures("fake_sandbox")
+    def test_uses_java7_standard_library(self):
+        with pytest.raises(CompilationError):
+            return_code, stdout, stderr = run_code_with_project_factory("java7",
+                "java7/java7_with_java8_classes.java", "empty_input.txt")
 
     @pytest.mark.usefixtures("fake_sandbox")
     def test_antlr_project(self):

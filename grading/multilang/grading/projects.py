@@ -150,7 +150,8 @@ class JavaProjectFactory(ProjectFactory):
     Implementation of ProjectFactory for Java.
     """
 
-    def __init__(self, main_class='Main', source_version='1.8', sourcepath="src", classpath="lib"):
+    def __init__(self, main_class='Main', source_version='1.8', sourcepath="src", classpath="lib",
+        bootclasspath=None):
         """
         Initializes an instance of JavaProjectFactory with the given options.
 
@@ -164,6 +165,7 @@ class JavaProjectFactory(ProjectFactory):
         self._source_version = source_version
         self._sourcepath = sourcepath
         self._classpath = classpath
+        self._bootclasspath = bootclasspath
 
     def create_from_code(self, code):
         project_directory = tempfile.mkdtemp(dir=CODE_WORKING_DIR)
@@ -183,8 +185,15 @@ class JavaProjectFactory(ProjectFactory):
         def run(input_file):
             source_files = glob(os.path.join(os.path.abspath(directory), "**/*.java"), recursive=True)
 
-            javac_command = ["javac", "-source", self._source_version, "-d", "build", "-cp", self._classpath + "/*",
-                    "-sourcepath", self._sourcepath] + source_files
+            javac_command = ["javac", "-source", self._source_version, "-d", "build",
+                    "-cp", self._classpath + "/*",
+                    "-sourcepath", self._sourcepath]
+
+            if self._bootclasspath is not None:
+                javac_command.extend(["-bootclasspath", self._bootclasspath])
+
+            javac_command.extend(source_files)
+
             return_code, stdout, stderr = _run_in_sandbox(javac_command, cwd=directory)
             if return_code != 0:
                 raise CompilationError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr)
@@ -277,7 +286,8 @@ class CProjectFactory(MakefileProjectFactory):
 _ALL_FACTORIES = {
     "python2": PythonProjectFactory(),
     "python3": PythonProjectFactory(python_binary='python3'),
-    "java7": JavaProjectFactory(source_version="1.7"),
+    "java7": JavaProjectFactory(source_version="1.7",
+        bootclasspath="/usr/lib/jvm/java-1.7.0-openjdk/jre/lib/rt.jar"),
     "java8": JavaProjectFactory(),
     "cpp": CppProjectFactory(["-O2"]),
     "cpp11": CppProjectFactory(additional_flags=["-std=c++11", "-O2"]),
