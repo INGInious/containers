@@ -10,6 +10,11 @@ from grading.graders import *
 from grading.projects import *
 import inginious
 
+def fake_project(return_code, stdout, stderr):
+    fake_project = MagicMock()
+    fake_project.run = MagicMock(return_value=(return_code, stdout, stderr))
+    return fake_project
+
 class TestGrader(object):
     def test_generate_test_files_tuples(self):
         assert generate_test_files_tuples(0) == []
@@ -24,18 +29,32 @@ class TestGrader(object):
 
     def test_success_run_with_custom_input(self):
         feedback = MagicMock()
-        project = MagicMock()
 
         return_code = 0
         stdout = "proyect_output"
         stderr = ""
 
-        project.run = MagicMock(return_value=(return_code, stdout, stderr))
-
+        project = fake_project(return_code, stdout, stderr)
         run_against_custom_input(project, "some_input", feedback)
 
         feedback.set_global_result.assert_called_with("success")
         feedback.set_grade.assert_called_with(100.0)
+
+        custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
+        feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
+
+    def test_fail_run_with_custom_input(self):
+        feedback = MagicMock()
+
+        return_code = 252
+        stdout = ""
+        stderr = "Not enough memory :("
+
+        project = fake_project(return_code, stdout, stderr)
+        run_against_custom_input(project, "some_input", feedback)
+
+        feedback.set_global_result.assert_called_with("failed")
+        feedback.set_grade.assert_called_with(0.0)
 
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
