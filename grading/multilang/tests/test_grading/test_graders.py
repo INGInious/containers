@@ -23,7 +23,7 @@ class FakeProject(Project):
         elif file_content == "MLE":
             return (252, "", "")
         else:
-            return (0, "AC", "")
+            return (0, "compare this output!", "")
 
 class TestGrader(object):
     def test_generate_test_files_tuples(self):
@@ -97,3 +97,18 @@ class TestGrader(object):
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(60.0)
         feedback.set_global_feedback.assert_called_with('- **Test 1: TIME_LIMIT_EXCEEDED**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: ACCEPTED**\n\n- **Test 4: MEMORY_LIMIT_EXCEEDED**\n\n- **Test 5: ACCEPTED**')
+
+    def test_run_with_partial_scores_3(self):
+        feedback = MagicMock()
+        project = FakeProject()
+
+        route = "tests/test_grading/mock_input_files/"
+        tests = ["WA.txt", "AC.txt"]
+        weights = [5, 1]
+        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+
+        feedback.set_global_result.assert_called_with("failed")
+        feedback.set_grade.assert_called_with(100/6)
+        feedback.set_global_feedback.assert_called_with('- **Test 1: WRONG_ANSWER**\n\n- **Test 2: ACCEPTED**')
