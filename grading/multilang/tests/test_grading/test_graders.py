@@ -22,6 +22,8 @@ class FakeProject(Project):
             return (253, "", "")
         elif file_content == "MLE":
             return (252, "", "")
+        elif file_content == "CE":
+            raise CompilationError("The code did not comiple")
         else:
             return (0, "compare this output!", "")
 
@@ -112,3 +114,18 @@ class TestGrader(object):
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(100/6)
         feedback.set_global_feedback.assert_called_with('- **Test 1: WRONG_ANSWER**\n\n- **Test 2: ACCEPTED**')
+
+    def test_run_with_partial_scores_compiler_error(self):
+        feedback = MagicMock()
+        project = FakeProject()
+
+        route = "tests/test_grading/mock_input_files/"
+        tests = ["CE.txt"]
+        weights = [300]
+        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+
+        feedback.set_global_result.assert_called_with("failed")
+        feedback.set_grade.assert_called_with(0)
+        feedback.set_global_feedback.assert_called_with('**Compilation error**:\n\n\n\n.. raw:: html\n\n\t<pre>The code did not comiple</pre>\n\n')
