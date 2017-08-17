@@ -73,7 +73,7 @@ class TestGrader(object):
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
 
-    def test_run_with_partial_scores(self):
+    def test_run_with_partial_scores_time_limit(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -88,7 +88,7 @@ class TestGrader(object):
         feedback.set_global_feedback.assert_called_with('- **Test 1: TIME_LIMIT_EXCEEDED**\n\n- **Test 2: ACCEPTED**')
 
 
-    def test_run_with_partial_scores_2(self):
+    def test_run_with_partial_scores_memory_limit(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -102,7 +102,7 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(60.0)
         feedback.set_global_feedback.assert_called_with('- **Test 1: TIME_LIMIT_EXCEEDED**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: ACCEPTED**\n\n- **Test 4: MEMORY_LIMIT_EXCEEDED**\n\n- **Test 5: ACCEPTED**')
 
-    def test_run_with_partial_scores_3(self):
+    def test_run_with_partial_scores_worng_answer(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -146,3 +146,18 @@ class TestGrader(object):
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(100*(5 + 10)/(sum(weights)))
         feedback.set_global_feedback.assert_called_with('- **Test 1: RUNTIME_ERROR**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: RUNTIME_ERROR**\n\n- **Test 4: ACCEPTED**')
+
+    def test_run_with_partial_scores_accepted(self):
+        feedback = MagicMock()
+        project = FakeProject()
+
+        route = "tests/test_grading/mock_input_files/"
+        tests = ["AC.txt", "AC.txt", "AC.txt", "AC.txt"]
+        weights = [7, 5, 7, 10]
+        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+
+        feedback.set_global_result.assert_called_with("success")
+        feedback.set_grade.assert_called_with(100)
+        feedback.set_global_feedback.assert_called_with('- **Test 1: ACCEPTED**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: ACCEPTED**\n\n- **Test 4: ACCEPTED**')
