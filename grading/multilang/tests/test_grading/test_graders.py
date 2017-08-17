@@ -26,6 +26,8 @@ class FakeProject(Project):
             raise CompilationError("The code did not comiple")
         elif file_content == "RTE":
             return (255, "", "")
+        elif file_content == "Internal Error":
+            return (254, "", "")
         else:
             return (0, "compare this output!", "")
 
@@ -161,3 +163,18 @@ class TestGrader(object):
         feedback.set_global_result.assert_called_with("success")
         feedback.set_grade.assert_called_with(100)
         feedback.set_global_feedback.assert_called_with('- **Test 1: ACCEPTED**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: ACCEPTED**\n\n- **Test 4: ACCEPTED**')
+
+    def test_run_with_partial_scores_internal_error(self):
+        feedback = MagicMock()
+        project = FakeProject()
+
+        route = "tests/test_grading/mock_input_files/"
+        tests = ["IE.txt", "AC.txt"]
+        weights = [2, 1]
+        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+
+        feedback.set_global_result.assert_called_with("failed")
+        feedback.set_grade.assert_called_with(100/3)
+        feedback.set_global_feedback.assert_called_with('- **Test 1: INTERNAL_ERROR**\n\n- **Test 2: ACCEPTED**')
