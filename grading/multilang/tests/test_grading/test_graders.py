@@ -24,6 +24,8 @@ class FakeProject(Project):
             return (252, "", "")
         elif file_content == "CE":
             raise CompilationError("The code did not comiple")
+        elif file_content == "RTE":
+            return (255, "", "")
         else:
             return (0, "compare this output!", "")
 
@@ -129,3 +131,18 @@ class TestGrader(object):
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(0)
         feedback.set_global_feedback.assert_called_with('**Compilation error**:\n\n\n\n.. raw:: html\n\n\t<pre>The code did not comiple</pre>\n\n')
+
+    def test_run_with_partial_scores_runtime_error(self):
+        feedback = MagicMock()
+        project = FakeProject()
+
+        route = "tests/test_grading/mock_input_files/"
+        tests = ["RTE.txt", "AC.txt", "RTE.txt", "AC.txt"]
+        weights = [7, 5, 7, 10]
+        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+
+        feedback.set_global_result.assert_called_with("failed")
+        feedback.set_grade.assert_called_with(100*(5 + 10)/(sum(weights)))
+        feedback.set_global_feedback.assert_called_with('- **Test 1: RUNTIME_ERROR**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: RUNTIME_ERROR**\n\n- **Test 4: ACCEPTED**')
