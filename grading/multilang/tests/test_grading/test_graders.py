@@ -15,6 +15,13 @@ def fake_project(return_code, stdout, stderr):
     fake_project.run = MagicMock(return_value=(return_code, stdout, stderr))
     return fake_project
 
+class FakeProject(Project):
+    def run(self, input_file):
+        file_content = input_file.read()
+        if file_content == "TLE":
+            return (253, "", "")
+        return (0, "AC", "")
+
 class TestGrader(object):
     def test_generate_test_files_tuples(self):
         assert generate_test_files_tuples(0) == []
@@ -58,3 +65,17 @@ class TestGrader(object):
 
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
+
+    def test_run_with_partial_scores(self):
+        feedback = MagicMock()
+        project = FakeProject()
+
+        route = "tests/test_grading/mock_input_files/"
+        tests = ["TLE.txt", "AC.txt"]
+        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
+
+        feedback.set_global_result.assert_called_with("failed")
+        feedback.set_grade.assert_called_with(50.0)
+        feedback.set_global_feedback.assert_called_with('- **Test 1: TIME_LIMIT_EXCEEDED**\n\n- **Test 2: ACCEPTED**')

@@ -170,7 +170,7 @@ def run_against_custom_input(project, custom_input, feedback=feedback):
     feedback.set_grade(100.0 if result == GraderResult.ACCEPTED else 0.0)
     feedback.set_global_feedback(feedback_str)
 
-def grade_with_partial_scores(project, test_cases, weights=None, options=None):
+def grade_with_partial_scores(project, test_cases, weights=None, options=None, feedback=feedback):
     """
     Partially grade the specified code with the given test cases and weights.
 
