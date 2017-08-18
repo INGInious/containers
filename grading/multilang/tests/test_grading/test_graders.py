@@ -8,6 +8,7 @@ sys.path.insert(0, "/python_lib")
 
 from grading.graders import *
 from grading.projects import *
+from grading.results import *
 import inginious
 
 def fake_project(return_code, stdout, stderr):
@@ -16,18 +17,22 @@ def fake_project(return_code, stdout, stderr):
     return fake_project
 
 class FakeProject(Project):
+
+    def build(self):
+        pass
+
     def run(self, input_file):
         file_content = input_file.read()
         if file_content == "TLE":
-            return (253, "", "")
+            return (SandboxCodes.TIME_LIMIT.value, "", "")
         elif file_content == "MLE":
-            return (252, "", "")
+            return (SandboxCodes.MEMORY_LIMIT.value, "", "")
         elif file_content == "CE":
-            raise CompilationError("The code did not comiple")
+            raise BuildError("The code did not comiple")
         elif file_content == "RTE":
-            return (255, "", "")
+            return (SandboxCodes.RUNTIME_ERROR.value, "", "")
         elif file_content == "Internal Error":
-            return (254, "", "")
+            return (SandboxCodes.INTERNAL_ERROR.value, "", "")
         else:
             return (0, "compare this output!", "")
 
@@ -62,7 +67,7 @@ class TestGrader(object):
     def test_fail_run_with_custom_input(self):
         feedback = MagicMock()
 
-        return_code = 252
+        return_code = SandboxCodes.MEMORY_LIMIT
         stdout = ""
         stderr = "Not enough memory :("
 
