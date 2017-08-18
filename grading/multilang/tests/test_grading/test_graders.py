@@ -3,9 +3,6 @@ import sys
 from unittest.mock import MagicMock
 from unittest.mock import call
 
-#Erase this hack when commiting
-sys.path.insert(0, "/python_lib")
-
 from grading.graders import *
 from grading.projects import *
 from grading.results import *
@@ -30,11 +27,11 @@ class FakeProject(Project):
         elif file_content == "CE":
             raise BuildError("The code did not comiple")
         elif file_content == "RTE":
-            return (SandboxCodes.RUNTIME_ERROR.value, "", "")
-        elif file_content == "Internal Error":
+            return (255, "", "")
+        elif file_content == "IE":
             return (SandboxCodes.INTERNAL_ERROR.value, "", "")
         else:
-            return (0, "compare this output!", "")
+            return (0, "Accepted output", "")
 
 class TestGrader(object):
     def test_generate_test_files_tuples(self):

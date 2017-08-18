@@ -1,1 +1,1 @@
-This is the output for an Internal Error run
+Internal error output

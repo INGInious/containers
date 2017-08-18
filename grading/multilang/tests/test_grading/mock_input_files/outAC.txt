@@ -1,1 +1,1 @@
-compare this output!
+Accepted output

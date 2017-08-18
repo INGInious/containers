@@ -13,7 +13,6 @@ class SandboxCodes(IntEnum):
     MEMORY_LIMIT = 252
     TIME_LIMIT = 253
     INTERNAL_ERROR = 254
-    RUNTIME_ERROR = 255
 
 def parse_non_zero_return_code(return_code):
     assert return_code != 0

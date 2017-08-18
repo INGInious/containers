@@ -1,1 +1,1 @@
-Output for non compiling project
+Compiler error output
