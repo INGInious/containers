@@ -3,10 +3,11 @@ import sys
 from unittest.mock import MagicMock
 from unittest.mock import call
 
-from grading.graders import *
-from grading.projects import *
-from grading.results import *
 import inginious
+
+from grading.graders import grade_with_partial_scores, run_against_custom_input, generate_test_files_tuples
+from grading.projects import Project, BuildError
+from grading.results import SandboxCodes
 
 def fake_project(return_code, stdout, stderr):
     fake_project = MagicMock()
@@ -49,7 +50,7 @@ class TestGrader(object):
         feedback = MagicMock()
 
         return_code = 0
-        stdout = "proyect_output"
+        stdout = "project_output"
         stderr = ""
 
         project = fake_project(return_code, stdout, stderr)
