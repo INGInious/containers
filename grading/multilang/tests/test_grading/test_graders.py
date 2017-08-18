@@ -96,8 +96,8 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(50.0)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
-        assert(global_feedback_string.count("TIME_LIMIT_EXCEEDED") == 1)
-        assert(global_feedback_string.count("ACCEPTED") == 1)
+        assert(len(re.findall(r"TIME[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 1)
+        assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
 
     def test_run_with_partial_scores_memory_limit(self):
         feedback = MagicMock()
@@ -112,8 +112,8 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(60.0)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
-        assert(global_feedback_string.count("MEMORY_LIMIT_EXCEEDED") == 2)
-        assert(global_feedback_string.count("ACCEPTED") == 3)
+        assert(len(re.findall(r"MEMORY[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 2)
+        assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 3)
 
     def test_run_with_partial_scores_wrong_answer(self):
         feedback = MagicMock()
@@ -129,8 +129,8 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(100/6)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
-        assert(global_feedback_string.count("WRONG_ANSWER") == 1)
-        assert(global_feedback_string.count("ACCEPTED") == 1)
+        assert(len(re.findall(r'WRONG[ _-]ANSWER', global_feedback_string)) == 1)
+        assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
 
     def test_run_with_partial_scores_compiler_error(self):
         feedback = MagicMock()
@@ -147,6 +147,9 @@ class TestGrader(object):
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r'COMPILATION[ _-]ERROR', global_feedback_string)) == 1)
+
+        #Here we need an exact matching because it's the compiler output so it should be
+        #passed as it is to the user
         assert(global_feedback_string.count("The code did not compile".upper()) == 1)
 
     def test_run_with_partial_scores_runtime_error(self):
@@ -163,8 +166,8 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(100*(5 + 10)/(sum(weights)))
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
-        assert(global_feedback_string.count("RUNTIME_ERROR") == 2)
-        assert(global_feedback_string.count("ACCEPTED") == 2)
+        assert(len(re.findall(r'RUNTIME[ _-]ERROR', global_feedback_string)) == 2)
+        assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 2)
 
     def test_run_with_partial_scores_accepted(self):
         feedback = MagicMock()
@@ -180,7 +183,7 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(100)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
-        assert(global_feedback_string.count("ACCEPTED") == 4)
+        assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 4)
 
     def test_run_with_partial_scores_internal_error(self):
         feedback = MagicMock()
@@ -196,5 +199,5 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(100/3)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
-        assert(global_feedback_string.count("INTERNAL_ERROR") == 1)
-        assert(global_feedback_string.count("ACCEPTED") == 1)
+        assert(len(re.findall(r'INTERNAL[ _-]ERROR', global_feedback_string)) == 1)
+        assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
