@@ -1,3 +1,7 @@
+/*
+ * Tests file for C11 specific features
+ * taken from https://stackoverflow.com/questions/9804371/syntax-and-sample-usage-of-generic-in-c11
+*/
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>

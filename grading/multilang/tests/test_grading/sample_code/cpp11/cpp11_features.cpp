@@ -1,3 +1,8 @@
+/*
+ * Test file for c++11 specific features
+ * based on http://codeforces.com/blog/entry/10124
+ */
+
 #include<bits/stdc++.h>
 
 using namespace std;
