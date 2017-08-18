@@ -1,5 +1,4 @@
 import pytest
-import sys
 import os
 from unittest.mock import MagicMock
 from unittest.mock import call
@@ -110,7 +109,7 @@ class TestGrader(object):
         feedback.set_grade.assert_called_with(60.0)
         feedback.set_global_feedback.assert_called_with('- **Test 1: TIME_LIMIT_EXCEEDED**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: ACCEPTED**\n\n- **Test 4: MEMORY_LIMIT_EXCEEDED**\n\n- **Test 5: ACCEPTED**')
 
-    def test_run_with_partial_scores_worng_answer(self):
+    def test_run_with_partial_scores_wrong_answer(self):
         feedback = MagicMock()
         project = FakeProject()
 
