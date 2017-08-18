@@ -1,6 +1,8 @@
 import pytest
 from .helpers import run_code_with_project_factory, run_project_with_project_factory
-from grading.projects import CompilationError
+from grading.projects import BuildError
+import grading.projects
+import os.path
 
 class TestPython2ProjectFactory(object):
     @pytest.mark.usefixtures("fake_sandbox")
@@ -96,19 +98,27 @@ class TestJava7ProjectFactory(object):
 
     @pytest.mark.usefixtures("fake_sandbox")
     def test_uses_java7_standard_library(self):
-        with pytest.raises(CompilationError):
+        with pytest.raises(BuildError):
             return_code, stdout, stderr = run_code_with_project_factory("java7",
                 "java7/java7_with_java8_classes.java", "empty_input.txt")
 
     @pytest.mark.usefixtures("fake_sandbox")
     def test_antlr_project(self):
-        for i in range(3):
-            return_code, stdout, stderr = run_project_with_project_factory("java7",
-                "java7/psiCoder_project",
-                "java7/psiCoder_project/casos/in0" + str(i) + ".txt")
+        factory = grading.projects.get_factory_from_name("java7")
+        project_directory = os.path.join("tests", "test_grading", "sample_code", "java7",
+            "psiCoder_project")
 
-            with open("tests/test_grading/sample_code/java7/psiCoder_project/casos/out0" + str(i) +
-                ".txt") as output_file:
+        project = factory.create_from_directory(project_directory)
+        project.build()
+
+        for i in range(3):
+            input_file_name = os.path.join(project_directory, "casos", "in0" + str(i) + ".txt")
+            output_file_name = os.path.join(project_directory, "casos", "out0" + str(i) + ".txt")
+
+            with open(input_file_name) as input_file:
+                return_code, stdout, stderr = project.run(input_file)
+
+            with open(output_file_name) as output_file:
                 output = output_file.read()
                 assert stdout == output
                 assert stderr == ""
@@ -132,13 +142,21 @@ class TestJava8ProjectFactory(object):
 
     @pytest.mark.usefixtures("fake_sandbox")
     def test_antlr_project(self):
-        for i in range(10):
-            return_code, stdout, stderr = run_project_with_project_factory("java8",
-                "java8/qb64_parser_project",
-                "java8/qb64_parser_project/casos/in0" + str(i) + ".txt")
+        factory = grading.projects.get_factory_from_name("java8")
+        project_directory = os.path.join("tests", "test_grading", "sample_code", "java8",
+            "qb64_parser_project")
 
-            with open("tests/test_grading/sample_code/java8/qb64_parser_project/casos/out0" + str(i) +
-                ".txt") as output_file:
+        project = factory.create_from_directory(project_directory)
+        project.build()
+
+        for i in range(10):
+            input_file_name = os.path.join(project_directory, "casos", "in0" + str(i) + ".txt")
+            output_file_name = os.path.join(project_directory, "casos", "out0" + str(i) + ".txt")
+
+            with open(input_file_name) as input_file:
+                return_code, stdout, stderr = project.run(input_file)
+
+            with open(output_file_name) as output_file:
                 output = output_file.read()
                 assert stdout == output
                 assert stderr == ""
