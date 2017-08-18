@@ -63,7 +63,7 @@ class TestCppProjectFactory(object):
 
     @pytest.mark.usefixtures("fake_sandbox")
     def test_uses_cpp11_features(self):
-        with pytest.raises(CompilationError):
+        with pytest.raises(BuildError):
             return_code, stdout, stderr = run_code_with_project_factory("cpp",
                 "cpp11/cpp11_features.cpp", "empty_input.txt")
 
@@ -125,7 +125,7 @@ class TestJava7ProjectFactory(object):
 
     @pytest.mark.usefixtures("fake_sandbox")
     def test_uses_java8_features(self):
-        with pytest.raises(CompilationError):
+        with pytest.raises(BuildError):
             return_code, stdout, stderr = run_project_with_project_factory("java7",
              "java8/qb64_parser_project", "empty_input.txt")
 
@@ -173,7 +173,7 @@ class TestCProjectFactory(object):
 
     @pytest.mark.usefixtures("fake_sandbox")
     def test_uses_c11_features(self):
-        with pytest.raises(CompilationError):
+        with pytest.raises(BuildError):
             return_code, stdout, stderr = run_code_with_project_factory("c",
                 "c11/c11_features.c", "empty_input.txt")
 
