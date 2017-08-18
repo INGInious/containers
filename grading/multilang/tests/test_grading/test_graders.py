@@ -1,5 +1,6 @@
 import pytest
 import os
+import re
 from unittest.mock import MagicMock
 from unittest.mock import call
 
@@ -26,7 +27,7 @@ class FakeProject(Project):
         elif file_content == "MLE":
             return (SandboxCodes.MEMORY_LIMIT.value, "", "")
         elif file_content == "CE":
-            raise BuildError("The code did not comiple")
+            raise BuildError("The code did not compile")
         elif file_content == "RTE":
             return (255, "", "")
         elif file_content == "IE":
@@ -93,21 +94,26 @@ class TestGrader(object):
 
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(50.0)
-        feedback.set_global_feedback.assert_called_with('- **Test 1: TIME_LIMIT_EXCEEDED**\n\n- **Test 2: ACCEPTED**')
 
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(global_feedback_string.count("TIME_LIMIT_EXCEEDED") == 1)
+        assert(global_feedback_string.count("ACCEPTED") == 1)
 
     def test_run_with_partial_scores_memory_limit(self):
         feedback = MagicMock()
         project = FakeProject()
 
-        tests = ["TLE.txt", "AC.txt", "AC.txt", "MLE.txt", "AC.txt"]
+        tests = ["MLE.txt", "AC.txt", "AC.txt", "MLE.txt", "AC.txt"]
         full_path_test_cases = self.build_full_named_test_pairs(tests)
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
 
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(60.0)
-        feedback.set_global_feedback.assert_called_with('- **Test 1: TIME_LIMIT_EXCEEDED**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: ACCEPTED**\n\n- **Test 4: MEMORY_LIMIT_EXCEEDED**\n\n- **Test 5: ACCEPTED**')
+
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(global_feedback_string.count("MEMORY_LIMIT_EXCEEDED") == 2)
+        assert(global_feedback_string.count("ACCEPTED") == 3)
 
     def test_run_with_partial_scores_wrong_answer(self):
         feedback = MagicMock()
@@ -121,7 +127,10 @@ class TestGrader(object):
 
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(100/6)
-        feedback.set_global_feedback.assert_called_with('- **Test 1: WRONG_ANSWER**\n\n- **Test 2: ACCEPTED**')
+
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(global_feedback_string.count("WRONG_ANSWER") == 1)
+        assert(global_feedback_string.count("ACCEPTED") == 1)
 
     def test_run_with_partial_scores_compiler_error(self):
         feedback = MagicMock()
@@ -135,7 +144,10 @@ class TestGrader(object):
 
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(0)
-        feedback.set_global_feedback.assert_called_with('**Compilation error**:\n\n\n\n.. raw:: html\n\n\t<pre>The code did not comiple</pre>\n\n')
+
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(len(re.findall(r'COMPILATION[ _-]ERROR', global_feedback_string)) == 1)
+        assert(global_feedback_string.count("The code did not compile".upper()) == 1)
 
     def test_run_with_partial_scores_runtime_error(self):
         feedback = MagicMock()
@@ -149,7 +161,10 @@ class TestGrader(object):
 
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(100*(5 + 10)/(sum(weights)))
-        feedback.set_global_feedback.assert_called_with('- **Test 1: RUNTIME_ERROR**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: RUNTIME_ERROR**\n\n- **Test 4: ACCEPTED**')
+
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(global_feedback_string.count("RUNTIME_ERROR") == 2)
+        assert(global_feedback_string.count("ACCEPTED") == 2)
 
     def test_run_with_partial_scores_accepted(self):
         feedback = MagicMock()
@@ -163,7 +178,9 @@ class TestGrader(object):
 
         feedback.set_global_result.assert_called_with("success")
         feedback.set_grade.assert_called_with(100)
-        feedback.set_global_feedback.assert_called_with('- **Test 1: ACCEPTED**\n\n- **Test 2: ACCEPTED**\n\n- **Test 3: ACCEPTED**\n\n- **Test 4: ACCEPTED**')
+
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(global_feedback_string.count("ACCEPTED") == 4)
 
     def test_run_with_partial_scores_internal_error(self):
         feedback = MagicMock()
@@ -177,4 +194,7 @@ class TestGrader(object):
 
         feedback.set_global_result.assert_called_with("failed")
         feedback.set_grade.assert_called_with(100/3)
-        feedback.set_global_feedback.assert_called_with('- **Test 1: INTERNAL_ERROR**\n\n- **Test 2: ACCEPTED**')
+
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(global_feedback_string.count("INTERNAL_ERROR") == 1)
+        assert(global_feedback_string.count("ACCEPTED") == 1)
