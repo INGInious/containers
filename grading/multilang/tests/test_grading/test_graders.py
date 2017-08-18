@@ -1,5 +1,6 @@
 import pytest
 import sys
+import os
 from unittest.mock import MagicMock
 from unittest.mock import call
 
@@ -82,9 +83,9 @@ class TestGrader(object):
         feedback = MagicMock()
         project = FakeProject()
 
-        route = "tests/test_grading/mock_input_files/"
+        base_path = os.path.join("tests", "test_grading", "mock_input_files")
         tests = ["TLE.txt", "AC.txt"]
-        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+        full_path_test_cases = [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
 
@@ -97,9 +98,9 @@ class TestGrader(object):
         feedback = MagicMock()
         project = FakeProject()
 
-        route = "tests/test_grading/mock_input_files/"
+        base_path = os.path.join("tests", "test_grading", "mock_input_files")
         tests = ["TLE.txt", "AC.txt", "AC.txt", "MLE.txt", "AC.txt"]
-        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+        full_path_test_cases = [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
 
@@ -111,10 +112,10 @@ class TestGrader(object):
         feedback = MagicMock()
         project = FakeProject()
 
-        route = "tests/test_grading/mock_input_files/"
+        base_path = os.path.join("tests", "test_grading", "mock_input_files")
         tests = ["WA.txt", "AC.txt"]
         weights = [5, 1]
-        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+        full_path_test_cases = [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
@@ -126,10 +127,10 @@ class TestGrader(object):
         feedback = MagicMock()
         project = FakeProject()
 
-        route = "tests/test_grading/mock_input_files/"
+        base_path = os.path.join("tests", "test_grading", "mock_input_files")
         tests = ["CE.txt"]
         weights = [300]
-        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+        full_path_test_cases = [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
@@ -141,10 +142,10 @@ class TestGrader(object):
         feedback = MagicMock()
         project = FakeProject()
 
-        route = "tests/test_grading/mock_input_files/"
+        base_path = os.path.join("tests", "test_grading", "mock_input_files")
         tests = ["RTE.txt", "AC.txt", "RTE.txt", "AC.txt"]
         weights = [7, 5, 7, 10]
-        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+        full_path_test_cases = [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
@@ -156,10 +157,10 @@ class TestGrader(object):
         feedback = MagicMock()
         project = FakeProject()
 
-        route = "tests/test_grading/mock_input_files/"
+        base_path = os.path.join("tests", "test_grading", "mock_input_files")
         tests = ["AC.txt", "AC.txt", "AC.txt", "AC.txt"]
         weights = [7, 5, 7, 10]
-        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+        full_path_test_cases = [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
@@ -171,10 +172,10 @@ class TestGrader(object):
         feedback = MagicMock()
         project = FakeProject()
 
-        route = "tests/test_grading/mock_input_files/"
+        base_path = os.path.join("tests", "test_grading", "mock_input_files")
         tests = ["IE.txt", "AC.txt"]
         weights = [2, 1]
-        full_path_test_cases = [(route + "in" + test, route + "out" + test) for test in tests]
+        full_path_test_cases = [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
 
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
