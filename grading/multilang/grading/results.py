@@ -9,14 +9,19 @@ class GraderResult(Enum):
     TIME_LIMIT_EXCEEDED = 6
     INTERNAL_ERROR = 7
 
+class SandboxCodes(Enum):
+    MEMORY_LIMIT = 252
+    TIME_LIMIT = 253
+    INTERNAL_ERROR = 254
+
 def parse_non_zero_return_code(return_code):
     assert return_code != 0
 
-    if return_code == 252:
+    if return_code == SandboxCodes.MEMORY_LIMIT:
         return GraderResult.MEMORY_LIMIT_EXCEEDED
-    elif return_code == 253:
+    elif return_code == SandboxCodes.TIME_LIMIT:
         return GraderResult.TIME_LIMIT_EXCEEDED
-    elif return_code == 254:
+    elif return_code == SandboxCodes.INTERNAL_ERROR:
         return GraderResult.INTERNAL_ERROR
     else:
         return GraderResult.RUNTIME_ERROR
