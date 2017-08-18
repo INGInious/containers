@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 
 class GraderResult(Enum):
     ACCEPTED = 1
@@ -9,7 +9,7 @@ class GraderResult(Enum):
     TIME_LIMIT_EXCEEDED = 6
     INTERNAL_ERROR = 7
 
-class SandboxCodes(Enum):
+class SandboxCodes(IntEnum):
     MEMORY_LIMIT = 252
     TIME_LIMIT = 253
     INTERNAL_ERROR = 254
