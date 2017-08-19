@@ -129,7 +129,7 @@ def _compute_feedback(project, test_cases, options):
 def _generate_feedback_for_compilation_error(compilation_output):
     return "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
 
-def run_against_custom_input(project, custom_input):
+def run_against_custom_input(project, custom_input, feedback=feedback):
     """
     Runs the given project against a custom input.
 
@@ -170,7 +170,7 @@ def run_against_custom_input(project, custom_input):
     feedback.set_grade(100.0 if result == GraderResult.ACCEPTED else 0.0)
     feedback.set_global_feedback(feedback_str)
 
-def grade_with_partial_scores(project, test_cases, weights=None, options=None):
+def grade_with_partial_scores(project, test_cases, weights=None, options=None, feedback=feedback):
     """
     Partially grade the specified code with the given test cases and weights.
 
