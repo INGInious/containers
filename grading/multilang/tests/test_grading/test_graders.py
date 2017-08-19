@@ -3,6 +3,7 @@ import os
 import re
 from unittest.mock import MagicMock
 from unittest.mock import call
+from unittest import TestCase
 
 import inginious
 
@@ -35,7 +36,7 @@ class FakeProject(Project):
         else:
             return (0, "Accepted output", "")
 
-class TestGrader(object):
+class TestGrader(TestCase):
     def build_full_named_test_pairs(self, tests):
         base_path = os.path.join("tests", "test_grading", "mock_input_files")
         return [(base_path + "/in" + test, base_path + "/out" + test) for test in tests]
@@ -62,7 +63,9 @@ class TestGrader(object):
         run_against_custom_input(project, "some_input", feedback)
 
         feedback.set_global_result.assert_called_with("success")
-        feedback.set_grade.assert_called_with(100.0)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(100, student_grade)
 
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
@@ -78,7 +81,9 @@ class TestGrader(object):
         run_against_custom_input(project, "some_input", feedback)
 
         feedback.set_global_result.assert_called_with("failed")
-        feedback.set_grade.assert_called_with(0.0)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(0, student_grade)
 
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
@@ -93,7 +98,9 @@ class TestGrader(object):
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
 
         feedback.set_global_result.assert_called_with("failed")
-        feedback.set_grade.assert_called_with(50.0)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(50, student_grade)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r"TIME[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 1)
@@ -109,7 +116,9 @@ class TestGrader(object):
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
 
         feedback.set_global_result.assert_called_with("failed")
-        feedback.set_grade.assert_called_with(60.0)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(60, student_grade)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r"MEMORY[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 2)
@@ -126,7 +135,9 @@ class TestGrader(object):
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
         feedback.set_global_result.assert_called_with("failed")
-        feedback.set_grade.assert_called_with(100/6)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(100/6, student_grade)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r'WRONG[ _-]ANSWER', global_feedback_string)) == 1)
@@ -143,7 +154,9 @@ class TestGrader(object):
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
         feedback.set_global_result.assert_called_with("failed")
-        feedback.set_grade.assert_called_with(0)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(0, student_grade)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r'COMPILATION[ _-]ERROR', global_feedback_string)) == 1)
@@ -163,7 +176,9 @@ class TestGrader(object):
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
         feedback.set_global_result.assert_called_with("failed")
-        feedback.set_grade.assert_called_with(100*(5 + 10)/(sum(weights)))
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(1500/29, student_grade)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r'RUNTIME[ _-]ERROR', global_feedback_string)) == 2)
@@ -180,7 +195,9 @@ class TestGrader(object):
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
         feedback.set_global_result.assert_called_with("success")
-        feedback.set_grade.assert_called_with(100)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(100, student_grade)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 4)
@@ -196,7 +213,9 @@ class TestGrader(object):
         grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
 
         feedback.set_global_result.assert_called_with("failed")
-        feedback.set_grade.assert_called_with(100/3)
+
+        student_grade = feedback.set_grade.call_args[0][0]
+        self.assertAlmostEqual(100/3, student_grade)
 
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r'INTERNAL[ _-]ERROR', global_feedback_string)) == 1)
