@@ -11,10 +11,10 @@ from grading.graders import grade_with_partial_scores, run_against_custom_input,
 from grading.projects import Project, BuildError
 from grading.results import SandboxCodes
 
-def fake_project(return_code, stdout, stderr):
-    fake_project = MagicMock()
-    fake_project.run = MagicMock(return_value=(return_code, stdout, stderr))
-    return fake_project
+def mock_project(return_code, stdout, stderr):
+    mock_project = MagicMock()
+    mock_project.run = MagicMock(return_value=(return_code, stdout, stderr))
+    return mock_project
 
 class FakeProject(Project):
 
@@ -52,43 +52,37 @@ class TestGrader(object):
                                                   ("in05.txt","out05.txt")
                                                 ]
 
-    def test_success_run_with_custom_input(self):
+    def test_run_with_custom_input_success(self):
         feedback = MagicMock()
 
         return_code = 0
         stdout = "project_output"
         stderr = ""
 
-        project = fake_project(return_code, stdout, stderr)
+        project = mock_project(return_code, stdout, stderr)
         run_against_custom_input(project, "some_input", feedback)
 
         feedback.set_global_result.assert_called_with("success")
 
-        student_grade = feedback.set_grade.call_args[0][0]
-        assert approx(student_grade) == 100
-
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
 
-    def test_fail_run_with_custom_input(self):
+    def test_run_with_custom_input_memory_limit(self):
         feedback = MagicMock()
 
         return_code = SandboxCodes.MEMORY_LIMIT
         stdout = ""
         stderr = "Not enough memory :("
 
-        project = fake_project(return_code, stdout, stderr)
+        project = mock_project(return_code, stdout, stderr)
         run_against_custom_input(project, "some_input", feedback)
 
         feedback.set_global_result.assert_called_with("failed")
 
-        student_grade = feedback.set_grade.call_args[0][0]
-        assert approx(student_grade) == 0
-
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
 
-    def test_run_with_partial_scores_time_limit(self):
+    def test_grade_with_partial_scores_time_limit(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -124,7 +118,7 @@ class TestGrader(object):
         assert(len(re.findall(r"MEMORY[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 2)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 3)
 
-    def test_run_with_partial_scores_wrong_answer(self):
+    def test_grade_with_partial_scores_wrong_answer(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -143,7 +137,7 @@ class TestGrader(object):
         assert(len(re.findall(r'WRONG[ _-]ANSWER', global_feedback_string)) == 1)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
 
-    def test_run_with_partial_scores_compiler_error(self):
+    def test_grade_with_partial_scores_compiler_error(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -165,7 +159,7 @@ class TestGrader(object):
         # passed as it is to the user
         assert(global_feedback_string.count("The code did not compile".upper()) == 1)
 
-    def test_run_with_partial_scores_runtime_error(self):
+    def test_grade_with_partial_scores_runtime_error(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -184,7 +178,7 @@ class TestGrader(object):
         assert(len(re.findall(r'RUNTIME[ _-]ERROR', global_feedback_string)) == 2)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 2)
 
-    def test_run_with_partial_scores_accepted(self):
+    def test_grade_with_partial_scores_accepted(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -202,7 +196,7 @@ class TestGrader(object):
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 4)
 
-    def test_run_with_partial_scores_internal_error(self):
+    def test_grade_with_partial_scores_internal_error(self):
         feedback = MagicMock()
         project = FakeProject()
 
