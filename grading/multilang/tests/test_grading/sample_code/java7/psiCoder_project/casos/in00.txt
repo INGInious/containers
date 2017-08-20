@@ -1,0 +1,28 @@
+funcion real f(real x) hacer
+  retornar 4*x*x*x*x - 900*x*x*x + 5*x*x - 3*x + 9;
+fin_funcion
+
+funcion real abs(real x) hacer
+   real respuesta = x;
+   si(x<0) entonces
+       respuesta = -x;
+   fin_si
+   retornar respuesta;
+fin_funcion
+
+funcion real bolzano(real bajo, real alto) hacer
+    real medio;
+    mientras( abs(alto-bajo)>0.0000001 ) hacer
+        medio = (alto+bajo)/2.0;
+        si (f(medio)*f(bajo) < 0 ) entonces //La raiz esta entre medio y bajo
+          alto = medio;
+        si_no
+          bajo = medio;
+        fin_si
+    fin_mientras
+    retornar medio;
+fin_funcion
+
+funcion_principal
+    imprimir(bolzano(100,250)); //224.994
+fin_principal

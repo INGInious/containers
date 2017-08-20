@@ -1,0 +1,23 @@
+FOR i = 10 TO 15
+    DIM xd AS INTEGER
+    xd = i
+NEXT
+
+PRINT xd                            ' Imprime 15
+proc
+
+SUB proc
+DIM xd AS INTEGER
+    FOR a = 10 TO 15
+        for b = 3 to 11 step 2
+            IF a THEN
+                DIM var, x, y AS INTEGER
+                x = a
+                y = b
+                var = a xor b
+                print var
+            END IF
+        next
+    NEXT
+    DIM var AS DOUBLE             ' Error, re-declaracion de var
+END SUB

@@ -1,0 +1,26 @@
+a = 2
+a& = 11
+a% = 17
+
+PRINT ((((a& ^ (a OR 7 AND 1) AND a%) ^ 2) + NOT -2) < 291) ^ 3 * a + a& * NOT NOT 1
+PRINT 10 MOD 3
+PRINT 10000000 MOD 3454
+PRINT 203948 MOD 34
+PRINT 100000 MOD 233434 MOD 3948 MOD 2423 MOD 123
+PRINT 8 * 89 + (123 + 8 * (1 * 4 * 9 + 89) - 34) - (-5 - 2017)
+PRINT 8 * 89 + 123 + 8 * 1 * 4 * 9 + 89 - 34 - -5 - 2017
+
+f& = 1
+id = 4 * -NOT 2
+final_case = ((f& ^ NOT -2) ^ xd(no_ahora_por_favor) ^ xd(NOT (NOT -234) * NOT 14) * id)
+PRINT final_case
+
+proc (f& * 1.000000011)
+
+FUNCTION xd (something)
+dim a as integer
+xd = 2
+END FUNCTION
+
+sub proc (s$)
+end sub

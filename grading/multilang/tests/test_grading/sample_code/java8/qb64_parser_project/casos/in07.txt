@@ -1,0 +1,70 @@
+dim shared a(10), t(10) as long
+
+a(0) = fact(5)
+a(1) = fact(2)
+a(2) = fact(3)
+a(3) = fact(9)
+a(4) = fact(4)
+a(5) = fact(8)
+a(6) = fact(12)
+a(7) = fact(1)
+a(8) = fact(0)
+a(9) = fact(4)
+a(10) = fact(4)
+
+merge_sort 0, 10
+
+for i% = 0 to 10
+    print a(i%)
+next
+
+function fact& (f&)
+    dim nothing(4, 5) as integer
+    if f& <= 0 then
+        fact& = 1
+    else
+        fact = f& * fact(f& - 1)
+    end if
+end function
+
+sub merge_sort (l%, r%)
+    if l% < r% then
+        print "interval "; l%; r%
+        m% = (l% + r%) / 2
+        merge_sort (l%), m%
+        merge_sort (m% + 1), r%
+        merge (l%), r%
+    end if
+end sub
+
+sub merge (l%, r%)
+    print "merging "; l%; r%
+    dim m, i, j, k as integer
+    m = (l% + r%) / 2
+    i = l%
+    j = m + 1
+    k = l%
+    while i <= m% and j <= r%
+        if a(i) < a(j) then
+            t(k) = a(i)
+            i = i + 1
+        else
+            t(k) = a(j)
+            j = j + 1
+        end if
+        k = k + 1
+    wend
+    while i <= m%
+        t(k) = a(i)
+        i = i + 1
+        k = k + 1
+    wend
+    while j <= r%
+        t(k) = a(j)
+        j = j + 1
+        k = k + 1
+    wend
+    for i = l% to r%
+        a(i) = t(i)
+    next
+end sub

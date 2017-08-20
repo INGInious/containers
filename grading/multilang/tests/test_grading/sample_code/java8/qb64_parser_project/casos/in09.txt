@@ -1,0 +1,43 @@
+n% = 3
+m% = 4
+
+dim arr(n%, m%), i, j as integer
+print f("hola", arr(), n%, m%)
+for i = 0 to n%
+    for j = 0 to m%
+        print arr(i, j)
+    next
+next
+print s("hola", arr(), n%, m%)
+
+function f (a$, b() as integer, n%, m%)
+    dim i, j as integer
+    for i = 0 to n%
+        for j = 0 to m%
+            print b(i, j)
+            b%(i, j) = (i xor j) ^ (i * j mod 4)
+        next
+    next
+    for i = 0 to n%
+        for j = 0 to m%
+            print b(i, j)
+        next
+    next
+    f! = 1
+end function
+
+sub s (a$, b() as integer, n%, m%)
+    dim i, j as integer
+    for i = 0 to n%
+        for j = 0 to m%
+            print b(i, j)
+            b%(i, j) = (i xor j) ^ (i * j mod 4)
+        next
+    next
+    for i = 0 to n%
+        for j = 0 to m%
+            print b(i, j)
+        next
+    next
+    f! = 1
+end sub

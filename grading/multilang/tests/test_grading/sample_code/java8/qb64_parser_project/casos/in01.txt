@@ -1,0 +1,21 @@
+PRINT 10-10*8/10*9-1/(5 MOD 10)-6 MOD 1*6
+PRINT 3*2 MOD 1 MOD 8 MOD 3/9*3+4+3/10-6
+PRINT 5/9-2/7-3/6+8+3*7/1 MOD 3
+PRINT 7*1*7*5-1/5-5*10^2/5*6
+PRINT 7*1/4+5 MOD 1/1*2 MOD 3^9 MOD 9/2
+PRINT 8+8/1+1/5-2+4-5/7/2/8
+PRINT 8/6/9*5+7/6+10*7-5*2*9
+PRINT 5/8/6-10-4/7-8*4 MOD 3-10/3
+PRINT 6 MOD 10-1 MOD 6-6/9+9 MOD 5*10-8/2
+
+PRINT 5 * 1 / 3           ' Imprime 1
+PRINT 5.0 * 1 / 3         ' Imprime 1.666667
+PRINT 5 * 1 / 3.0         ' Imprime 1.666667
+PRINT NOT 13              ' Imprime -14
+PRINT NOT 13.3333         ' Imprime -14
+PRINT "abc" < "abcd"      ' Imprime -1
+PRINT "abc" = "abc"       ' Imprime -1
+PRINT "abc" = "abcd"      ' Imprime 0
+PRINT "abcd" <> "abc"     ' Imprime -1
+
+PRINT 1 XOR 0 AND 0       ' Imprime 1

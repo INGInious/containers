@@ -43,17 +43,16 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
 
     return diff_output
 
-def _compute_single_feedback(project, input_file_name, expected_output_file_name,
-    debug_info=None, options=None):
+def _compute_single_feedback(project, input_file_name, expected_output_file_name, options=None):
     """
-    Runs the script in file_name and returns a GraderResult depending on the output for
-    input_file_name.
+    Runs the script in file_name and returns a tuple (GraderResult, debug_info) depending on the
+    output for input_file_name. The second item of the tuple (debug_info) is a dictionary that
+    includes stdout, stderr, return_code and diff.
 
     code: A string with the code to run.
     runner: A CodeRunner instance.
     input_file_name: The test case input file name.
-    expected_output_file_name: The test case output file name.
-    debug_info: An optional dictionary to write debug information
+    expected_output_file_name: The test case output file name
     options: An optional dictionary with grader settings. See grade_with_partial_scores() for
         details.
     """
@@ -66,19 +65,9 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
     diff_context_lines = options.get("diff_context_lines", 3)
     check_output = options.get("check_output", _check_output)
 
-    if debug_info is not None:
-        if "files_feedback" not in debug_info:
-            debug_info["files_feedback"] = {}
-
     return_code, stdout, stderr = None, None, None
     with open(input_file_name, 'r') as input_file:
-        try:
-            return_code, stdout, stderr = project.run(input_file)
-        except projects.CompilationError as e:
-            if debug_info is not None:
-                debug_info["compilation_output"] = e.compilation_output
-
-            return GraderResult.COMPILATION_ERROR
+        return_code, stdout, stderr = project.run(input_file)
 
     expected_output = None
 
@@ -93,27 +82,28 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
     else:
         result = parse_non_zero_return_code(return_code)
 
-    if debug_info is not None and result != GraderResult.ACCEPTED:
+    debug_info = {}
+
+    if result != GraderResult.ACCEPTED:
         diff = None
         if compute_diff:
             diff = _compute_diff(stdout, expected_output, diff_context_lines, diff_max_lines)
 
-        debug_info["files_feedback"][input_file_name] = {
+        debug_info.update({
             "input_file": input_file_name,
             "stdout": html.escape(stdout),
             "stderr": html.escape(stderr),
             "return_code": return_code,
-            "diff": html.escape(diff),
-        }
+            "diff": None if diff is None else html.escape(diff),
+        })
 
-    return result
+    return result, debug_info
 
 def _compute_feedback(project, test_cases, options):
     """
-    Computes the grader feedback for the given code against each of the provided test cases.
+    Computes the grader feedback for the given project against each of the provided test cases.
 
-    code: A string with the code to run.
-    runner: A CodeRunner instance associated to run the code with.
+    project: The project to run the test cases against.
     test_cases: A list of tuples (input_file_name, output_file_name) describing the cases the code
         will be tested against.
     options: A dictionary with the grader options. It will be forwarded to _compute_single_feedback().
@@ -121,16 +111,27 @@ def _compute_feedback(project, test_cases, options):
     grader_results = []
     debug_info = {}
 
-    for input_file_name, output_file_name in test_cases:
-        grader_results.append(_compute_single_feedback(project, input_file_name,
-            output_file_name, debug_info, options))
+    try:
+        project.build()
+
+        debug_info["files_feedback"] = {}
+        for input_file_name, output_file_name in test_cases:
+            grader_result, test_case_debug_info = _compute_single_feedback(project, input_file_name,
+                output_file_name, options)
+
+            debug_info["files_feedback"][input_file_name] = test_case_debug_info
+            grader_results.append(grader_result)
+    except projects.BuildError as e:
+        debug_info["compilation_output"] = e.compilation_output
+
+        grader_results = [GraderResult.COMPILATION_ERROR for _ in test_cases]
 
     return grader_results, debug_info
 
 def _generate_feedback_for_compilation_error(compilation_output):
     return "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
 
-def run_against_custom_input(project, custom_input):
+def run_against_custom_input(project, custom_input, feedback=feedback):
     """
     Runs the given project against a custom input.
 
@@ -148,6 +149,7 @@ def run_against_custom_input(project, custom_input):
 
     with open(custom_input_file_name, 'r') as input_file:
         try:
+            project.build()
             return_code, stdout, stderr = project.run(input_file)
 
             if return_code == 0:
@@ -161,7 +163,7 @@ def run_against_custom_input(project, custom_input):
             # Save stdout and stderr so the UI can show it easily
             feedback.set_custom_value("custom_stdout", stdout)
             feedback.set_custom_value("custom_stderr", stderr)
-        except projects.CompilationError as e:
+        except projects.BuildError as e:
             compilation_output = e.compilation_output
             feedback_str = _generate_feedback_for_compilation_error(compilation_output)
             result = GraderResult.COMPILATION_ERROR
@@ -170,7 +172,7 @@ def run_against_custom_input(project, custom_input):
     feedback.set_grade(100.0 if result == GraderResult.ACCEPTED else 0.0)
     feedback.set_global_feedback(feedback_str)
 
-def grade_with_partial_scores(project, test_cases, weights=None, options=None):
+def grade_with_partial_scores(project, test_cases, weights=None, options=None, feedback=feedback):
     """
     Partially grade the specified code with the given test cases and weights.
 

@@ -1,0 +1,17 @@
+estructura Point
+    entero x;
+    entero y;
+    real a,b,c;
+fin_estructura
+
+funcion real f(real n) hacer
+    retornar (n*(n+1))/2;
+fin_funcion
+funcion_principal
+
+    Point p;
+    p.x = 5;
+    p.y = 10;
+    imprimir( p.x , " " , p.y,"\n");
+    imprimir(f(5));
+fin_principal
