@@ -43,17 +43,16 @@ def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_l
 
     return diff_output
 
-def _compute_single_feedback(project, input_file_name, expected_output_file_name,
-    debug_info=None, options=None):
+def _compute_single_feedback(project, input_file_name, expected_output_file_name, options=None):
     """
-    Runs the script in file_name and returns a GraderResult depending on the output for
-    input_file_name.
+    Runs the script in file_name and returns a tuple (GraderResult, debug_info) depending on the
+    output for input_file_name. The second item of the tuple (debug_info) is a dictionary that
+    includes stdout, stderr, return_code and diff.
 
     code: A string with the code to run.
     runner: A CodeRunner instance.
     input_file_name: The test case input file name.
-    expected_output_file_name: The test case output file name.
-    debug_info: An optional dictionary to write debug information
+    expected_output_file_name: The test case output file name
     options: An optional dictionary with grader settings. See grade_with_partial_scores() for
         details.
     """
@@ -65,10 +64,6 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
     diff_max_lines = options.get("diff_max_lines", 100)
     diff_context_lines = options.get("diff_context_lines", 3)
     check_output = options.get("check_output", _check_output)
-
-    if debug_info is not None:
-        if "files_feedback" not in debug_info:
-            debug_info["files_feedback"] = {}
 
     return_code, stdout, stderr = None, None, None
     with open(input_file_name, 'r') as input_file:
@@ -87,20 +82,22 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
     else:
         result = parse_non_zero_return_code(return_code)
 
-    if debug_info is not None and result != GraderResult.ACCEPTED:
+    debug_info = {}
+
+    if result != GraderResult.ACCEPTED:
         diff = None
         if compute_diff:
             diff = _compute_diff(stdout, expected_output, diff_context_lines, diff_max_lines)
 
-        debug_info["files_feedback"][input_file_name] = {
+        debug_info.update({
             "input_file": input_file_name,
             "stdout": html.escape(stdout),
             "stderr": html.escape(stderr),
             "return_code": return_code,
             "diff": html.escape(diff),
-        }
+        })
 
-    return result
+    return result, debug_info
 
 def _compute_feedback(project, test_cases, options):
     """
@@ -117,8 +114,13 @@ def _compute_feedback(project, test_cases, options):
     try:
         project.build()
 
-        grader_results = [_compute_single_feedback(project, input_file_name, output_file_name,
-            debug_info, options) for input_file_name, output_file_name in test_cases]
+        debug_info["files_feedback"] = {}
+        for input_file_name, output_file_name in test_cases:
+            grader_result, test_case_debug_info = _compute_single_feedback(project, input_file_name,
+                output_file_name, options)
+
+            debug_info["files_feedback"][input_file_name] = test_case_debug_info
+            grader_results.append(grader_result)
     except projects.BuildError as e:
         debug_info["compilation_output"] = e.compilation_output
 
