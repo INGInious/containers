@@ -211,7 +211,8 @@ class TestC11ProjectFactory(object):
         assert stdout == "Hello world!\n"
         assert stderr == ""
 
-    @pytest.mark.skip(reason="Container's GCC version does not fully support c11")
+    @pytest.mark.skip(reason="Container's GCC version does not fully support C11")
+    @pytest.mark.usefixtures("fake_sandbox")
     def test_c11_features(self):
         return_code, stdout, stderr = run_code_with_project_factory("c11",
             "c11/c11_features.c", "empty_input.txt")
