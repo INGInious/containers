@@ -47,6 +47,11 @@ class TestPython3ProjectFactory(object):
         assert return_code == 0
         assert stdout == "Frijoles Mauricio 1.5\n"
         assert stderr == ""
+    @pytest.mark.usefixtures("fake_sandbox")
+    def test_python3_features(self):
+        return_code, stdout, stderr = run_code_with_project_factory("python3",
+            "python3/python3_features.py", "empty_input.txt")
+        assert return_code == 0
 
 class TestCppProjectFactory(object):
     @pytest.mark.usefixtures("fake_sandbox")
@@ -91,6 +96,12 @@ class TestCpp11ProjectFactory(object):
         assert return_code == 0
         assert stdout == "I am a cpp11 Object!!!\n"
         assert stderr == ""
+
+    @pytest.mark.usefixtures("fake_sandbox")
+    def test_cpp11_features(self):
+        return_code, stdout, stderr = run_code_with_project_factory("cpp11",
+            "cpp11/cpp11_features.cpp","empty_input.txt")
+        assert return_code == 0
 
 class TestJava7ProjectFactory(object):
     @pytest.mark.usefixtures("fake_sandbox")
@@ -167,6 +178,12 @@ class TestJava8ProjectFactory(object):
                 assert stdout == output
                 assert stderr == ""
 
+    @pytest.mark.usefixtures("fake_sandbox")
+    def test_java8_features(self):
+        return_code, stdout, stderr = run_code_with_project_factory("java8",
+            "java8/java8_features.java", "empty_input.txt")
+        assert return_code == 0
+
 class TestCProjectFactory(object):
     @pytest.mark.usefixtures("fake_sandbox")
     def test_hello_world(self):
@@ -193,3 +210,9 @@ class TestC11ProjectFactory(object):
         assert return_code == 0
         assert stdout == "Hello world!\n"
         assert stderr == ""
+
+    @pytest.mark.skip(reason="Container's GCC version does not fully support c11")
+    def test_c11_features(self):
+        return_code, stdout, stderr = run_code_with_project_factory("c11",
+            "c11/c11_features.c", "empty_input.txt")
+        assert return_code == 0
