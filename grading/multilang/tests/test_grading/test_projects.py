@@ -23,6 +23,12 @@ class TestPython2ProjectFactory(object):
         assert stdout == "Hello Dr Mauricio\n"
         assert stderr == ""
 
+    @pytest.mark.usefixtures("fake_sandbox")
+    def test_does_not_support_python3_features(self):
+        return_code, stdout, stderr = run_code_with_project_factory("python2",
+            "python3/python3_features.py", "empty_input.txt")
+        assert return_code != 0
+
 class TestPython3ProjectFactory(object):
     @pytest.mark.usefixtures("fake_sandbox")
     def test_hello_world(self):
@@ -126,8 +132,8 @@ class TestJava7ProjectFactory(object):
     @pytest.mark.usefixtures("fake_sandbox")
     def test_does_not_support_java8_features(self):
         with pytest.raises(BuildError):
-            return_code, stdout, stderr = run_project_with_project_factory("java7",
-             "java8/qb64_parser_project", "empty_input.txt")
+            return_code, stdout, stderr = run_code_with_project_factory("java7",
+             "java8/java8_features.java", "empty_input.txt")
 
 
 class TestJava8ProjectFactory(object):
