@@ -5,7 +5,7 @@ FROM    ingi/inginious-c-base
 LABEL org.inginious.grading.name="multiple_languages"
 
 # Add java 1.8
-RUN yum -y install wget java-1.8.0-openjdk-devel
+RUN yum -y install java-1.8.0-openjdk-devel
 
 # Add java 1.7
 RUN yum -y install java-1.7.0-openjdk-devel

@@ -19,7 +19,7 @@ def mock_project(return_code, stdout, stderr):
 
 class FakeProject(Project):
 
-    def build(self):
+    def _do_build(self):
         pass
 
     def run(self, input_file):

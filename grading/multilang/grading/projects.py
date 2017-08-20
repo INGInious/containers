@@ -59,16 +59,24 @@ class Project(object, metaclass=ABCMeta):
     def __init__(self):
         self._is_built = False
 
-    @abstractmethod
     def build(self):
         """
         Builds this project. A BuildError is thrown if the project cannot be built.
 
         A call to this method is mandatory before a call to the run method.
-        Implementations of this method must call _mark_as_built() after the project is
-        successfully built to ensure subsequent run() calls succeed.
+        Subclasses should override _do_build() instead of this method.
         """
 
+        self._do_build()
+        self._is_built = True
+
+    @abstractmethod
+    def _do_build(self):
+        """
+        Subclasses should override this method to perform the actual build logic.
+        A BuildError should be thrown if the project cannot be built (the build process
+        is assumed to be successful if no error is thrown).
+        """
         pass
 
     @abstractmethod
@@ -92,18 +100,10 @@ class Project(object, metaclass=ABCMeta):
         if not self._is_built:
             raise ProjectNotBuiltError()
 
-    def _mark_as_built(self):
-        """
-        Marks the project as built. Subclasses are expected to call this method after the
-        project is successfully built to ensure that subsequent run() calls succeed.
-        """
-
-        self._is_built = True
-
 
 class LambdaProject(Project):
     """
-    A Project implementation that takes the run and build functions as parameters.
+    A Project implementation that takes the run and _do_build functions as parameters.
     """
 
     def __init__(self, run_function, build_function=None):
@@ -117,9 +117,8 @@ class LambdaProject(Project):
         self._run = run_function
         self._build = build_function
 
-    def build(self):
+    def _do_build(self):
         self._build()
-        self._mark_as_built()
 
     def run(self, input_file):
         super().run(input_file)
