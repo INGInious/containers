@@ -94,7 +94,7 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
             "stdout": html.escape(stdout),
             "stderr": html.escape(stderr),
             "return_code": return_code,
-            "diff": html.escape(diff),
+            "diff": None if diff is None else html.escape(diff),
         })
 
     return result, debug_info

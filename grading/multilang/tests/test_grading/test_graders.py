@@ -1,6 +1,7 @@
 import pytest
 import os
 import re
+import json
 from unittest.mock import MagicMock
 from unittest.mock import call
 from pytest import approx
@@ -100,7 +101,7 @@ class TestGrader(object):
         assert(len(re.findall(r"TIME[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 1)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
 
-    def test_run_with_partial_scores_memory_limit(self):
+    def test_grade_with_partial_scores_memory_limit(self):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -214,3 +215,45 @@ class TestGrader(object):
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r'INTERNAL[ _-]ERROR', global_feedback_string)) == 1)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
+
+    def test_grade_with_partial_scores_additional_info(self):
+        feedback = MagicMock()
+        custom_data = {}
+
+        def set_custom_value(key, value):
+            custom_data[key] = value
+
+        feedback.set_custom_value.side_effect = set_custom_value
+
+        project = MagicMock()
+
+        project.run.side_effect = [
+            (0, "Accepted output", ""),
+            (SandboxCodes.TIME_LIMIT.value, "Time limit output", "stderr example")
+        ]
+
+        tests = ["AC.txt", "TLE.txt"]
+        full_path_test_cases = self.build_full_named_test_pairs(tests)
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, options={
+            "compute_diff": False
+        })
+
+        assert "additional_info" in custom_data
+        debug_info = json.loads(custom_data["additional_info"])
+
+        assert debug_info == {
+            "files_feedback": {
+                # Empty for successful runs
+                full_path_test_cases[0][0]: {},
+                # input_file, stdout, stderr, return_code and diff for unsuccessful runs
+                full_path_test_cases[1][0]: {
+                    "input_file": full_path_test_cases[1][0],
+                    "stdout": "Time limit output",
+                    "stderr": "stderr example",
+                    "return_code": SandboxCodes.TIME_LIMIT.value,
+                    # Diff was disabled because there is no specific format for this.
+                    "diff": None,
+                }
+            }
+        }
