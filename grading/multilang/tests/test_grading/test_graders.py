@@ -83,14 +83,15 @@ class TestGrader(object):
         custom_value_calls = [call("custom_stdout", stdout), call("custom_stderr", stderr)]
         feedback.set_custom_value.assert_has_calls(custom_value_calls, any_order=True)
 
-    def test_grade_with_partial_scores_time_limit(self):
+    @pytest.mark.parametrize("options", [{}, {"treat_non_zero_as_runtime_error": False}])
+    def test_grade_with_partial_scores_time_limit(self, options):
         feedback = MagicMock()
         project = FakeProject()
 
         tests = ["TLE.txt", "AC.txt"]
         full_path_test_cases = self.build_full_named_test_pairs(tests)
 
-        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, options=options)
 
         feedback.set_global_result.assert_called_with("failed")
 
@@ -101,14 +102,15 @@ class TestGrader(object):
         assert(len(re.findall(r"TIME[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 1)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
 
-    def test_grade_with_partial_scores_memory_limit(self):
+    @pytest.mark.parametrize("options", [{}, {"treat_non_zero_as_runtime_error": False}])
+    def test_grade_with_partial_scores_memory_limit(self, options):
         feedback = MagicMock()
         project = FakeProject()
 
         tests = ["MLE.txt", "AC.txt", "AC.txt", "MLE.txt", "AC.txt"]
         full_path_test_cases = self.build_full_named_test_pairs(tests)
 
-        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, options=options)
 
         feedback.set_global_result.assert_called_with("failed")
 
@@ -119,7 +121,8 @@ class TestGrader(object):
         assert(len(re.findall(r"MEMORY[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 2)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 3)
 
-    def test_grade_with_partial_scores_wrong_answer(self):
+    @pytest.mark.parametrize("options", [{}, {"treat_non_zero_as_runtime_error": False}])
+    def test_grade_with_partial_scores_wrong_answer(self, options):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -127,7 +130,7 @@ class TestGrader(object):
         weights = [5, 1]
         full_path_test_cases = self.build_full_named_test_pairs(tests)
 
-        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights, options=options)
 
         feedback.set_global_result.assert_called_with("failed")
 
@@ -138,7 +141,8 @@ class TestGrader(object):
         assert(len(re.findall(r'WRONG[ _-]ANSWER', global_feedback_string)) == 1)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
 
-    def test_grade_with_partial_scores_compiler_error(self):
+    @pytest.mark.parametrize("options", [{}, {"treat_non_zero_as_runtime_error": False}])
+    def test_grade_with_partial_scores_compiler_error(self, options):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -146,7 +150,7 @@ class TestGrader(object):
         weights = [300]
         full_path_test_cases = self.build_full_named_test_pairs(tests)
 
-        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights, options=options)
 
         feedback.set_global_result.assert_called_with("failed")
 
@@ -179,7 +183,8 @@ class TestGrader(object):
         assert(len(re.findall(r'RUNTIME[ _-]ERROR', global_feedback_string)) == 2)
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 2)
 
-    def test_grade_with_partial_scores_accepted(self):
+    @pytest.mark.parametrize("options", [{}, {"treat_non_zero_as_runtime_error": False}])
+    def test_grade_with_partial_scores_accepted(self, options):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -187,7 +192,7 @@ class TestGrader(object):
         weights = [7, 5, 7, 10]
         full_path_test_cases = self.build_full_named_test_pairs(tests)
 
-        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights, options=options)
 
         feedback.set_global_result.assert_called_with("success")
 
@@ -197,7 +202,8 @@ class TestGrader(object):
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 4)
 
-    def test_grade_with_partial_scores_internal_error(self):
+    @pytest.mark.parametrize("options", [{}, {"treat_non_zero_as_runtime_error": False}])
+    def test_grade_with_partial_scores_internal_error(self, options):
         feedback = MagicMock()
         project = FakeProject()
 
@@ -205,7 +211,7 @@ class TestGrader(object):
         weights = [2, 1]
         full_path_test_cases = self.build_full_named_test_pairs(tests)
 
-        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights)
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, weights=weights, options=options)
 
         feedback.set_global_result.assert_called_with("failed")
 
@@ -257,3 +263,37 @@ class TestGrader(object):
                 }
             }
         }
+
+    def test_grade_with_partial_scores_ignores_runtime_error_success(self):
+        runtime_error_code = 10
+        feedback = MagicMock()
+        expected_output = "Accepted output"
+        project = mock_project(runtime_error_code, expected_output, "")
+
+        tests = ["AC.txt"]
+        full_path_test_cases = self.build_full_named_test_pairs(tests)
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, options={
+            "treat_non_zero_as_runtime_error": False
+        })
+
+        feedback.set_global_result.assert_called_with("success")
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(len(re.findall(r"ACCEPTED", global_feedback_string)) == 1)
+
+    def test_grade_with_partial_scores_ignores_runtime_error_wrong_answer(self):
+        runtime_error_code = 10
+        feedback = MagicMock()
+        wrong_output = "wrong output"
+        project = mock_project(runtime_error_code, wrong_output, "")
+
+        tests = ["AC.txt"]
+        full_path_test_cases = self.build_full_named_test_pairs(tests)
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, options={
+            "treat_non_zero_as_runtime_error": False
+        })
+
+        feedback.set_global_result.assert_called_with("failed")
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(len(re.findall(r'WRONG[ _-]ANSWER', global_feedback_string)) == 1)
