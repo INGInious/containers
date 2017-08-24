@@ -13,8 +13,7 @@ env:
 
 install:
   - git clone https://github.com/JuezUN/INGInious /tmp/inginious-main
-  - docker build -t ingi/inginious-c-base /tmp/inginious-main/base-containers/base
-  - docker build -t ingi/inginious-c-base /tmp/inginious-main/base-containers/default
+  - docker build -t ingi/inginious-c-base /tmp/inginious-main/base-containers/base  
   - ./build-container.sh multilang
 
 script:
