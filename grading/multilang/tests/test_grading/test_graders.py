@@ -257,3 +257,18 @@ class TestGrader(object):
                 }
             }
         }
+
+    def test_grade_with_partial_scores_ignores_runtime_error(self):
+        feedback = MagicMock()
+        project = FakeProject()
+
+        tests = ["RTE.txt"]
+        full_path_test_cases = self.build_full_named_test_pairs(tests)
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback, options={
+            "ignore_runtime_error" : True
+        })
+
+        feedback.set_global_result.assert_called_with("failed")
+        global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
+        assert(len(re.findall(r"TIME[ _-]LIMIT[ _-]EXCEEDED", global_feedback_string)) == 0)
