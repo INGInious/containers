@@ -64,7 +64,7 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
     diff_max_lines = options.get("diff_max_lines", 100)
     diff_context_lines = options.get("diff_context_lines", 3)
     check_output = options.get("check_output", _check_output)
-    ignore_runtime_error = options.get("ignore_runtime_error", False)
+    treat_non_zero_as_runtime_error = options.get("treat_non_zero_as_runtime_error", True)
 
     return_code, stdout, stderr = None, None, None
     with open(input_file_name, 'r') as input_file:
@@ -77,10 +77,7 @@ def _compute_single_feedback(project, input_file_name, expected_output_file_name
 
     result = None
 
-    if return_code == 0:
-        output_matches = check_output(stdout, expected_output)
-        result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
-    elif ignore_runtime_error and return_code == GraderResult.RUNTIME_ERROR:
+    if return_code == 0 or (not treat_non_zero_as_runtime_error and parse_non_zero_return_code(return_code) == GraderResult.RUNTIME_ERROR):
         output_matches = check_output(stdout, expected_output)
         result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
     else:
