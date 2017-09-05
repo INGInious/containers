@@ -9,8 +9,9 @@ from pytest import approx
 import inginious
 
 from grading.graders import grade_with_partial_scores, run_against_custom_input, generate_test_files_tuples
+from grading import graders
 from grading.projects import Project, BuildError
-from grading.results import SandboxCodes
+from grading.results import SandboxCodes, GraderResult
 
 def mock_project(return_code, stdout, stderr):
     mock_project = MagicMock()
@@ -297,3 +298,39 @@ class TestGrader(object):
         feedback.set_global_result.assert_called_with("failed")
         global_feedback_string = feedback.set_global_feedback.call_args[0][0].upper()
         assert(len(re.findall(r'WRONG[ _-]ANSWER', global_feedback_string)) == 1)
+
+    def test_grade_with_partial_scores_includes_summary_result(self):
+        summary_result = GraderResult.WRONG_ANSWER
+
+        def compute_summary_result(_):
+            return summary_result
+
+        feedback = MagicMock()
+        project = mock_project(0, "", "")
+
+        tests = ["AC.txt"]
+        full_path_test_cases = self.build_full_named_test_pairs(tests)
+
+        grade_with_partial_scores(project, full_path_test_cases, feedback=feedback)
+
+        feedback.set_custom_value.assert_called_with("summary_result", summary_result.name)
+
+    @pytest.mark.parametrize("grader_results,expected_summary", [
+        ([GraderResult.COMPILATION_ERROR, GraderResult.TIME_LIMIT_EXCEEDED,
+        GraderResult.MEMORY_LIMIT_EXCEEDED, GraderResult.RUNTIME_ERROR, GraderResult.WRONG_ANSWER,
+        GraderResult.INTERNAL_ERROR, GraderResult.ACCEPTED], GraderResult.COMPILATION_ERROR),
+        ([GraderResult.TIME_LIMIT_EXCEEDED, GraderResult.MEMORY_LIMIT_EXCEEDED,
+        GraderResult.RUNTIME_ERROR, GraderResult.WRONG_ANSWER, GraderResult.INTERNAL_ERROR,
+        GraderResult.ACCEPTED], GraderResult.TIME_LIMIT_EXCEEDED),
+        ([GraderResult.MEMORY_LIMIT_EXCEEDED, GraderResult.RUNTIME_ERROR, GraderResult.WRONG_ANSWER,
+        GraderResult.INTERNAL_ERROR, GraderResult.ACCEPTED], GraderResult.MEMORY_LIMIT_EXCEEDED),
+        ([GraderResult.RUNTIME_ERROR, GraderResult.WRONG_ANSWER, GraderResult.INTERNAL_ERROR,
+        GraderResult.ACCEPTED], GraderResult.RUNTIME_ERROR),
+        ([GraderResult.WRONG_ANSWER, GraderResult.INTERNAL_ERROR, GraderResult.ACCEPTED],
+        GraderResult.WRONG_ANSWER),
+        ([GraderResult.INTERNAL_ERROR, GraderResult.ACCEPTED], GraderResult.INTERNAL_ERROR),
+        ([GraderResult.ACCEPTED], GraderResult.ACCEPTED)
+    ])
+    def test_compute_summary_feedback(self, grader_results, expected_summary):
+        assert graders._compute_summary_result(grader_results) == expected_summary
+        assert graders._compute_summary_result(grader_results[::-1]) == expected_summary
