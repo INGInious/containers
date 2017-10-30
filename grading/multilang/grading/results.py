@@ -1,13 +1,17 @@
-from enum import Enum, IntEnum
+from enum import IntEnum
 
-class GraderResult(Enum):
-    ACCEPTED = 1
-    COMPILATION_ERROR = 2
-    RUNTIME_ERROR = 3
-    WRONG_ANSWER = 4
-    MEMORY_LIMIT_EXCEEDED = 5
-    TIME_LIMIT_EXCEEDED = 6
-    INTERNAL_ERROR = 7
+class GraderResult(IntEnum):
+    """
+    Represents a result of the grader. Results are ordered by precedence (lower values override
+    higher values when computing a summary result).
+    """
+    COMPILATION_ERROR = 10
+    TIME_LIMIT_EXCEEDED = 20
+    MEMORY_LIMIT_EXCEEDED = 30
+    RUNTIME_ERROR = 40
+    WRONG_ANSWER = 50
+    INTERNAL_ERROR = 60
+    ACCEPTED = 70
 
 class SandboxCodes(IntEnum):
     MEMORY_LIMIT = 252

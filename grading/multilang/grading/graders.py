@@ -132,6 +132,9 @@ def _compute_feedback(project, test_cases, options):
 def _generate_feedback_for_compilation_error(compilation_output):
     return "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
 
+def _compute_summary_result(grader_results):
+    return min(grader_results)
+
 def run_against_custom_input(project, custom_input, feedback=feedback):
     """
     Runs the given project against a custom input.
@@ -256,7 +259,10 @@ def grade_with_partial_scores(project, test_cases, weights=None, options=None, f
         feedback_str = '\n\n'.join(generate_feedback_for_test(i, result)
             for i, result in enumerate(results))
 
+    summary_result = _compute_summary_result(results)
+
     feedback.set_custom_value("additional_info", json.dumps(debug_info))
+    feedback.set_custom_value("summary_result", summary_result.name)
     feedback.set_global_result("success" if passing == len(test_cases) else "failed")
     feedback.set_grade(score * 100.0 / total_sum)
     feedback.set_global_feedback(feedback_str)
