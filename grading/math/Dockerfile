@@ -6,5 +6,5 @@ LABEL org.inginious.grading.name="math"
 
 #install Octave and Julia
 RUN     yum -y install octave julia && \
-        yum clean all
-
+        yum clean all && \
+        pip3.5 install matplotlib numpy
