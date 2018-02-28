@@ -5,6 +5,9 @@ FROM    ingi/inginious-c-base
 LABEL org.inginious.grading.name="math"
 
 #install Octave and Julia
-RUN     yum -y install octave julia && \
+RUN     yum -y install octave octave-control octave-GeographicLib \
+                       octave-doc octave-general octave-image octave-io \
+                       octave-lhapdf octave-netcdf octave-signal \
+                       octave-statistics julia && \
         yum clean all && \
         pip3.5 install matplotlib numpy
