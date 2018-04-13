@@ -296,10 +296,10 @@ def handle_problem_action(problem_id, test_cases, language_name=None, options=No
     project = None
     project_factory = projects.get_factory_from_name(language_name)
 
-    if problem_type == 'code-multiple-languages':
+    if problem_type == 'code_multiple_languages':
         project = project_factory.create_from_code(code)
 
-    elif problem_type == 'code-file-multiple-languages':
+    elif problem_type == 'code_file_multiple_languages':
         project_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
 
         with open(project_directory + ".zip", 'wb') as project_file:
