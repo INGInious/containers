@@ -283,7 +283,7 @@ def handle_problem_action(problem_id, test_cases, language_name=None, options=No
     options: Same as in grade_with_partial_scores().
     """
 
-    action = input.get_input("@action")
+    action = "submit"#input.get_input("@action")
 
     assert action in ["customtest", "submit"]
 
