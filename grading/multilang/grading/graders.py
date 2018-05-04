@@ -130,7 +130,7 @@ def _compute_feedback(project, test_cases, options):
     return grader_results, debug_info
 
 def _generate_feedback_for_compilation_error(compilation_output):
-    return "**Compilation error**:\n\n" + rst.get_html_block("<pre>%s</pre>" % (compilation_output,))
+    return "**Compilation error**:\n\n" + _html_to_rst("<pre>%s</pre>" % (compilation_output,))
 
 def _compute_summary_result(grader_results):
     return min(grader_results)
@@ -161,7 +161,7 @@ def run_against_custom_input(project, custom_input, feedback=feedback):
                 feedback_str = "Your code finished successfully. Check your output below\n"
             else:
                 result = parse_non_zero_return_code(return_code)
-                feedback_str = rst.get_html_block(
+                feedback_str = _html_to_rst(
                     "Your code did not run successfully: <strong>%s</strong>" % (result.name,))
 
             # Save stdout and stderr so the UI can show it easily
@@ -249,7 +249,7 @@ def grade_with_partial_scores(project, test_cases, weights=None, options=None, f
                     diff_html = """<ul><li><strong>Test {0}: {1} </strong></li></ul>""".format(
                         i + 1, result.name)
 
-                feedback = rst.get_html_block(diff_html)
+                feedback = _html_to_rst(diff_html)
             else:
                 feedback = '- **Test %d: %s**' % (i + 1, result.name)
 
@@ -283,7 +283,7 @@ def handle_problem_action(problem_id, test_cases, language_name=None, options=No
     options: Same as in grade_with_partial_scores().
     """
 
-    action = "submit"#input.get_input("@action")
+    action = input.get_input("submit_action")
 
     assert action in ["customtest", "submit"]
 
@@ -324,3 +324,7 @@ def generate_test_files_tuples(n):
     """
 
     return [("in%02d.txt" % (i,), "out%02d.txt" % (i,)) for i in range(1, n + 1)]
+
+def _html_to_rst(html):
+    """ Generates an RST HTML block from the given HTML """
+    return '\n\n.. raw:: html\n\n' + rst.indent_block(1, html) + '\n'
