@@ -236,6 +236,9 @@ def grade_with_partial_scores(project, test_cases, weights=None, options=None, f
                 diff_html = None
 
                 if diff_available:
+                    # This replace is to avoid taking '\n' as one character, helping as to keep white spaces and
+                    # the diff well formatted.
+                    diff_result = diff_result.replace("\n", "\\n")
                     diff_html = """<ul><li><strong>Test {0}: {1} </strong>
                         <a class="btn btn-default btn-link btn-xs" role="button"
                         data-toggle="collapse" href="#{2}" aria-expanded="false" aria-controls="{2}">
