@@ -1,5 +1,5 @@
 FROM amicis/uncode-base
-LABEL org.inginious.grading.name="VHDL"
+LABEL org.inginious.grading.name="HDL"
 
 ADD     ghdl /ghdl
 RUN     yum -y install gcc make gcc-gnat zlib-devel
