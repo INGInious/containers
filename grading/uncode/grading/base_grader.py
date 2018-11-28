@@ -13,10 +13,17 @@ class BaseGrader(ABC):
     and a grade method (the function that is call in order to test the student code)
 
     Attributes:
-        user_request: Contains the student's submission request object
+        submission_request: Contains the student's submission request object
     """
 
-    def __init__(self, user_request):
+    def __init__(self, submission_request):
+        """
+        Initialize the attributes of the BaseGrader.
+
+        Args:
+            submission_request (obj, SubmissionRequest): An 'parameter object' that contains the information
+            about the submission made by the student
+        """
         self.submission_request = submission_request
 
 
