@@ -9,12 +9,12 @@ import json
 import difflib
 import html
 import tempfile
-from . import projects
-from .results import GraderResult, parse_non_zero_return_code
+import projects
+from results import GraderResult, parse_non_zero_return_code
 from zipfile import ZipFile
-from .base_grader import BaseGrader
-from .feedback_tools import Diff, set_feedback
-from . import graders_utils as gutils
+from base_grader import BaseGrader
+from feedback_tools import Diff, set_feedback
+import graders_utils as gutils
 
 class SimpleGrader(BaseGrader):
     """

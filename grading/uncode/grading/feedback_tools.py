@@ -9,7 +9,7 @@ TO DO:
     - Charts: Donut, Bars
 """
 
-from .graders_utils import html_to_rst as html2rst
+from graders_utils import html_to_rst as html2rst
 import difflib
 import itertools
 from inginious import feedback
