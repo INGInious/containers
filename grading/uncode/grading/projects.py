@@ -3,7 +3,7 @@ from glob import glob
 import os
 import tempfile
 import subprocess
-from .results import GraderResult, parse_non_zero_return_code
+from results import GraderResult, parse_non_zero_return_code
 
 CODE_WORKING_DIR = '/task/student/'
 
