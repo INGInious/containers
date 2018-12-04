@@ -82,7 +82,7 @@ class SimpleGrader(BaseGrader):
         # Check for errors in run
         if GraderResult.COMPILATION_ERROR in results:
             compilation_output = debug_info.get("compilation_output", "")
-            feedback_str = gutils.feedback_for_compilation_error(compilation_output)
+            feedback_str = gutils.feedback_str_for_compilation_error(compilation_output)
         else:
             # Generate feedback string for tests
             feedbacklist = []
@@ -282,7 +282,7 @@ def _generate_custom_input_feedback_info(self, return_code, stdout, stderr):
     else:
         feedback_info['global']['return'] = parse_non_zero_return_code(return_code)
         feedback_info['global']['feedback'] = gutils.html_to_rst(
-                "Your code did not run successfully: <strong>%s</strong>" % (results['global']['result'].name,))
+                "Your code did not run successfully: <strong>%s</strong>" % (feedback_info['global']['result'].name,))
         feedback_info['custom']['stdout'] =  stdout
         feedback_info['custom']['stderr'] = stderr
 
