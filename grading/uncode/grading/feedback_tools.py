@@ -42,7 +42,7 @@ class Diff:
         self.diff_context_lines = options.get("diff_context_lines", 3)
         self.output_diff_for = set(options.get("output_diff_for", []))
         
-        self.testcase_template = """<ul><li><strong>Test {testcase_number}: {result_name} </strong>
+        self.testcase_template = """<ul><li><strong>Test {test_id}: {result_name} </strong>
                         <a class="btn btn-default btn-link btn-xs" role="button"
                         data-toggle="collapse" href="#{panel_id}" aria-expanded="false" aria-controls="{panel_id}">
                         Toggle diff
