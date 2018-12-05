@@ -28,10 +28,11 @@ class SimpleGrader(BaseGrader):
     """
 
     def __init__(self, submission_request, options):
-        super.__init__(submission_request)
+        super(SimpleGrader, self).__init__(submission_request)
         self.generate_diff = options.get("compute_diff", True)
         self.treat_non_zero_as_runtime_error = options.get("treat_non_zero_as_runtime_error", True)
         self.diff_tool = Diff(options)
+        self.check_output = options.get('check_output', gutils.check_output)
 
 
 
@@ -173,14 +174,13 @@ class SimpleGrader(BaseGrader):
             And the debug information in the execution.
         """                              
 
-        check_output = self.options.get('check_output', gutils.check_output)
 
         with open(input_filename, 'r') as input_file, open(expected_output_filename, 'r') as expected_output_file:
             return_code, stdout, stderr = project.run(input_file)
             expected_output = expected_output_file.read()
 
             if return_code == 0 or (not self.treat_non_zero_as_runtime_error and parse_non_zero_return_code(return_code) == GraderResult.RUNTIME_ERROR):
-                output_matches = check_output(stdout, expected_output)
+                output_matches = self.check_output(stdout, expected_output)
                 result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
             else:
                 result = parse_non_zero_return_code(return_code)
