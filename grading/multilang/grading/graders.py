@@ -1,6 +1,8 @@
 """
 This module contains the Multi-language Grader and the method for grading 
 the submission requests.
+
+This module works with the help of the libraries on its base container (uncode).
 """
 
 from abc import ABC, abstractmethod
@@ -15,6 +17,7 @@ from zipfile import ZipFile
 from base_grader import BaseGrader
 from feedback_tools import Diff, set_feedback
 import graders_utils as gutils
+from submission_requests import SubmissionRequest
 
 class SimpleGrader(BaseGrader):
     """
@@ -309,3 +312,12 @@ def _construct_compilation_error_feedback_info(self, error):
     feedback_info['global']['result'] = GraderResult.COMPILATION_ERROR
 
     return feedback_info
+
+
+
+# Problem Handler TODO: Change in future versions
+
+def handle_problem_action(problem_id, test_cases, options={}, weights=None):
+    sub_req = SubmissionRequest(problem_id)
+    simple_grader = SimpleGrader(sub_req, options)
+    simple_grader.grade(test_cases, weights)
