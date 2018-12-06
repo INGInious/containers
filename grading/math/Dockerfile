@@ -10,5 +10,5 @@ RUN     yum -y install git octave octave-control octave-GeographicLib \
                        octave-lhapdf octave-netcdf octave-signal \
                        octave-statistics julia && \
         yum clean all && \
-        pip3.5 install matplotlib numpy antlr4-python3-runtime && \
+        pip3.5 install matplotlib numpy antlr4-python3-runtime scikit-learn && \
         pip3.5 install git+https://github.com/sympy/sympy
