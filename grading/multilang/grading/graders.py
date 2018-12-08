@@ -71,7 +71,7 @@ class SimpleGrader(BaseGrader):
 
 
 
-    def grade(self, test_cases, weights=None):
+    def grade(self, test_cases, weights=None, set_feedback=set_feedback):
         """
         This method grades the student's source code against some specific test cases
 
@@ -103,7 +103,7 @@ class SimpleGrader(BaseGrader):
                 
 
 
-    def test(self):
+    def test(self, set_feedback=set_feedback):
         """
         This function test the student's source code against the custom input of this student.                
         """
@@ -320,4 +320,7 @@ def _construct_compilation_error_feedback_info(self, error):
 def handle_problem_action(problem_id, test_cases, options={}, weights=None):
     sub_req = SubmissionRequest(problem_id)
     simple_grader = SimpleGrader(sub_req, options)
-    simple_grader.grade(test_cases, weights)
+    if sub_req.action == "submit":
+        simple_grader.grade(test_cases, weights)
+    elif sub_req.action == "customtest":
+        simple_grader.test()
