@@ -105,11 +105,42 @@ class TestGrader(object):
                     set_feedback.assert_called()
                     
         
-    
+    def test_graders_compute_all_test_cases(self):
+        """#TODO: Needs more cases"""
+        sub_req = MagicMock()
+        # Create temporal file for test cases pairs
+        _, temp_filename = tempfile.mkstemp()
+        with open(temp_filename, 'w') as tmpfile:
+            tmpfile.write('Hello world!\n')
+        # Pass this to the function _compute_all_test_cases
+        project = mock_project(0, 'Hello world!\n', "")
+        grader = SimpleGrader(sub_req, {'compute_diff': False})
+        results, _ = grader._compute_all_test_cases(project, [(temp_filename, temp_filename)])
+        assert results == [GraderResult.ACCEPTED]
+
         
+    def test_graders_generate_feedback_info(self):
+        '''#TODO: Needs more cases '''
+        sub_req = MagicMock()
+        # Create temporal file for test cases pair        
+        grader = SimpleGrader(sub_req, {'compute_diff': False})
+        feedback_info = grader._generate_feedback_info([GraderResult.ACCEPTED], {}, None, [('dummy', 'dummy')])
+        assert feedback_info['grade'] == 100.0
+        assert feedback_info['global']['result'] == 'success'
+        feedback_info = grader._generate_feedback_info([GraderResult.WRONG_ANSWER], {}, None, [('dummy', 'dummy')])
+        assert feedback_info['grade'] == 0.0
+        assert feedback_info['global']['result'] == 'failed'
+
+    def test_graders_run_custom_input_project(self):
+        '''#TODO: Needs more cases'''
+        sub_req = MagicMock(custom_input='Hello')
+        project = mock_project(0, 'Hello world!\n', "")
+        grader = SimpleGrader(sub_req, {'compute_diff': False})
+        return_code, stdout, _ = grader._run_custom_input_project(project)
+        assert return_code == 0 and stdout == 'Hello world!\n'
 
 
-
+    
 
         
     
