@@ -21,7 +21,7 @@ from submission_requests import SubmissionRequest
 
 class SimpleGrader(BaseGrader):
     """
-    This is the basic grader use by the multilang container.
+    This is the basic grader used by the multilang container.
 
     Attributes:
         - submission_request (obj): Contains the student's submission request object
