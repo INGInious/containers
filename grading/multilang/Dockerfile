@@ -1,7 +1,7 @@
 # DOCKER-VERSION 1.1.0
 
 # Inherit from the base container, which has all the needed scripts to launch tasks
-FROM    amicis/uncode-base
+FROM    unjudge/uncode-c-base
 LABEL org.inginious.grading.name="multiple_languages"
 
 # Add java 1.8
