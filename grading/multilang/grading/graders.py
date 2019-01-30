@@ -81,7 +81,7 @@ class SimpleGrader(BaseGrader):
             weights (list): List of integers describing the importance of each test case            
         """
         project = self.create_project()
-        results, debug_info = self._compute_all_test_cases(project, test_cases)
+        results, debug_info = self._run_code_against_all_test_cases(project, test_cases)
 
         # Check for errors in run
         if GraderResult.COMPILATION_ERROR in results:
@@ -103,7 +103,7 @@ class SimpleGrader(BaseGrader):
                 
 
 
-    def test(self, set_feedback=set_feedback):
+    def run_custom_input(self, set_feedback=set_feedback):
         """
         This function test the student's source code against the custom input of this student.                
         """
@@ -121,7 +121,7 @@ class SimpleGrader(BaseGrader):
 
 
 
-    def _compute_all_test_cases(self, project, test_cases):
+    def _run_code_against_all_test_cases(self, project, test_cases):
         """
         This method runs the code against all the test cases and returns a list containing
         the results and dictionary containing information for debugging.
@@ -147,7 +147,7 @@ class SimpleGrader(BaseGrader):
 
             debug_info["files_feedback"] = {}
             for input_filename, exp_output_filename in test_cases:
-                grader_result, test_case_debug_info = self._compute_test_case(project, input_filename, 
+                grader_result, test_case_debug_info = self._run_code_against_test_case(project, input_filename, 
                 exp_output_filename)
 
                 debug_info["files_feedback"][input_filename] = test_case_debug_info
@@ -161,7 +161,7 @@ class SimpleGrader(BaseGrader):
         return grader_results, debug_info
 
 
-    def _compute_test_case(self, project, input_filename, expected_output_filename):
+    def _run_code_against_test_case(self, project, input_filename, expected_output_filename):
         """
         This method computes the results and debug information of an specific
         run of the source code against one single test case.
@@ -323,4 +323,4 @@ def handle_problem_action(problem_id, test_cases, options={}, weights=None):
     if sub_req.action == "submit":
         simple_grader.grade(test_cases, weights)
     elif sub_req.action == "customtest":
-        simple_grader.test()
+        simple_grader.run_custom_input()
