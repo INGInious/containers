@@ -317,8 +317,22 @@ def _construct_compilation_error_feedback_info(self, error):
 
 # Problem Handler TODO: Change in future versions
 
-def handle_problem_action(problem_id, test_cases, options={}, weights=None):
-    sub_req = SubmissionRequest(problem_id)
+def handle_problem_action(problem_id, test_cases, options={}, weights=None, language_name=None):
+    """
+    Decides whether to grade the given problem against the test cases, or run it against a
+    user-provided custom input according to the task action. If language_name is None, it will be
+    automatically inferred from the problem with the given id (assuming it's a
+    "code multiple language" problem).
+    problem_id: The id of the problem where the code (and optionally the language) will be extracted
+        from.
+    test_cases: Same as in grade_with_partial_scores().
+    language_name: The name of the language that the code is written in. If None, it will be
+        extracted from the problem with id problem_id.
+    weights: Same as in grade_with_partial_scores().
+    options: Same as in grade_with_partial_scores().
+    """
+    
+    sub_req = SubmissionRequest(problem_id, language_name)
     simple_grader = SimpleGrader(sub_req, options)
     if sub_req.action == "submit":
         simple_grader.grade(test_cases, weights)
