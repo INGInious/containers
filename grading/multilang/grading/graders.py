@@ -325,11 +325,11 @@ def handle_problem_action(problem_id, test_cases, options={}, weights=None, lang
     "code multiple language" problem).
     problem_id: The id of the problem where the code (and optionally the language) will be extracted
         from.
-    test_cases: Same as in grade_with_partial_scores().
+    test_cases: Same as in grade().
     language_name: The name of the language that the code is written in. If None, it will be
         extracted from the problem with id problem_id.
-    weights: Same as in grade_with_partial_scores().
-    options: Same as in grade_with_partial_scores().
+    weights: grade().
+    options: Diff class.
     """
     
     sub_req = SubmissionRequest(problem_id, language_name)
