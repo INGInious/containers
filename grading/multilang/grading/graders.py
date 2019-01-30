@@ -323,8 +323,4 @@ def handle_problem_action(problem_id, test_cases, options={}, weights=None):
     if sub_req.action == "submit":
         simple_grader.grade(test_cases, weights)
     elif sub_req.action == "customtest":
-<<<<<<< HEAD
         simple_grader.run_custom_input()
-=======
-        simple_grader.test()
->>>>>>> f70b4519382e003a2642bc9b9c4c9cadaaa514e3
