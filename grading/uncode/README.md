@@ -1,8 +1,8 @@
 UNCode
 =========
 
-This is container is the base for all other custom containers for the project of
-UNCode. Contains the libraries that are share across this containers.
+This container is the base for all other custom containers of UNCode project.
+Contains the libraries shared across the custom containers (e.g. Multilang container).
 
 Multilang container (uncode/uncode-container)
 --------------------------------------------
