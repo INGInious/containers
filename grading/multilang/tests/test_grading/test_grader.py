@@ -59,7 +59,7 @@ class TestGrader(object):
         return [( path + "/in" + test + ".txt", path + "/out" + test + ".txt") for test in tests]
     
         
-    def test_graders_compute_all_test_cases(self):
+    def test_graders_run_code_against_all_test_cases(self):
         """#TODO: Needs more cases"""
         sub_req = MagicMock()
         # Create temporal file for test cases pairs
@@ -69,7 +69,7 @@ class TestGrader(object):
         # Pass this to the function _compute_all_test_cases
         project = mock_project(0, 'Hello world!\n', "")
         grader = SimpleGrader(sub_req, {'compute_diff': False})
-        results, _ = grader._compute_all_test_cases(project, [(temp_filename, temp_filename)])
+        results, _ = grader._run_code_against_all_test_cases(project, [(temp_filename, temp_filename)])
         assert results == [GraderResult.ACCEPTED]
 
         
