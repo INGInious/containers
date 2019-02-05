@@ -17,4 +17,4 @@ RUN     yum clean all
 
 ADD . /INGInious
 RUN cp -R /INGInious/grading/.  /usr/lib/python3.5/site-packages/grading/
-RUN rm -r /INGInious
+RUN rm -R /INGInious

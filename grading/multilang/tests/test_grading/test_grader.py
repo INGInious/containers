@@ -55,7 +55,7 @@ class TestGrader(object):
         Args:
             - tests (str): Name of the pairs of files for testing.
         '''
-        path = os.path.join("tests", "test_grading", "mock_input_files")
+        path = os.path.join("/tests", "test_grading", "mock_input_files")
         return [( path + "/in" + test + ".txt", path + "/out" + test + ".txt") for test in tests]
     
         
@@ -95,6 +95,45 @@ class TestGrader(object):
 
 
     
+    def test_custom_input_with_memory_limit(self):
+        sub_req = MagicMock(custom_input="Hello")
+        return_code = SandboxCodes.MEMORY_LIMIT
+        stdout = "Hello world\n"
+        stderr = "Not enough memory :("
+
+        project = mock_project(return_code, stdout, stderr)
+        grader = SimpleGrader(sub_req, {'compute_diff': False})
+        r, s, serr = grader._run_custom_input_project(project)
+        assert r == return_code and s == stdout and serr == stderr
+
+    
+    def test_grade_with_ignores_runtime_error_success(self):
+        expected_output = "Accepted output"
+        project = mock_project(10, expected_output, "")
+
+        tests = ["AC"]
+        full_path_test = self.build_test_cases_fullpath(tests)[0]
 
         
+        sub_req = MagicMock()
+        grader = SimpleGrader(sub_req, {"treat_non_zero_as_runtime_error": False})
+        result, debug = grader._run_code_against_test_case(project, full_path_test[0], full_path_test[1] )
+        assert result == GraderResult.ACCEPTED
+
+    def test_grade_with_ignores_runtime_error_wrong(self):
+        wrong_output = "Wrong output"
+        project = mock_project(10, wrong_output, "")
+
+        tests = ["AC"]
+        full_path_test = self.build_test_cases_fullpath(tests)[0]
+
+        # Instanciate the grader
+        sub_req = MagicMock()
+        grader = SimpleGrader(sub_req, {"treat_non_zero_as_runtime_error": False})
+        result, debug = grader._run_code_against_test_case(project, full_path_test[0], full_path_test[1])
+
+        assert result == GraderResult.WRONG_ANSWER
+    
+
+    
     
