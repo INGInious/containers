@@ -37,7 +37,7 @@ class FakeProject(Project):
             return (0, "Accepted output", "")
 
 
-base_path = os.path.join("/tests", "test_grading", "sample_code")
+base_path = os.path.join("tests", "test_grading", "sample_code")
 @pytest.fixture
 def codes_by_language():
         # Get the directories of sample_code
