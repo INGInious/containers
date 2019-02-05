@@ -108,7 +108,7 @@ class Diff:
                         "result_name" : result.name,
                         "panel_id" : "collapseDiff" + str(test_id),
                         "block_id" : "diffBlock" + str(test_id),
-                        "diff_result" : diff_result
+                        "diff_result" : diff_result.replace("\n", "\\n")
                 }
                 diff_html = self.testcase_template.format(**template_info)
             else:
