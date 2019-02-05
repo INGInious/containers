@@ -55,7 +55,7 @@ class TestGrader(object):
         Args:
             - tests (str): Name of the pairs of files for testing.
         '''
-        path = os.path.join("/tests", "test_grading", "mock_input_files")
+        path = os.path.join("tests", "test_grading", "mock_input_files")
         return [( path + "/in" + test + ".txt", path + "/out" + test + ".txt") for test in tests]
     
         
