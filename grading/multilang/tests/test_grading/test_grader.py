@@ -135,5 +135,31 @@ class TestGrader(object):
         assert result == GraderResult.WRONG_ANSWER
     
 
+    def test_grade_errors(self):
+        sub_req = MagicMock()        
+
+        project = FakeProject()
+        tests = ["MLE",  "IE", "TLE", "RTE"]
+        full_path_tests = self.build_test_cases_fullpath(tests)
+        grader = SimpleGrader(sub_req, {})
+        results = []
+        for test in full_path_tests:
+            result, _ = grader._run_code_against_test_case(project, test[0], test[1])
+            results.append(result)
+        assert results == [GraderResult.MEMORY_LIMIT_EXCEEDED,  GraderResult.INTERNAL_ERROR, GraderResult.TIME_LIMIT_EXCEEDED, GraderResult.RUNTIME_ERROR]
     
-    
+    def test_run_custom_input_errors(self):
+        sub_req = MagicMock(custom_input="Hello")
+        errors = [SandboxCodes.MEMORY_LIMIT, SandboxCodes.TIME_LIMIT, SandboxCodes.INTERNAL_ERROR]
+        results = []
+        for error in errors:
+            return_code = error
+            stdout = "Hello world\n"
+            stderr = "An error"
+        
+            project = mock_project(return_code, stdout, stderr)
+            grader = SimpleGrader(sub_req, {'compute_diff': False})
+            r, s, serr = grader._run_custom_input_project(project)
+            results.append(r)
+        # Custom tests from the user don't return grader codes (there is nothing to grade)
+        assert results == [SandboxCodes.MEMORY_LIMIT, SandboxCodes.TIME_LIMIT, SandboxCodes.INTERNAL_ERROR]
