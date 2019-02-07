@@ -5,6 +5,7 @@ i.e (BaseGrader Class the interface for all Graders)
 
 from abc import ABC, abstractmethod
 
+
 class BaseGrader(ABC):
     """
     Is an interface for the implementation of a Grader.
@@ -25,7 +26,6 @@ class BaseGrader(ABC):
             about the submission made by the student
         """
         self.submission_request = submission_request
-
 
     @abstractmethod
     def create_project(self):

@@ -10,6 +10,7 @@ This attributes are store in an parameter object for better use in the grading.
 
 from inginious import input
 
+
 class SubmissionRequest:
     """
     This class is a contains the information about the submission request
@@ -22,6 +23,7 @@ class SubmissionRequest:
         problem_type (str): Type of the problem submission (in the UNCode case: multiple files or single file)
         custom_input (str): String containing the student's input in case of testing
     """
+
     def __init__(self, problem_id, language_name=None):
         """
         Initialize the information about the request (attributes).
@@ -48,7 +50,6 @@ class SubmissionRequest:
         custom_input = None
         if action == "customtest":
             custom_input = input.get_input(problem_id + "/input")
-            
 
         self.action = action
         self.code = code
