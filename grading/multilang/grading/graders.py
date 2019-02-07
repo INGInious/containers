@@ -63,7 +63,7 @@ class SimpleGrader(BaseGrader):
                 project_file.write(request.code)
 
             # Unzip all the files on the project directory
-            with ZipFile(project)(project_directory + ".zip") as project_file:
+            with ZipFile(project_directory + ".zip") as project_file:
                 project_file.extractall(path=project_directory)
             
             project = project_factory.create_from_directory(project_directory)
