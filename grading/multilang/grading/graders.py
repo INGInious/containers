@@ -119,10 +119,8 @@ class SimpleGrader(BaseGrader):
 
         Args:
             project (obj): An instance of Project (an abstraction of runnable code)
-            test_cases (list): A list containing the pairs input filename and expected output filename as tuples.
-            options (dict): A dictionary containing options about the diff tool and the grading.
+            test_cases (list): A list containing the pairs input filename and expected output filename as tuples.            
 
-        Note: "options" parameter is given by the task creator on the run file.
 
         Returns:
             - grader_results (list): A list containing the grading result of each test case
