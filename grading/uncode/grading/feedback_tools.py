@@ -14,6 +14,7 @@ import difflib
 import itertools
 from inginious import feedback
 
+
 class Diff:
     """
     This class contains the toolbox (methods) for the creation
@@ -41,7 +42,7 @@ class Diff:
         self.diff_max_lines = options.get("diff_max_lines", 100)
         self.diff_context_lines = options.get("diff_context_lines", 3)
         self.output_diff_for = set(options.get("output_diff_for", []))
-        
+
         self.testcase_template = """<ul><li><strong>Test {test_id}: {result_name} </strong>
                         <a class="btn btn-default btn-link btn-xs" role="button"
                         data-toggle="collapse" href="#{panel_id}" aria-expanded="false" aria-controls="{panel_id}">
@@ -50,7 +51,6 @@ class Diff:
                     <div class="collapse" id="{panel_id}">
                         <pre id="{block_id}">{diff_result}</pre>
                     </div></li></ul><script>updateDiffBlock("{block_id}");</script>"""
-
 
     def compute(self, actual_output, expected_output):
         """
@@ -63,12 +63,13 @@ class Diff:
             - expected_output (str): Second text given for the diff tool.
         """
         diff_generator = difflib.unified_diff(expected_output.split('\n'), actual_output.split('\n'),
-            n=self.diff_context_lines, fromfile='expected_output', tofile='your_output')
+                                              n=self.diff_context_lines, fromfile='expected_output',
+                                              tofile='your_output')
 
         # Remove file names (legend will be added in the frontend)
         start = 2
         diff_output = '\n'.join(itertools.islice(diff_generator, start,
-            start + self.diff_max_lines if self.diff_max_lines is not None else sys.maxsize))
+                                                 start + self.diff_max_lines if self.diff_max_lines is not None else sys.maxsize))
 
         end_of_diff_reached = next(diff_generator, None) is None
 
@@ -77,7 +78,6 @@ class Diff:
 
         return diff_output
 
-    
     def to_html_block(self, test_id, result, test_case, debug_info):
         """
         This method creates a html block (rst embedding html) for a single test case.
@@ -85,8 +85,7 @@ class Diff:
         Args:
             - test_id (int):
             - result: Represents the results for the feedback (check 'results.py')
-            - test_case (tuple): A pair of names. The input filename and the expected output
-            filename
+            - test_case (tuple): A pair of names. The input filename and the expected output filename
             - debug_info (dict): Debugging information about the execution of the source code.
 
         Returns:
@@ -104,11 +103,11 @@ class Diff:
 
             if diff_available:
                 template_info = {
-                        "test_id" : test_id + 1,
-                        "result_name" : result.name,
-                        "panel_id" : "collapseDiff" + str(test_id),
-                        "block_id" : "diffBlock" + str(test_id),
-                        "diff_result" : diff_result.replace("\n", "\\n")
+                    "test_id": test_id + 1,
+                    "result_name": result.name,
+                    "panel_id": "collapseDiff" + str(test_id),
+                    "block_id": "diffBlock" + str(test_id),
+                    "diff_result": diff_result.replace("\n", "\\n")
                 }
                 diff_html = self.testcase_template.format(**template_info)
             else:
@@ -118,8 +117,9 @@ class Diff:
             htmlblock = html2rst(diff_html)
         else:
             htmlblock = '- **Test %d: %s**' % (test_id + 1, result.name)
-        
+
         return htmlblock
+
 
 def set_feedback(results):
     """
