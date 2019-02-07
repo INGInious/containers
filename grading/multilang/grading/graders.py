@@ -263,55 +263,55 @@ class SimpleGrader(BaseGrader):
                 raise
     
 
-def _generate_custom_input_feedback_info(self, return_code, stdout, stderr):
-    """
-    This method generates a dictionary with the information for setting the 
-    feedback information (check 'feedback_tools.py').
+    def _generate_custom_input_feedback_info(self, return_code, stdout, stderr):
+        """
+        This method generates a dictionary with the information for setting the 
+        feedback information (check 'feedback_tools.py').
 
-    Args:
-        - return_code (int): The return code after running a project (abstraction of code)
-        - stdout (str): The contents of the standard output after running a project.
-        - stderr (str): The contents of the standard error after running a project.
+        Args:
+            - return_code (int): The return code after running a project (abstraction of code)
+            - stdout (str): The contents of the standard output after running a project.
+            - stderr (str): The contents of the standard error after running a project.
 
-    Returns:
-        A dictionary containing the information for the feedback.
-    """
+        Returns:
+            A dictionary containing the information for the feedback.
+        """
 
-    feedback_info = {'global': {}, 'custom': {}}
+        feedback_info = {'global': {}, 'custom': {}}
 
-    if return_code == 0:
-        feedback_info['global']['return'] = GraderResult.ACCEPTED
-        feedback_info['global']['feedback'] = "Your code finished successfully. Check your output below\n"
-    else:
-        feedback_info['global']['return'] = parse_non_zero_return_code(return_code)
-        feedback_info['global']['feedback'] = gutils.html_to_rst(
-                "Your code did not run successfully: <strong>%s</strong>" % (feedback_info['global']['result'].name,))
-        feedback_info['custom']['stdout'] =  stdout
-        feedback_info['custom']['stderr'] = stderr
+        if return_code == 0:
+            feedback_info['global']['return'] = GraderResult.ACCEPTED
+            feedback_info['global']['feedback'] = "Your code finished successfully. Check your output below\n"
+        else:
+            feedback_info['global']['return'] = parse_non_zero_return_code(return_code)
+            feedback_info['global']['feedback'] = gutils.html_to_rst(
+                    "Your code did not run successfully: <strong>%s</strong>" % (feedback_info['global']['result'].name,))
+            feedback_info['custom']['stdout'] =  stdout
+            feedback_info['custom']['stderr'] = stderr
 
-    feedback_info['global']['result'] = "success" if feedback_info['global']['return'] == GraderResult.ACCEPTED else "failed"
-    feedback_info['grade'] = 100.0 if feedback_info['global']['return'] == GraderResult.ACCEPTED else 0.0
+        feedback_info['global']['result'] = "success" if feedback_info['global']['return'] == GraderResult.ACCEPTED else "failed"
+        feedback_info['grade'] = 100.0 if feedback_info['global']['return'] == GraderResult.ACCEPTED else 0.0
 
-    return feedback_info
+        return feedback_info
 
 
-def _construct_compilation_error_feedback_info(self, error):
-    """
-    Returns a dictionary with the feedback information, in case of a 
-    compilation error.
+    def _construct_compilation_error_feedback_info(self, error):
+        """
+        Returns a dictionary with the feedback information, in case of a 
+        compilation error.
 
-    Args:
-        error (obj): An instance of class BuildError (check 'projects.py')
+        Args:
+            error (obj): An instance of class BuildError (check 'projects.py')
 
-    Returns:
-        A dictionary with the information for the feedback setting.
-    """
-    feedback_info = {'global': {}, 'custom': {}}
-    compilation_output = error.compilation_output
-    feedback_info['global']['feedback'] = gutils.feedback_str_for_compilation_error(compilation_output)
-    feedback_info['global']['result'] = GraderResult.COMPILATION_ERROR
+        Returns:
+            A dictionary with the information for the feedback setting.
+        """
+        feedback_info = {'global': {}, 'custom': {}}
+        compilation_output = error.compilation_output
+        feedback_info['global']['feedback'] = gutils.feedback_str_for_compilation_error(compilation_output)
+        feedback_info['global']['result'] = GraderResult.COMPILATION_ERROR
 
-    return feedback_info
+        return feedback_info
 
 
 
