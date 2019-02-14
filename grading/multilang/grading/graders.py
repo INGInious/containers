@@ -1,336 +1,325 @@
+"""
+This module contains the Multi-language Grader and the method for grading 
+the submission requests.
+
+This module works with the help of the libraries on its base container (uncode).
+"""
+
+from abc import ABC, abstractmethod
 from inginious import input, feedback
-import subprocess
-import io
-import os
 import json
-import rst
 import difflib
-import itertools
-import sys
 import html
 import tempfile
-from . import projects
-from .results import GraderResult, parse_non_zero_return_code
+import projects
+from results import GraderResult, parse_non_zero_return_code
 from zipfile import ZipFile
+from base_grader import BaseGrader
+from feedback_tools import Diff, set_feedback
+import graders_utils as gutils
+from submission_requests import SubmissionRequest
 
-def _check_output(actual_output, expected_output):
+
+class SimpleGrader(BaseGrader):
     """
-    Compares the output of a program against an expected output. Returns true if the actual and the
-    expected output match.
-    """
+    This is the basic grader used by the multilang container.
 
-    return actual_output == expected_output
-
-def _compute_diff(actual_output, expected_output, diff_context_lines, diff_max_lines):
-    """
-    Computes a diff between the program output and the expected output.
-    This function will strip the diff to diff_max_lines, and provide a context of diff_context_lines
-    for each difference found.
-    """
-
-    diff_generator = difflib.unified_diff(expected_output.split('\n'), actual_output.split('\n'),
-        n=diff_context_lines, fromfile='expected_output', tofile='your_output')
-
-    # Remove file names (legend will be added in the frontend)
-    start = 2
-    diff_output = '\n'.join(itertools.islice(diff_generator, start,
-        start + diff_max_lines if diff_max_lines is not None else sys.maxsize))
-
-    end_of_diff_reached = next(diff_generator, None) is None
-
-    if not end_of_diff_reached:
-        diff_output += '\n...'
-
-    return diff_output
-
-def _compute_single_feedback(project, input_file_name, expected_output_file_name, options=None):
-    """
-    Runs the script in file_name and returns a tuple (GraderResult, debug_info) depending on the
-    output for input_file_name. The second item of the tuple (debug_info) is a dictionary that
-    includes stdout, stderr, return_code and diff.
-
-    code: A string with the code to run.
-    runner: A CodeRunner instance.
-    input_file_name: The test case input file name.
-    expected_output_file_name: The test case output file name
-    options: An optional dictionary with grader settings. See grade_with_partial_scores() for
-        details.
+    Attributes:
+        - submission_request (obj): Contains the student's submission request object
+        - diff_tool (obj): Instance of the class Diff. Containing the diff tool with some
+        specific 'options'.
+        - generate_diff (bool): Value signaling that is necessary to generate the diff feedback.
     """
 
-    if options is None:
-        options = {}
+    def __init__(self, submission_request, options):
+        super(SimpleGrader, self).__init__(submission_request)
+        self.generate_diff = options.get("compute_diff", True)
+        self.treat_non_zero_as_runtime_error = options.get("treat_non_zero_as_runtime_error", True)
+        self.diff_tool = Diff(options)
+        self.check_output = options.get('check_output', gutils.check_output)
 
-    compute_diff = options.get("compute_diff", True)
-    diff_max_lines = options.get("diff_max_lines", 100)
-    diff_context_lines = options.get("diff_context_lines", 3)
-    check_output = options.get("check_output", _check_output)
-    treat_non_zero_as_runtime_error = options.get("treat_non_zero_as_runtime_error", True)
+    def create_project(self):
+        """
+        This method constructs a project (an abstraction of runnable code) for the grading of the student's code.
 
-    return_code, stdout, stderr = None, None, None
-    with open(input_file_name, 'r') as input_file:
-        return_code, stdout, stderr = project.run(input_file)
+        Returns:
+            Project: An abstraction of runnable code that contains the student's code
+            and can be given specific test cases for the grading of the source code
+        """
+        request = self.submission_request
+        project_factory = projects.get_factory_from_name(request.language_name)
 
-    expected_output = None
+        if request.problem_type == 'code_multiple_languages':
+            project = project_factory.create_from_code(request.code)
+            return project
+        if request.problem_type == 'code_file_multiple_languages':
+            # Create project directory to add source code and unzip files
+            project_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
 
-    with open(expected_output_file_name) as expected_output_file:
-        expected_output = expected_output_file.read()
+            # Add source code to zip file
+            with open(project_directory + ".zip", "wb") as project_file:
+                project_file.write(request.code)
 
-    result = None
+            # Unzip all the files on the project directory
+            with ZipFile(project_directory + ".zip") as project_file:
+                project_file.extractall(path=project_directory)
 
-    if return_code == 0 or (not treat_non_zero_as_runtime_error and parse_non_zero_return_code(return_code) == GraderResult.RUNTIME_ERROR):
-        output_matches = check_output(stdout, expected_output)
-        result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
-    else:
-        result = parse_non_zero_return_code(return_code)
+            project = project_factory.create_from_directory(project_directory)
+            return project
 
-    debug_info = {}
+    def grade(self, test_cases, weights=None, set_feedback=set_feedback):
+        """
+        This method grades the student's source code against some specific test cases
 
-    if result != GraderResult.ACCEPTED:
-        diff = None
-        if compute_diff:
-            diff = _compute_diff(stdout, expected_output, diff_context_lines, diff_max_lines)
+        Args:
+            test_cases (list of tuples): A list containing a tuples with a pair of string. The name
+            of the input file and name of the expected output file of each test case.
+            weights (list): List of integers describing the importance of each test case
+        """
+        project = self.create_project()
+        results, debug_info = self._run_code_against_all_test_cases(project, test_cases)
 
-        debug_info.update({
-            "input_file": input_file_name,
-            "stdout": html.escape(stdout),
-            "stderr": html.escape(stderr),
-            "return_code": return_code,
-            "diff": None if diff is None else html.escape(diff),
-        })
+        # Check for errors in run
+        if GraderResult.COMPILATION_ERROR in results:
+            compilation_output = debug_info.get("compilation_output", "")
+            feedback_str = gutils.feedback_str_for_compilation_error(compilation_output)
+        else:
+            # Generate feedback string for tests
+            feedbacklist = []
+            for i, result in enumerate(results):
+                test_case = test_cases[i]
+                feedbacklist.append(self.diff_tool.to_html_block(i, result, test_case, debug_info))
+            feedback_str = '\n\n'.join(feedbacklist)
 
-    return result, debug_info
+        feedback_info = self._generate_feedback_info(results, debug_info, weights, test_cases)
+        feedback_info['global']['feedback'] = feedback_str
 
-def _compute_feedback(project, test_cases, options):
-    """
-    Computes the grader feedback for the given project against each of the provided test cases.
+        set_feedback(feedback_info)
 
-    project: The project to run the test cases against.
-    test_cases: A list of tuples (input_file_name, output_file_name) describing the cases the code
-        will be tested against.
-    options: A dictionary with the grader options. It will be forwarded to _compute_single_feedback().
-    """
-    grader_results = []
-    debug_info = {}
+    def run_custom_input(self, set_feedback=set_feedback):
+        """
+        This function test the student's source code against the custom input of this student.
+        """
+        project = self.create_project()
+        results = {}
 
-    try:
-        project.build()
+        try:
+            return_code, stdout, stderr = self._run_custom_input_project(project)
+            results = self._generate_custom_input_feedback_info(return_code, stdout, stderr)
+        except projects.BuildError as e:
+            results = self._construct_compilation_error_feedback_info(e)
 
-        debug_info["files_feedback"] = {}
-        for input_file_name, output_file_name in test_cases:
-            grader_result, test_case_debug_info = _compute_single_feedback(project, input_file_name,
-                output_file_name, options)
+        # Return feedback
+        set_feedback(results)
 
-            debug_info["files_feedback"][input_file_name] = test_case_debug_info
-            grader_results.append(grader_result)
-    except projects.BuildError as e:
-        debug_info["compilation_output"] = e.compilation_output
+    def _run_code_against_all_test_cases(self, project, test_cases):
+        """
+        This method runs the code against all the test cases and returns a list containing
+        the results and dictionary containing information for debugging.
 
-        grader_results = [GraderResult.COMPILATION_ERROR for _ in test_cases]
+        Args:
+            project (obj): An instance of Project (an abstraction of runnable code)
+            test_cases (list): A list containing the pairs input filename and expected output filename as tuples.            
 
-    return grader_results, debug_info
 
-def _generate_feedback_for_compilation_error(compilation_output):
-    return "**Compilation error**:\n\n" + _html_to_rst("<pre>%s</pre>" % (compilation_output,))
+        Returns:
+            - grader_results (list): A list containing the grading result of each test case
+            (i.e output equals to expected output)
+            - debug_info (dict): A dictionary containing the information about debugging, the keys are the
+            input filenames.
+        """
+        grader_results = []
+        debug_info = {}
 
-def _compute_summary_result(grader_results):
-    return min(grader_results)
-
-def run_against_custom_input(project, custom_input, feedback=feedback):
-    """
-    Runs the given project against a custom input.
-
-    Arguments:
-    project -- A Project instance.
-    custom_input -- A String with the input to be sent to the project.
-    """
-
-    result = None
-    feedback_str = None
-
-    custom_input_file_name = 'custom_input.txt'
-    with open(custom_input_file_name, 'w') as input_file:
-        input_file.write(custom_input)
-
-    with open(custom_input_file_name, 'r') as input_file:
         try:
             project.build()
-            return_code, stdout, stderr = project.run(input_file)
 
-            if return_code == 0:
-                result = GraderResult.ACCEPTED
-                feedback_str = "Your code finished successfully. Check your output below\n"
+            debug_info["files_feedback"] = {}
+            for input_filename, exp_output_filename in test_cases:
+                grader_result, test_case_debug_info = self._run_code_against_test_case(project, input_filename,
+                                                                                       exp_output_filename)
+
+                debug_info["files_feedback"][input_filename] = test_case_debug_info
+                grader_results.append(grader_result)
+
+        except projects.BuildError as e:
+            debug_info["compilation_output"] = e.compilation_output
+
+            grader_results = [GraderResult.COMPILATION_ERROR for _ in test_cases]
+
+        return grader_results, debug_info
+
+    def _run_code_against_test_case(self, project, input_filename, expected_output_filename):
+        """
+        This method computes the results and debug information of an specific
+        run of the source code against one single test case.
+
+        Args:
+            project (obj): Instance of project, an abstraction of runnable code
+            input_filename (str): Name of the input file in the test case.
+            expected_output_filename (str): Name of the output file in the test case.
+
+        Returns:
+            The result of the execution of the student's source code, (ACCEPTED or WRONG_ANSWER in the case
+            of zero return code. Check 'results.py')
+            And the debug information in the execution.
+        """
+
+        with open(input_filename, 'r') as input_file, open(expected_output_filename, 'r') as expected_output_file:
+            return_code, stdout, stderr = project.run(input_file)
+            expected_output = expected_output_file.read()
+
+            if return_code == 0 or (not self.treat_non_zero_as_runtime_error and
+                                    parse_non_zero_return_code(return_code) == GraderResult.RUNTIME_ERROR):
+                output_matches = self.check_output(stdout, expected_output)
+                result = GraderResult.ACCEPTED if output_matches else GraderResult.WRONG_ANSWER
             else:
                 result = parse_non_zero_return_code(return_code)
-                feedback_str = _html_to_rst(
-                    "Your code did not run successfully: <strong>%s</strong>" % (result.name,))
 
-            # Save stdout and stderr so the UI can show it easily
-            feedback.set_custom_value("custom_stdout", stdout)
-            feedback.set_custom_value("custom_stderr", stderr)
-        except projects.BuildError as e:
-            compilation_output = e.compilation_output
-            feedback_str = _generate_feedback_for_compilation_error(compilation_output)
-            result = GraderResult.COMPILATION_ERROR
+            debug_info = {}
+            if result != GraderResult.ACCEPTED:
+                diff = None
+                if self.generate_diff:
+                    diff = self.diff_tool.compute(stdout, expected_output)
 
-    feedback.set_global_result("success" if result == GraderResult.ACCEPTED else "failed")
-    feedback.set_grade(100.0 if result == GraderResult.ACCEPTED else 0.0)
-    feedback.set_global_feedback(feedback_str)
+                debug_info.update({
+                    "input_file": input_filename,
+                    "stdout": html.escape(stdout),
+                    "stderr": html.escape(stderr),
+                    "return_code": return_code,
+                    "diff": None if diff is None else html.escape(diff),
+                })
 
-def grade_with_partial_scores(project, test_cases, weights=None, options=None, feedback=feedback):
-    """
-    Partially grade the specified code with the given test cases and weights.
+            return result, debug_info
 
-    project: A Project instance with the project to grade.
-    test_cases: A list of tuples (input_file_name, output_file_name). Must have at least one test
-        case.
-    weights: A list of weights for each test case. If None, all test_cases are assumed to have the
-        same weight. If not None, it must have the same number of elements as test_cases.
-    options: A dictionary of settings for the grader. This function accepts the following options:
-        - output_diff_for: list with the names of the input files for which the diff will be shown
-            to the user. Defaults to an empty list. Only valid if compute_diff is True.
-        - compute_diff: bool. Whether or not to compute diff for admins. Defaults to True
-        - diff_max_lines: int. The maximum number of lines of diff to be saved, or None if unbounded.
-        - diff_context_lines: int. The lines of context to be included for diff.
-        - check_output: function. A custom function that compares the program output against the
-            expected output. This function takes two strings (actual and expected output) and returns
-            a boolean that indicates whether the outputs match.
-    """
+    def _generate_feedback_info(self, results, debug_info, weights, test_cases):
+        """
+        This method generates a dictionary containing the information for the feedback
+        setting function (check 'feedback_tools.py')
 
-    assert project is not None
-    assert test_cases is not None and len(test_cases) > 0, \
-        "test_cases must be provided and should have at least one test case"
+        Args:
+            - results (list): Containing the results for executing student's source code (check 'results.py')
+            - debug_info (dict): Dictionary containing the debugging info for the execution
+            of the test cases.
+            - weights (list): List of integers containing the importance of the nth-test
+            - test_cases (list): List of pairs of filenames. i.e (input_filename, expected_output_filename)
+        """
 
-    if weights is None:
-        weights = [1] * len(test_cases)
+        if weights is None:
+            weights = [1] * len(test_cases)
 
-    assert len(weights) == len(test_cases), \
-        "If provided, the number of elements in weights must match the number of elements in test_cases"
+        feedback_info = {'global': {}, 'custom': {}}
 
-    if options is None:
-        options = {}
+        passing = sum(1 for result in results if result == GraderResult.ACCEPTED)
+        score = sum(weights[i] for i, result in enumerate(results) if result == GraderResult.ACCEPTED)
+        total_sum = sum(weights)
 
-    output_diff_for = set(options.get("output_diff_for", []))
+        summary_result = gutils.compute_summary_result(results)
 
-    results, debug_info = _compute_feedback(project, test_cases, options)
-    passing = sum(1 for result in results if result == GraderResult.ACCEPTED)
-    score = sum(weights[i] for i, result in enumerate(results) if result == GraderResult.ACCEPTED)
-    total_sum = sum(weight for weight in weights)
+        feedback_info['custom']['additional_info'] = json.dumps(debug_info)
+        feedback_info['custom']['summary_result'] = summary_result.name
+        feedback_info['global']['result'] = "success" if passing == len(test_cases) else "failed"
+        feedback_info['grade'] = score * 100.0 / total_sum
 
-    assert total_sum != 0, "The sum of weights must not be zero"
+        return feedback_info
 
-    if GraderResult.COMPILATION_ERROR in results:
-        compilation_output = debug_info.get("compilation_output", "")
-        feedback_str = _generate_feedback_for_compilation_error(compilation_output)
-    else:
-        def generate_feedback_for_test(i, result):
-            input_file_name = test_cases[i][0]
+    def _run_custom_input_project(self, project):
+        """
+        This method runs the student's source code against a custom input that
+        the student defines on the task submission section.
 
-            if input_file_name in output_diff_for:
-                panel_id = "collapseDiff" + str(i)
-                block_id = "diffBlock" + str(i)
-                diff_result = (
-                    debug_info.get("files_feedback", {}).get(input_file_name, {}).get("diff", None)
-                )
+        Args:
+            - project (obj): An instance of Project. An abstraction of runnable code
+            (check 'projects.py').
 
-                diff_available = diff_result is not None
-                diff_html = None
-
-                if diff_available:
-                    # This replace is to avoid taking '\n' as one character, helping as to keep white spaces and
-                    # the diff well formatted.
-                    diff_result = diff_result.replace("\n", "\\n")
-                    diff_html = """<ul><li><strong>Test {0}: {1} </strong>
-                        <a class="btn btn-default btn-link btn-xs" role="button"
-                        data-toggle="collapse" href="#{2}" aria-expanded="false" aria-controls="{2}">
-                      Toggle diff
-                    </a>
-                    <div class="collapse" id="{2}">
-                      <pre id="{4}">{3}</pre>
-                    </div></li></ul><script>updateDiffBlock("{4}");</script>""".format(
-                        i + 1, result.name, panel_id, diff_result, block_id)
-                else:
-                    diff_html = """<ul><li><strong>Test {0}: {1} </strong></li></ul>""".format(
-                        i + 1, result.name)
-
-                feedback = _html_to_rst(diff_html)
-            else:
-                feedback = '- **Test %d: %s**' % (i + 1, result.name)
+        Returns:
+            The return code, standard output and standard error files.
+        """
+        # Create a file with the custom input
+        custom_input_filename = 'custom_input.txt'
+        with open(custom_input_filename, 'w') as input_file:
+            input_file.write(self.submission_request.custom_input)
+        with open(custom_input_filename, 'r') as input_file:
+            try:
+                project.build()
+                return_code, stdout, stderr = project.run(input_file)
+                return return_code, stdout, stderr
+            except:
+                raise
 
 
-            return feedback
+    def _generate_custom_input_feedback_info(self, return_code, stdout, stderr):
+        """
+        This method generates a dictionary with the information for setting the 
+        feedback information (check 'feedback_tools.py').
 
-        feedback_str = '\n\n'.join(generate_feedback_for_test(i, result)
-            for i, result in enumerate(results))
+        Args:
+            - return_code (int): The return code after running a project (abstraction of code)
+            - stdout (str): The contents of the standard output after running a project.
+            - stderr (str): The contents of the standard error after running a project.
 
-    summary_result = _compute_summary_result(results)
+        Returns:
+            A dictionary containing the information for the feedback.
+        """
 
-    feedback.set_custom_value("additional_info", json.dumps(debug_info))
-    feedback.set_custom_value("summary_result", summary_result.name)
-    feedback.set_global_result("success" if passing == len(test_cases) else "failed")
-    feedback.set_grade(score * 100.0 / total_sum)
-    feedback.set_global_feedback(feedback_str)
+        feedback_info = {'global': {}, 'custom': {}}
 
-def handle_problem_action(problem_id, test_cases, language_name=None, options=None, weights=None):
+        if return_code == 0:
+            feedback_info['global']['return'] = GraderResult.ACCEPTED
+            feedback_info['global']['feedback'] = "Your code finished successfully. Check your output below\n"
+        else:
+            feedback_info['global']['return'] = parse_non_zero_return_code(return_code)
+            feedback_info['global']['feedback'] = gutils.html_to_rst(
+                    "Your code did not run successfully: <strong>%s</strong>" % (feedback_info['global']['result'].name,))
+            feedback_info['custom']['stdout'] =  stdout
+            feedback_info['custom']['stderr'] = stderr
+
+        feedback_info['global']['result'] = "success" if feedback_info['global']['return'] == GraderResult.ACCEPTED else "failed"
+        feedback_info['grade'] = 100.0 if feedback_info['global']['return'] == GraderResult.ACCEPTED else 0.0
+
+        return feedback_info
+
+
+    def _construct_compilation_error_feedback_info(self, error):
+        """
+        Returns a dictionary with the feedback information, in case of a 
+        compilation error.
+
+        Args:
+            error (obj): An instance of class BuildError (check 'projects.py')
+
+        Returns:
+            A dictionary with the information for the feedback setting.
+        """
+        feedback_info = {'global': {}, 'custom': {}}
+        compilation_output = error.compilation_output
+        feedback_info['global']['feedback'] = gutils.feedback_str_for_compilation_error(compilation_output)
+        feedback_info['global']['result'] = GraderResult.COMPILATION_ERROR
+
+        return feedback_info
+
+
+# Problem Handler TODO: Change in future versions
+
+
+def handle_problem_action(problem_id, test_cases, options={}, weights=None, language_name=None):
     """
     Decides whether to grade the given problem against the test cases, or run it against a
     user-provided custom input according to the task action. If language_name is None, it will be
     automatically inferred from the problem with the given id (assuming it's a
     "code multiple language" problem).
-
     problem_id: The id of the problem where the code (and optionally the language) will be extracted
         from.
-    test_cases: Same as in grade_with_partial_scores().
+    test_cases: Same as in grade().
     language_name: The name of the language that the code is written in. If None, it will be
         extracted from the problem with id problem_id.
-    weights: Same as in grade_with_partial_scores().
-    options: Same as in grade_with_partial_scores().
+    weights: grade().
+    options: Diff class.
     """
 
-    try:
-        action = input.get_input("submit_action")
-    except KeyError:
-        action = "submit"
-
-    assert action in ["customtest", "submit"]
-
-    code = input.get_input(problem_id)
-
-    if language_name is None:
-        language_name = input.get_input(problem_id + "/language")
-    problem_type = input.get_input(problem_id + "/type")
-
-    project = None
-    project_factory = projects.get_factory_from_name(language_name)
-
-    if problem_type == 'code_multiple_languages':
-        project = project_factory.create_from_code(code)
-
-    elif problem_type == 'code_file_multiple_languages':
-        project_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
-
-        with open(project_directory + ".zip", 'wb') as project_file:
-            project_file.write(code)
-        with ZipFile(project_directory + ".zip") as project_file:
-            project_file.extractall(path=project_directory)
-
-        project = project_factory.create_from_directory(project_directory)
-
-    if action == "customtest":
-        custom_input = input.get_input(problem_id + "/input")
-        return run_against_custom_input(project, custom_input)
-    elif action == "submit":
-        return grade_with_partial_scores(project, test_cases, weights, options)
-
-def generate_test_files_tuples(n):
-    """
-    Generates a list of test cases with the following convention:
-    [("in01.txt", "out01.txt"), ("in02.txt", "out02.txt"), ..., ("in<n>.txt", "out<n>.txt")]
-
-    n: the number of test cases
-    """
-
-    return [("in%02d.txt" % (i,), "out%02d.txt" % (i,)) for i in range(1, n + 1)]
-
-def _html_to_rst(html):
-    """ Generates an RST HTML block from the given HTML """
-    return '\n\n.. raw:: html\n\n' + rst.indent_block(1, html) + '\n'
+    sub_req = SubmissionRequest(problem_id, language_name)
+    simple_grader = SimpleGrader(sub_req, options)
+    if sub_req.action == "submit":
+        simple_grader.grade(test_cases, weights)
+    elif sub_req.action == "customtest":
+        simple_grader.run_custom_input()
