@@ -1,0 +1,5 @@
+package Version is
+   Ghdl_Ver : constant String := "@VER@";
+   Ghdl_Release : constant String :=
+      "(tarball) [Dunoon edition]";
+end Version;
