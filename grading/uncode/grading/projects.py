@@ -329,7 +329,58 @@ class CProjectFactory(MakefileProjectFactory):
 
         return LambdaProject(run_function=run, build_function=build)
 
+class VerilogProjectFactory(ProjectFactory):
+    """
+    Implementation of project for verilog code
+    """
+    def __init__(self, additional_flags=[]):
+        """
+        Initializes an instance of CProjectFactory with the given options.
+        """
+        self._additional_flags = additional_flags
+    def create_from_code(self):
+        pass
+        
+    def create_from_directory(self, directory):
+        
+        def build():
+            source_files = glob(os.path.join(os.path.abspath(directory), "*.v"))
 
+            compilation_command = self._additional_flags + ["iverilog -o main.out"]
+            compilation_command.extend(source_files)
+
+            return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=directory)
+            if return_code != 0:
+                raise BuildError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr)
+
+        def run(input_file=None):
+            run_command = ["vvp main.out"]
+            return _run_in_sandbox(run_command, cwd=directory)
+        
+        return LambdaProject(run_function=run, build_function=build)
+
+    
+class VHDLProjectFactory(ProjectFactory):
+    def create_from_code(self):
+        pass
+    def create_from_directory(self, directory, testbench_file_name, entity_name):
+        testbench_file_name = testbench_file_name.split('/')[-1]
+        def build():
+            source_files = glob(os.path.join(os.path.abspath(directory), "*.vhd"))
+            source_files = list(map(os.path.basename, source_files))
+            analize_command = ["ghdl -a "] + source_files 
+            return_code, stdout, stderr = _run_in_sandbox(analize_command, cwd=directory)
+            if return_code != 0:
+                raise BuildError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr)
+            compilation_command = ["ghdl -e ", entity_name]
+            return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=directory)
+            if return_code != 0:
+                raise BuildError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr+ str(analize_command) + '\n' + str(compilation_command))
+
+        def run(input_file=None):
+            run_command = ["ghdl -r ", entity_name]
+            return _run_in_sandbox(run_command, cwd=directory)
+        return LambdaProject(run_function=run, build_function=build)
 
 _ALL_FACTORIES = {
     "python2": PythonProjectFactory(),
@@ -340,7 +391,9 @@ _ALL_FACTORIES = {
     "cpp": CppProjectFactory(["-O2"]),
     "cpp11": CppProjectFactory(additional_flags=["-std=c++11", "-O2"]),
     "c": CProjectFactory(["-O2"]),
-    "c11": CProjectFactory(additional_flags=["-std=c11", "-O2"])
+    "c11": CProjectFactory(additional_flags=["-std=c11", "-O2"]),
+    "verilog": VerilogProjectFactory(),
+    "vhdl": VHDLProjectFactory()
 }
 
 def factory_exists(name):
