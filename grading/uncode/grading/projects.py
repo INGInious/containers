@@ -368,14 +368,14 @@ class VHDLProjectFactory(ProjectFactory):
         def build():
             source_files = glob(os.path.join(os.path.abspath(directory), "*.vhd"))
             source_files = list(map(os.path.basename, source_files))
-            analize_command = ["ghdl -a "] + source_files 
-            return_code, stdout, stderr = _run_in_sandbox(analize_command, cwd=directory)
+            analyze_command = ["ghdl -a "] + source_files 
+            return_code, stdout, stderr = _run_in_sandbox(analyze_command, cwd=directory)
             if return_code != 0:
                 raise BuildError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr)
             compilation_command = ["ghdl -e ", entity_name]
             return_code, stdout, stderr = _run_in_sandbox(compilation_command, cwd=directory)
             if return_code != 0:
-                raise BuildError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr+ str(analize_command) + '\n' + str(compilation_command))
+                raise BuildError(_get_compilation_message_from_return_code(return_code) + "\n" + stderr+ str(analyze_command) + '\n' + str(compilation_command))
 
         def run(input_file=None):
             run_command = ["ghdl -r ", entity_name]
