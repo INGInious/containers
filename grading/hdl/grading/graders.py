@@ -101,8 +101,6 @@ class HDLGrader(BaseGrader):
                 "return_code": return_code,
                 "diff": None if diff is None else html.escape(diff),
             })
-        # Compare the return values with the expected_output
-
         return result, debug_info, feedback_info
 
 
