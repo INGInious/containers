@@ -335,7 +335,7 @@ class VerilogProjectFactory(ProjectFactory):
     """
     def __init__(self, additional_flags=[]):
         """
-        Initializes an instance of CProjectFactory with the given options.
+        Initializes an instance of VerilogProjectFactory with the given options.
         """
         self._additional_flags = additional_flags
     def create_from_code(self):
