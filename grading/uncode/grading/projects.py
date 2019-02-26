@@ -338,11 +338,11 @@ class VerilogProjectFactory(ProjectFactory):
         Initializes an instance of VerilogProjectFactory with the given options.
         """
         self._additional_flags = additional_flags
+
     def create_from_code(self):
         pass
         
     def create_from_directory(self, directory):
-        
         def build():
             source_files = glob(os.path.join(os.path.abspath(directory), "*.v"))
 
@@ -363,8 +363,8 @@ class VerilogProjectFactory(ProjectFactory):
 class VHDLProjectFactory(ProjectFactory):
     def create_from_code(self):
         pass
+
     def create_from_directory(self, directory, testbench_file_name, entity_name):
-        testbench_file_name = testbench_file_name.split('/')[-1]
         def build():
             source_files = glob(os.path.join(os.path.abspath(directory), "*.vhd"))
             source_files = list(map(os.path.basename, source_files))

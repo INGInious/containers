@@ -84,7 +84,8 @@ class HDLGrader(BaseGrader):
                 correct = self.check_output(stdout, expected_output)
                 feedback_info['global']['result'] = "success" if correct else "failed"
                 feedback_info['grade'] = 100.0 if correct else 0.0
-                if correct: result = GraderResult.ACCEPTED
+                if correct: 
+                    result = GraderResult.ACCEPTED
         
         debug_info = {}
 
