@@ -28,18 +28,17 @@ class HDLGrader(BaseGrader):
         Creates a project (VHDL or Verilog) to test the code
         """
         # Create factory project
-        project_factory = projects.get_factory_from_name(self.submission_request.language_name)
+        language_name = self.submission_request.language_name
+        project_factory = projects.get_factory_from_name(language_name)
 
         # Create directory
         project_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
 
-        if self.submission_request.problem_type == 'code_multiple_languages':
-            veri = self.submission_request.language_name == 'verilog'
-            vhd = self.submission_request.language_name == 'vhdl'
-            if veri:
+        if self.submission_request.problem_type == 'code_multiple_languages':            
+            if language_name == 'verilog':
                 code_file_name = tempfile.mkstemp(suffix=".v", dir=project_directory)
                 testbench_temp_name = tempfile.mkstemp(suffix=".v", dir=project_directory)[1]
-            if vhd:
+            if language_name == 'vhdl':
                 code_file_name = tempfile.mkstemp(suffix=".vhd", dir=project_directory)
                 testbench_temp_name = os.path.join(project_directory, testbench_file_name)
 
