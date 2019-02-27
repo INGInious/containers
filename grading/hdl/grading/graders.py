@@ -45,9 +45,9 @@ class HDLGrader(BaseGrader):
             with open(code_file_name[1], "w+") as code_file:
                 code_file.write(self.submission_request.code)
                 copyfile(testbench_file_name, testbench_temp_name)
-            if veri:
+            if language_name == 'verilog':
                 project = project_factory.create_from_directory(project_directory)
-            elif vhd:                
+            elif language_name == 'vhd':                
                 project = project_factory.create_from_directory(project_directory, testbench_temp_name[1], self.entity_name)
             return project
 
