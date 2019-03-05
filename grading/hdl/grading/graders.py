@@ -46,10 +46,9 @@ class HDLGrader(BaseGrader):
                 code_file.write(self.submission_request.code)
                 copyfile(testbench_file_name, testbench_temp_name)
             if language_name == 'verilog':
-                project = project_factory.create_from_directory(project_directory)
-            elif language_name == 'vhd':                
-                project = project_factory.create_from_directory(project_directory, testbench_temp_name[1], self.entity_name)
-            return project
+                return project_factory.create_from_directory(project_directory)
+            elif language_name == 'vhdl':                
+                return project_factory.create_from_directory(project_directory, testbench_temp_name[1], self.entity_name)
 
 
         #if self.submission_request.problem_type == 'code_file_multiple_languages':
