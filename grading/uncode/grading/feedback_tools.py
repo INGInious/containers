@@ -49,6 +49,7 @@ class Diff:
                         Toggle diff
                     </a>
                     <div class="collapse" id="{panel_id}">
+                        <pre class="input-area" id="{block_id}-input">{input_text}</pre>
                         <pre id="{block_id}">{diff_result}</pre>
                     </div></li></ul><script>updateDiffBlock("{block_id}");</script>"""
 
@@ -107,8 +108,11 @@ class Diff:
                     "result_name": result.name,
                     "panel_id": "collapseDiff" + str(test_id),
                     "block_id": "diffBlock" + str(test_id),
-                    "diff_result": diff_result.replace("\n", "\\n")
+                    "diff_result": diff_result.replace("\n", "\\n"),
+                    "input_text": self.read_input_example(test_case)
                 }
+
+
                 diff_html = self.testcase_template.format(**template_info)
             else:
                 diff_html = """<ul><li><strong>Test {0}: {1} </strong></li></ul>""".format(
@@ -120,6 +124,12 @@ class Diff:
 
         return htmlblock
 
+
+    def read_input_example(self, test_case):
+        """ This method reads and adds the input test text. """
+        with open(test_case[0], 'r') as input_file:
+            text = input_file.read()
+            return text
 
 def set_feedback(results):
     """
