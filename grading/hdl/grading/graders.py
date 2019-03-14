@@ -51,7 +51,27 @@ class HDLGrader(BaseGrader):
                 return project_factory.create_from_directory(project_directory, testbench_temp_name[1], self.entity_name)
 
 
-        #if self.submission_request.problem_type == 'code_file_multiple_languages':
+        if self.submission_request.problem_type == 'code_file_multiple_languages':
+            project_directory = tempfile.mkdtemp(dir=projects.CODE_WORKING_DIR)
+
+            # Add source code to zip file
+            with open(project_directory + ".zip", "wb") as project_file:
+                project_file.write(self.submission_request.code)
+
+            # Unzip all the files on the project directory
+            with ZipFile(project_directory + ".zip") as project_file:
+                project_file.extractall(path=project_directory)
+
+            
+            if language_name == 'verilog':
+                # Add the testbench
+                testbench_temp_name = tempfile.mkstemp(suffix=".v", dir=project_directory)[1]
+                copyfile(testbench_file_name, testbench_temp_name)
+                return project_factory.create_from_directory(project_directory)         
+            elif language_name == 'vhdl':
+                testbench_temp_name = os.path.join(project_directory, testbench_file_name)
+                copyfile(testbench_file_name, testbench_temp_name)
+                return project_factory.create_from_directory(project_directory, testbench_temp_name[1], self.entity_name)
 
     def grade(self, testbench_file_name, expected_output_name):
         """
