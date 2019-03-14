@@ -129,7 +129,11 @@ class Diff:
         """ This method reads and adds the input test text. """
         with open(test_case[0], 'r') as input_file:
             text = input_file.read()
-            return text
+            number_of_lines = len(text.split('\n'))
+            if number_of_lines < 150:
+                return text
+            else:
+                return test_case[0]
 
 def set_feedback(results):
     """
