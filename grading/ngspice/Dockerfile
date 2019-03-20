@@ -19,3 +19,6 @@ ADD ngspice.rpm /ngspice.rpm
 RUN rpm -ivh /ngspice.rpm
 RUN yum install ngspice
 RUN rm /ngspice.rpm
+
+# Add sympy to evaluate equations
+RUN pip3.5 install sympy
