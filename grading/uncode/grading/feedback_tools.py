@@ -9,9 +9,10 @@ TO DO:
     - Charts: Donut, Bars
 """
 
-from graders_utils import html_to_rst as html2rst
 import difflib
 import itertools
+import os
+from graders_utils import html_to_rst as html2rst
 from inginious import feedback
 
 
@@ -127,13 +128,18 @@ class Diff:
 
     def read_input_example(self, test_case):
         """ This method reads and adds the input test text. """
-        with open(test_case[0], 'r') as input_file:
-            text = input_file.read()
-            number_of_lines = len(text.split('\n'))
-            if number_of_lines < 150:
-                return text
-            else:
-                return test_case[0]
+        statinfo = os.stat(test_case[0])
+        # size of input least than 1MB
+        if statinfo.st_size < 1048576:
+            with open(test_case[0], 'r') as input_file:
+                text = input_file.read()
+                number_of_lines = len(text.split('\n'))
+                if number_of_lines < 150:
+                    return text
+                else:
+                    return "Too many lines on the input"
+        else:
+            return "Input file oversize"            
 
 def set_feedback(results):
     """
