@@ -43,16 +43,22 @@ class Diff:
         self.diff_max_lines = options.get("diff_max_lines", 100)
         self.diff_context_lines = options.get("diff_context_lines", 3)
         self.output_diff_for = set(options.get("output_diff_for", []))
+        self.show_input = options.get('show_input', False)
 
-        self.testcase_template = """<ul><li><strong>Test {test_id}: {result_name} </strong>
+        self.testcase_template = ["""<ul><li><strong>Test {test_id}: {result_name} </strong>
                         <a class="btn btn-default btn-link btn-xs" role="button"
                         data-toggle="collapse" href="#{panel_id}" aria-expanded="false" aria-controls="{panel_id}">
                         Toggle diff
                     </a>
-                    <div class="collapse" id="{panel_id}">
-                        <pre class="input-area" id="{block_id}-input">{input_text}</pre>
-                        <pre id="{block_id}">{diff_result}</pre>
-                    </div></li></ul><script>updateDiffBlock("{block_id}");</script>"""
+                    <div class="collapse" id="{panel_id}">""",
+                    """
+                    <p>Input preview: {title_input}</p>
+                    <pre class="input-area" id="{block_id}-input">{input_text}</pre>
+                    <div id="{title_input}_download_link"></div>
+                    <script>createDownloadLink("{title_input}", `{input_text_full}`);</script>
+                    """,
+                    """<pre id="{block_id}">{diff_result}</pre>
+                    </div></li></ul><script>updateDiffBlock("{block_id}");</script>"""]
 
     def compute(self, actual_output, expected_output):
         """
@@ -104,17 +110,22 @@ class Diff:
             diff_html = ""
 
             if diff_available:
+                input_text_full, input_text = self.read_input_example(test_case)
                 template_info = {
                     "test_id": test_id + 1,
                     "result_name": result.name,
                     "panel_id": "collapseDiff" + str(test_id),
                     "block_id": "diffBlock" + str(test_id),
                     "diff_result": diff_result.replace("\n", "\\n"),
-                    "input_text": self.read_input_example(test_case)
+                    "input_text": input_text,
+                    "input_text_full": input_text_full,
+                    "title_input": test_case[0]
                 }
 
-
-                diff_html = self.testcase_template.format(**template_info)
+                if self.show_input or input_text_full == "":
+                    diff_html = "".join(self.testcase_template).format(**template_info)
+                else:
+                    diff_html = "".join([self.testcase_template[0], self.testcase_template[2]]).format(**template_info)
             else:
                 diff_html = """<ul><li><strong>Test {0}: {1} </strong></li></ul>""".format(
                     test_id + 1, result.name)
@@ -132,14 +143,10 @@ class Diff:
         # size of input least than 1MB
         if statinfo.st_size < 1048576:
             with open(test_case[0], 'r') as input_file:
-                text = input_file.read()
-                number_of_lines = len(text.split('\n'))
-                if number_of_lines < 150:
-                    return text
-                else:
-                    return "Too many lines on the input"
+                text = input_file.readlines()                
+                return ["".join(text), "".join(text[:15])]
         else:
-            return "Input file oversize"            
+            return ["", "Input file oversize"]            
 
 def set_feedback(results):
     """

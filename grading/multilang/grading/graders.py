@@ -35,6 +35,7 @@ class SimpleGrader(BaseGrader):
         super(SimpleGrader, self).__init__(submission_request)
         self.generate_diff = options.get("compute_diff", True)
         self.treat_non_zero_as_runtime_error = options.get("treat_non_zero_as_runtime_error", True)
+        options['show_input'] = True
         self.diff_tool = Diff(options)
         self.check_output = options.get('check_output', gutils.check_output)
 
