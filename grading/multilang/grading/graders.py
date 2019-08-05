@@ -271,7 +271,7 @@ class SimpleGrader(BaseGrader):
         else:
             feedback_info['global']['return'] = parse_non_zero_return_code(return_code)
             feedback_info['global']['feedback'] = gutils.html_to_rst(
-                    "Your code did not run successfully: <strong>%s</strong>" % (feedback_info['global']['result'].name,))
+                    "Your code did not run successfully: <strong>%s</strong>" % (feedback_info['global']['return'].name,))
         feedback_info['custom']['stdout'] =  stdout
         feedback_info['custom']['stderr'] = stderr
 
