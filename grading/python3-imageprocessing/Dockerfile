@@ -12,5 +12,5 @@ LABEL   org.inginious.grading.name="python3-imageprocessing"
 RUN yum install -y libXext libSM libXrender
 
 # Python packages for image processing
-RUN pip3.5 install numpy
-RUN pip3.5 install opencv-python
+RUN pip3 install numpy
+RUN pip3 install opencv-python
