@@ -15,4 +15,4 @@ RUN     yum -y install ant bsdtar java-1.8.0 && \
         cp -r lib /opt/css-validator/lib && \
         cd / && \
         rm -rf /tmp/css-validator && \
-        pip3.5 install lxml cssutils html5print AdvancedHTMLParser
+        pip3 install lxml cssutils html5print AdvancedHTMLParser
