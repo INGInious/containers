@@ -22,3 +22,5 @@ for container in $grading; do
     fi
     
 done
+
+docker logout
