@@ -10,7 +10,7 @@ RUN yum -y install wget java-1.8.0-openjdk-devel maven && \
     wget -P /usr/share http://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar && \
     yum -y remove wget && \
     rpm -ivh https://downloads.lightbend.com/scala/2.12.2/scala-2.12.2.rpm && \
-	curl https://bintray.com/sbt/rpm/rpm > bintray-sbt-rpm.repo && \
-	mv bintray-sbt-rpm.repo /etc/yum.repos.d/ && \
-	yum install sbt && \
+    curl https://bintray.com/sbt/rpm/rpm > bintray-sbt-rpm.repo && \
+    mv bintray-sbt-rpm.repo /etc/yum.repos.d/ && \
+    yum -y install sbt && \
     yum clean all
