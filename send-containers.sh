@@ -18,7 +18,7 @@ docker push ingi/inginious-c-base:latest
 docker push ingi/inginious-c-default:latest
 for container in $grading; do
     if [[ "$(docker images -q ingi/inginious-c-$container:latest 2> /dev/null)" != "" ]]; then
-        echo "docker push ingi/inginious-c-$container:latest"
+        docker push ingi/inginious-c-$container:latest
     fi
     
 done
