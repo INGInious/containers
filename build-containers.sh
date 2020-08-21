@@ -16,7 +16,7 @@ usage () {
 # Sourcing the container list
 #############################
 
-source $SCRIPT_DIR/container-list.sh
+source "$SCRIPT_DIR/container-list.sh"
 
 #################
 # Reading options
@@ -41,7 +41,6 @@ do
     esac
 done
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BUILD_DIR="$SCRIPT_DIR/build"
 CONTAINERS_DIR="$SCRIPT_DIR/grading"
 
@@ -49,11 +48,11 @@ CONTAINERS_DIR="$SCRIPT_DIR/grading"
 # Clean the build dir
 #####################
 
-if [ -d $BUILD_DIR ];
+if [ -d "$BUILD_DIR" ];
 then
-    rm -rf $BUILD_DIR
+    rm -rf "$BUILD_DIR"
 fi
-mkdir $BUILD_DIR
+mkdir "$BUILD_DIR"
 
 #######################################################
 # Cloning the INGInious repo & building base containers
@@ -61,8 +60,8 @@ mkdir $BUILD_DIR
 
 # Clone the INGInious repo to get base-containers
 echo "Cloning INGInious repo"
-git clone https://github.com/UCL-INGI/INGInious $BUILD_DIR/INGInious
-pushd $BUILD_DIR/INGInious
+git clone https://github.com/UCL-INGI/INGInious "$BUILD_DIR/INGInious"
+pushd "$BUILD_DIR/INGInious"
 
 # Determining the branches to build
 if [ -z $BRANCHES ];
@@ -85,8 +84,8 @@ then
         TAG=$(echo $BRANCH | sed "s/master/latest/g")
 
         # Build base containers
-        docker build -t ingi/inginious-c-base:$TAG $BUILD_DIR/INGInious/base-containers/base
-        docker build -t ingi/inginious-c-default:$TAG --build-arg VERSION=$TAG $BUILD_DIR/INGInious/base-containers/default
+        docker build -t ingi/inginious-c-base:$TAG "$BUILD_DIR/INGInious/base-containers/base"
+        docker build -t ingi/inginious-c-default:$TAG --build-arg VERSION=$TAG "$BUILD_DIR/INGInious/base-containers/default"
     done
 fi
 
@@ -104,6 +103,6 @@ do
 
     for CONTAINER in $CONTAINERS;
     do
-        docker build -t ingi/inginious-c-$CONTAINER:$TAG --build-arg VERSION=$TAG $CONTAINERS_DIR/$CONTAINER
+        docker build -t ingi/inginious-c-$CONTAINER:$TAG --build-arg VERSION=$TAG "$CONTAINERS_DIR/$CONTAINER"
     done
 done
