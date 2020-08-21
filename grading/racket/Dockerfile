@@ -1,4 +1,5 @@
-FROM ingi/inginious-c-base
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="racket"
 RUN \
   curl https://mirror.racket-lang.org/installers/7.1/racket-7.1-x86_64-linux.sh -o /racket.sh && \

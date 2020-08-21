@@ -1,7 +1,8 @@
 # DOCKER-VERSION 1.1.0
 
 #inherit from the base container, which have all the needed script to launch tasks
-FROM    ingi/inginious-c-java7
+ARG   VERSION=latest
+FROM  ingi/inginious-c-java7:${VERSION}
 LABEL org.inginious.grading.name="java7mockito"
 
 # Add mockito and depencies

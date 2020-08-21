@@ -1,8 +1,9 @@
 # DOCKER-VERSION 1.1.0
 
 # Inherit from the base container, which have all the needed script to launch tasks
-FROM    ingi/inginious-c-base
-LABEL   org.inginious.grading.name="cpp-gcc5"
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
+LABEL org.inginious.grading.name="cpp-gcc5"
 
 # Install Developer Toolset 5
 RUN     yum install -y centos-release-scl && \

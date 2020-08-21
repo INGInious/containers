@@ -1,4 +1,5 @@
-FROM ingi/inginious-c-base
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="mpi"
 
 RUN yum install -y openmpi-devel gcc-c++

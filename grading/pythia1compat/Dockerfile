@@ -1,6 +1,7 @@
 # DOCKER-VERSION 1.1.0
 
-FROM    ingi/inginious-c-base
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="pythia1compat"
 
 # Install Oz

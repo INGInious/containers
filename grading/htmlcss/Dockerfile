@@ -1,8 +1,9 @@
 # DOCKER-VERSION 1.1.0
 
 #inherit from the base container, which have all the needed script to launch tasks
-FROM    ingi/inginious-c-base
-LABEL   org.inginious.grading.name="htmlcss"
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
+LABEL org.inginious.grading.name="htmlcss"
 
 RUN     yum -y install ant bsdtar java-1.8.0 && \
         mkdir /opt/vnu && curl -L https://github.com/validator/validator/releases/download/17.9.0/vnu.jar_17.9.0.zip | bsdtar -xf - -C /opt/vnu/ --strip-components 1 && \

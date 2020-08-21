@@ -1,7 +1,8 @@
 # DOCKER-VERSION 1.1.0
 
 #inherit from the base container, which have all the needed script to launch tasks
-FROM    ingi/inginious-c-base
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="mono"
 
 RUN     rpm --import "http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF" && \

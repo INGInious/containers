@@ -6,7 +6,8 @@
 #$       docker run -t -i --rm ingi-prolog /bin/bash
 
 # Inherit from the default container, which have all the needed script to launch tasks
-FROM    ingi/inginious-c-base
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
 
 # Set the environment name for tasks
 LABEL   org.inginious.grading.name="prolog"

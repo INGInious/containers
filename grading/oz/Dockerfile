@@ -1,8 +1,9 @@
 # DOCKER-VERSION 1.1.0
 
 #inherit from the base container, which have all the needed script to launch tasks
-FROM    ingi/inginious-c-base
-LABEL   org.inginious.grading.name="oz"
+ARG   VERSION=latest
+FROM  ingi/inginious-c-base:${VERSION}
+LABEL org.inginious.grading.name="oz"
 
 RUN     yum -y install \
             # Extra dependencies for tools...
