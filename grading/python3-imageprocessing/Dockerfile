@@ -10,8 +10,9 @@ FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="python3-imageprocessing"
 
 # Packages needed for the opencv-python package
-RUN yum install -y libXext libSM libXrender
-
-# Python packages for image processing
-RUN pip3 install numpy
-RUN pip3 install opencv-python
+RUN yum install -y epel-release && \
+    yum groupinstall -y 'Development tools' && \
+    yum install -y libXext libSM libXrender cmake3 python3-devel && \
+    alternatives --install /usr/local/bin/cmake cmake /usr/bin/cmake3 0 && \
+    # Python packages for image processing
+    pip3 install scikit-build ninja numpy && pip3 install opencv-python
