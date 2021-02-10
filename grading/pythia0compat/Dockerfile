@@ -17,7 +17,7 @@ RUN     apt-get update && \
         libgomp1 libc6-dev openjdk-7-jdk openjdk-7-jre-headless openjdk-7-jre-lib \
         tzdata-java tzdata libc6 libc-bin libgcc1 zlib1g libnss3-1d libnspr4-0d \
         libsqlite3-0 python-pip python3-pip libzmq3-dev && \
-        pip3 install xmltodict msgpack-python pyzmq && \
+        pip3 install xmltodict msgpack-python pyzmq==19.0.0 && \
         ln -s /usr/lib/jvm/java-6-openjdk/bin/java /bin/java && \
         ln -s /usr/lib/jvm/java-6-openjdk/bin/javac /bin/javac
 
