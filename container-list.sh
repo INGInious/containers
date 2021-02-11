@@ -16,7 +16,6 @@ mechanics
 mpi
 oz
 prolog
-pythia0compat
 python3
 r
 scapy
