@@ -11,7 +11,7 @@ RUN yum -y install wget maven && \
     wget -P /usr/share https://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/2.2/hamcrest-core-2.2.jar && \
     wget -P /usr/share https://search.maven.org/remotecontent?filepath=com/github/guillaumederval/JavaGrading/0.5.1/JavaGrading-0.5.1.jar && \
     yum -y remove wget && \
-    rpm -ivh https://downloads.lightbend.com/scala/2.12.13/scala-2.12.13.rpm && \
+    rpm -ivh https://downloads.lightbend.com/scala/2.13.4/scala-2.13.4.rpm && \
     curl https://bintray.com/sbt/rpm/rpm > bintray-sbt-rpm.repo && \
     mv bintray-sbt-rpm.repo /etc/yum.repos.d/ && \
     yum -y install sbt && \
