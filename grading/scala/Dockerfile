@@ -2,10 +2,10 @@
 
 #inherit from the base container, which have all the needed script to launch tasks
 ARG   VERSION=latest
-FROM  ingi/inginious-c-base:${VERSION}
+FROM  ingi/inginious-c-java15:${VERSION}
 LABEL org.inginious.grading.name="scala"
 
-RUN yum -y install wget java-1.11.0-openjdk-devel maven && \
+RUN yum -y install wget maven && \
     wget -P /usr/share/scala/lib -O scalacheck.jar https://search.maven.org/remotecontent?filepath=org/scalacheck/scalacheck_2.13/1.15.2/scalacheck_2.13-1.15.2.jar && \
     wget -P /usr/share https://search.maven.org/remotecontent?filepath=junit/junit/4.13.1/junit-4.13.1.jar && \
     wget -P /usr/share https://search.maven.org/remotecontent?filepath=org/hamcrest/hamcrest-core/2.2/hamcrest-core-2.2.jar && \
