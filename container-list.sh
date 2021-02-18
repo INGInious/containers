@@ -9,8 +9,9 @@ gcc5-openmpi
 gcc6-openmpi
 gcc7-openmpi
 gcc8-openmpi
-java7
-java8scala
+java8
+java15
+scala
 math
 mechanics
 mpi
@@ -25,7 +26,6 @@ gcc6
 gcc7
 gcc8
 htmlcss
-java7mockito
 mono
 ngspice
 php

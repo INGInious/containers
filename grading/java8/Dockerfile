@@ -3,8 +3,8 @@
 #inherit from the base container, which have all the needed script to launch tasks
 ARG   VERSION=latest
 FROM  ingi/inginious-c-base:${VERSION}
-LABEL org.inginious.grading.name="java7"
+LABEL org.inginious.grading.name="java8"
 
-# Add java 1.7
-RUN     yum install -y java-1.7.0-openjdk java-1.7.0-openjdk-devel ant ant-junit bc enca file && \
+# Add java 1.8
+RUN     yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel ant ant-junit bc enca file && \
         yum clean all
