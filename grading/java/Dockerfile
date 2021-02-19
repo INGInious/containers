@@ -13,6 +13,6 @@ RUN     yum install -y  java-latest-openjdk java-latest-openjdk-devel ant ant-ju
         cd powermock-mockito2-junit-1.7.4 && \
         wget https://repo1.maven.org/maven2/org/powermock/powermock-api-mockito-common/1.7.4/powermock-api-mockito-common-1.7.4.jar && \
         cd .. &&  rm powermock.zip && \
-        wget -O gradle.zip https://services.gradle.org/distributions/gradle-6.3-bin.zip && \
-        unzip -d /opt/gradle gradle.zip && \
+        wget -O gradle.zip https://services.gradle.org/distributions/gradle-6.5.1-bin.zip && \
+        unzip -d /opt/ gradle.zip && ln -s /opt/gradle-6.5.1/bin/gradle /usr/local/bin/gradle && \
         rm gradle.zip
