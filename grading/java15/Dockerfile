@@ -22,6 +22,6 @@ RUN     yum install -y ant ant-junit bc enca file curl && \
         rm gradle.zip
 
 ENV JAVA_HOME=/opt/jdk-15.0.2
-ENV PATH=\$PATH:\$JAVA_HOME/bin
+ENV PATH=${PATH}:${JAVA_HOME}/bin
 ENV GRADLE_HOME=/opt/gradle/gradle-6.3
 ENV PATH=${GRADLE_HOME}/bin:${PATH}
