@@ -32,6 +32,7 @@ php
 pyjavacpp
 pythia1compat
 python3-imageprocessing
+python3-deeplearning
 racket
 sekexe
 verilog
