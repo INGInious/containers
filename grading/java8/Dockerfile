@@ -6,7 +6,10 @@ FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="java8"
 
 # Add java 1.8
-RUN     yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel ant ant-junit bc enca file wget && \
+RUN     dnf -y install dnf-plugins-core && \
+        dnf config-manager --set-enabled powertools && \
+        dnf -y module enable javapackages-tools && \
+        dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel ant-junit bc enca file wget && \
         yum clean all && \
         # Build and install powermock
         cd /tmp && \
