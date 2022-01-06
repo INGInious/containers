@@ -4,10 +4,13 @@ ARG   VERSION=latest
 FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="java"
 # Add mockito and depencies
-RUN     yum install -y  java-latest-openjdk java-latest-openjdk-devel ant ant-junit bc enca file wget && \
-        yum clean all && \
+RUN     dnf -y install dnf-plugins-core && \
+        dnf config-manager --set-enabled powertools && \
+        dnf -y module enable javapackages-tools && \
+        dnf install -y  java-latest-openjdk java-latest-openjdk-devel ant-junit bc enca file wget && \
+        dnf clean all && \
         alternatives --set java java-latest-openjdk.x86_64 && alternatives --set javac java-latest-openjdk.x86_64 && \
         # Install gradle
-        wget -O gradle.zip https://services.gradle.org/distributions/gradle-7.0.1-bin.zip && \
-        unzip -d /opt/ gradle.zip && ln -s /opt/gradle-7.0.1/bin/gradle /usr/local/bin/gradle && \
+        wget -O gradle.zip https://services.gradle.org/distributions/gradle-7.3.3-bin.zip && \
+        unzip -d /opt/ gradle.zip && ln -s /opt/gradle-7.3.3/bin/gradle /usr/local/bin/gradle && \
         rm gradle.zip
