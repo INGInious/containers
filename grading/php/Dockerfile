@@ -5,5 +5,5 @@ ARG   VERSION=latest
 FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="php"
 
-RUN     yum install -y php && \
-        yum clean all
+RUN     dnf install -y php && \
+        dnf clean all
