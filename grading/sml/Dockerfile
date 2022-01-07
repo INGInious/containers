@@ -7,26 +7,15 @@ FROM  ingi/inginious-c-base:${VERSION}
 # Set the environment name for tasks
 LABEL   org.inginious.grading.name="sml"
 
-# Installing SML/NJ requires glibc with 32-bit support
-RUN yum -y install gcc && \
-  yum -y install glibc-devel.i686 libgcc.i686 && \
 
-# Add SML/NJ
-#RUN     declare -x SMLROOT="/usr/local/sml"
-  mkdir /usr/local/sml && \
-  cd /usr/local/sml && \
-#RUN     declare -x SMLROOT="/sml"
-#RUN     mkdir sml
-#RUN     cd sml
-  curl -O http://www.smlnj.org/dist/working/110.78/config.tgz && \
-  tar xzvf config.tgz && \
-  rm config.tgz && \
-  config/install.sh && \
-
-# clean up
-  yum -y remove gcc glibc-devel.i686 libgcc.i686 && \
-  rm -rf config && \
-  rm -f *.tgz && \
-  ln -sf /usr/local/sml/bin/sml /usr/local/bin/sml && \
-  cd ~
+RUN dnf -y install wget systemd-udev && \
+    dnf -y install make gcc-toolset-11 && \
+    source /opt/rh/gcc-toolset-11/enable && \
+    mkdir /root/smlnj && cd /root/smlnj && \
+    wget https://smlnj.org/dist/working/110.99.2/config.tgz && \
+    tar xzvf config.tgz && \
+    INSTALLDIR=/usr /root/smlnj/config/install.sh -64 && \
+    cd /root && rm -rf /root/smlnj && \
+    dnf -y history undo last && \
+    dnf clean all
 
