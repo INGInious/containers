@@ -22,4 +22,5 @@ RUN     dnf -y install wget automake findutils gettext-devel libtool dnf-plugins
         # Make the distribution and install it \
         make && \
         ln -s /opt/sage-9.4/sage /usr/local/bin/sage && \
+        sage --pip install antlr4-python3-runtime && \
         dnf clean all
