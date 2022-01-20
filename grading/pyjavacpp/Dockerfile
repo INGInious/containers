@@ -6,5 +6,6 @@ FROM  ingi/inginious-c-cpp:${VERSION}
 LABEL org.inginious.grading.name="pyjavacpp"
 
 # Add java 1.8
-RUN     yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel ant ant-junit bc enca file && \
-        yum clean all
+RUN     dnf -y module enable javapackages-tools && \
+        dnf install -y java-1.8.0-openjdk-devel ant-junit bc enca file && \
+        dnf clean all

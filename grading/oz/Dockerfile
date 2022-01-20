@@ -5,24 +5,24 @@ ARG   VERSION=latest
 FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="oz"
 
-RUN     yum -y install \
-            # Extra dependencies for tools...
-            # ... for correctoz (java)
-            java-1.7.0-openjdk java-1.7.0-openjdk-devel \
-            ant ant-junit bc enca wget \
-            # ... for image capture and processing
-            ImageMagick Xvfb \
-            # ... for sound processing
-            sox lame
+RUN     dnf -y install dnf-plugins-core && \
+        dnf config-manager --set-enabled powertools && \
+        dnf -y module enable javapackages-tools && \
+        dnf -y install \
+        # Extra dependencies for tools... \
+        # ... for correctoz (java) \
+        java-1.8.0-openjdk java-1.8.0-openjdk-devel \
+        ant-junit bc enca wget \
+        # ... for image capture and processing \
+        ImageMagick Xvfb \
+        # ... for sound processing \
+        sox lame-libs && \
+        # Install mozart \
+        dnf -y --nogpgcheck install https://github.com/mozart/mozart2/releases/download/v2.0.1/mozart2-2.0.1-x86_64-linux.rpm && \
+        dnf clean all && \
+        wget -P /usr/local/lib/ https://www.antlr.org/download/antlr-4.5.3-complete.jar && \
+        echo -e "CLASSPATH=.:/usr/local/lib/antlr-4.5.3-complete.jar${CLASSPATH:+:${CLASSPATH}}" >> /etc/environment && \
+        echo -e "#!/bin/sh\njava -jar /usr/local/lib/antlr-4.5.3-complete.jar" > /usr/local/bin/antlr4 && chmod +x /usr/local/bin/antlr4 && \
+        echo -e "#!/bin/sh\njava org.antlr.v4.gui.TestRig" > /usr/local/bin/grun && chmod +x /usr/local/bin/grun
 
-ADD     mozart2-2.0.1+build.8.db41d83-x86_64-centos.rpm /mozart.rpm
-
-RUN     yum -y --nogpgcheck localinstall /mozart.rpm && \
-        rm /mozart.rpm && \
-        yum clean all && \
-        rm -rf /var/cache/yum
-
-RUN     wget -P /usr/local/lib/antlr-4.5.3-complete.jar http://www.antlr.org/download/antlr-4.5.3-complete.jar && \
-        export CLASSPATH=".:/usr/local/lib/antlr-4.5.3-complete.jar:$CLASSPATH" && \
-        alias antlr4='java -jar /usr/local/lib/antlr-4.5.3-complete.jar' && \
-        alias grun='java org.antlr.v4.gui.TestRig'
+ENV CLASSPATH=.:/usr/local/lib/antlr-4.5.3-complete.jar${CLASSPATH:+:${CLASSPATH}}

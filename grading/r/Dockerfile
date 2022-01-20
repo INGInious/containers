@@ -6,6 +6,8 @@ FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="R"
 
 #install R
-RUN     yum -y install R && \
-        yum clean all
+RUN     dnf -y install dnf-plugins-core && \
+        dnf config-manager --set-enabled powertools && \
+        dnf -y install R && \
+        dnf clean all
 
