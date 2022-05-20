@@ -12,6 +12,7 @@ RUN     dnf -y install dnf-plugins-core && \
         dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel ant-junit bc enca file wget && \
         dnf install -y junit hamcrest-core && \
         dnf install -y mockito && \
+        dnf install -y maven && \
         yum clean all && \
         # Build and install powermock
         cd /tmp && \
