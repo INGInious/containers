@@ -13,6 +13,7 @@ RUN     dnf -y install dnf-plugins-core && \
         dnf install -y junit hamcrest-core && \
         dnf install -y mockito && \
         dnf install -y maven && \
+        dnf install -y git && \
         yum clean all && \
         # Build and install powermock
         cd /tmp && \

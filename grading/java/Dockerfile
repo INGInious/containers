@@ -9,6 +9,7 @@ RUN     dnf -y install dnf-plugins-core && \
         dnf -y module enable javapackages-tools && \
         dnf install -y  java-latest-openjdk java-latest-openjdk-devel ant-junit bc enca file wget && \
         dnf install -y maven && \
+        dnf install -y git && \
         dnf clean all && \
         alternatives --set java java-latest-openjdk.x86_64 && alternatives --set javac java-latest-openjdk.x86_64 && \
         # Install gradle
