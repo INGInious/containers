@@ -24,4 +24,4 @@ WORKDIR ./unitex-core-${UNITEX_VERSION}/build/
 RUN     make DEBUG=yes 64BITS=yes UNITEXTOOLLOGGERONLY=yes && ln -s /home/unitex-core-${UNITEX_VERSION}/bin/UnitexToolLogger /usr/local/bin/UnitexToolLogger
 
 # Install NLP libraries for Python
-RUN     pip3 install --upgrade pip && pip3 install tensorflow keras numpy pandas matplotlib sklearn nltk gensim lxml pyyaml
+RUN     pip3 install --upgrade pip && pip3 install nltk numpy pandas lxml pyyaml
