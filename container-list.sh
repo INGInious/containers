@@ -36,5 +36,6 @@ python3-deeplearning
 racket
 sekexe
 verilog
+unitex-nlp
 END
 )
