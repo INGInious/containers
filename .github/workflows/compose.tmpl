@@ -1,0 +1,16 @@
+services:
+{% for image, deps in images.items() %}
+  {{image}}:
+    image: ${REGISTRY}/inginious/env-{{image}}
+    build:
+      dockerfile: grading/{{image}}/Dockerfile
+      #context: grading/{{image}}
+      args:
+        REGISTRY: ${REGISTRY}
+{% if deps|length != 0 %}
+    depends_on:
+{% for dep in deps %}
+      - {{dep}}
+{% endfor %}
+{% endif %}
+{% endfor %}

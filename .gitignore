@@ -1,4 +1,5 @@
 .DS_Store
 .idea
 __*
-env/
+compose.yml
+env
