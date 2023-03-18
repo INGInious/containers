@@ -3,8 +3,7 @@ services:
   {{image}}:
     image: ${REGISTRY}/inginious/env-{{image}}
     build:
-      dockerfile: grading/{{image}}/Dockerfile
-      #context: grading/{{image}}
+      dockerfile: ../../grading/{{image}}/Dockerfile
       args:
         REGISTRY: ${REGISTRY}
 {% if deps|length != 0 %}
