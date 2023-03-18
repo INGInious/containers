@@ -2,7 +2,8 @@
 
 #inherit from the base container, which have all the needed script to launch tasks
 ARG   VERSION=latest
-FROM  ingi/inginious-c-java:${VERSION}
+ARG   REGISTRY
+FROM  ${REGISTRY}/inginious/env-java:${VERSION}
 LABEL org.inginious.grading.name="scala"
 
 RUN dnf -y install maven && \

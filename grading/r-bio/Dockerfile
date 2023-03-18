@@ -2,7 +2,8 @@
 
 #inherit from the base container, which have all the needed script to launch tasks
 ARG    VERSION=latest
-FROM   ingi/inginious-c-r:${VERSION}
+ARG    REGISTRY
+FROM   ${REGISTRY}/inginious/env-r:${VERSION}
 LABEL  org.inginious.grading.name="R-bio"
 
 RUN    dnf -y install libcurl-devel libxml2-devel geos-devel openssl-devel xmlsec1-devel \

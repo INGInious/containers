@@ -1,5 +1,6 @@
 ARG   VERSION=latest
-FROM  ingi/inginious-c-base:${VERSION}
+ARG   REGISTRY
+FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="dafny"
 
 RUN dnf -y install wget dotnet libgomp && dnf clean all && \

@@ -3,3 +3,41 @@ images:
   gcc8-openmpi:
     - gcc8
   gcc8:
+  dafny:
+  dotnet:
+  gcc9:
+  gcc9-openmpi:
+    - gcc9
+  htmlcss:
+  java:
+  java8:
+  math:
+  mechanics:
+    - math
+  ngspice:
+  oz:
+  php:
+  pyjavacpp:
+    - cpp
+  python3:
+  python3-deeplearning:
+  python3-forbiddenfruit:
+  python3-imageprocessing:
+  python3-pylint:
+  python3-turtle:
+  r:
+  racket:
+  r-bio:
+    - r
+  sagemath:
+  scala:
+    - java
+  scapy:
+    - cpp
+  sekexe:
+  sml:
+  sql:
+  ssh-toolkit:
+  unitex-nlp:
+    - cpp
+  verilog:

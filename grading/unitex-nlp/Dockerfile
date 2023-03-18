@@ -6,10 +6,11 @@
 # By default, the latest version of INGInious will be used.
 # You can install a different version with --build-arg VERSION=<version>.
 ARG     VERSION=latest
+ARG     REGISTRY
 
 # Instead of using ingi/inginious-c-base (default configuration),
 # we must use the container with C/C++ (GCC) to install the Unitex/GramLab C++ Core.
-FROM    ingi/inginious-c-cpp:${VERSION}
+FROM    ${REGISTRY}/inginious/env-cpp:${VERSION}
 LABEL   org.inginious.grading.name="unitex-nlp"
 
 # By default, Unitex v3.3 will be installed. 
