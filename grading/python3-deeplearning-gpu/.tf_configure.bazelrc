@@ -1,0 +1,9 @@
+build --action_env PYTHON_BIN_PATH="/usr/bin/python3"
+build --action_env PYTHON_LIB_PATH="/usr/lib/python3.8/site-packages"
+build --python_path="/usr/bin/python3"
+build --config=native_arch_linux
+build --config=tensorrt
+build --config=cuda
+build --action_env CUDA_TOOLKIT_PATH="/usr/local/cuda-11.8"
+build --action_env TF_CUDA_COMPUTE_CAPABILITIES="5.0,7.5"
+build --action_env GCC_HOST_COMPILER_PATH="/opt/rh/gcc-toolset-11/root/usr/bin/gcc"
