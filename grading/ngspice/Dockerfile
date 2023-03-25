@@ -7,7 +7,7 @@ LABEL org.inginious.grading.name="ngspice"
 RUN dnf -y install wget rpm-build dnf-plugins-core && \
     # Build ictl \
     cd /root && \
-    wget https://archive.fedoraproject.org/pub/fedora/linux/releases/35/Everything/source/tree/Packages/i/itcl-4.1.1-5.fc35.src.rpm && \
+    wget https://archive.fedoraproject.org/pub/archive/fedora/linux/releases/35/Everything/source/tree/Packages/i/itcl-4.1.1-5.fc35.src.rpm && \
     dnf -y builddep itcl-4.1.1-5.fc35.src.rpm && \
     rpmbuild --rebuild itcl-4.1.1-5.fc35.src.rpm && \
     dnf -y history undo last && \
@@ -15,7 +15,7 @@ RUN dnf -y install wget rpm-build dnf-plugins-core && \
     dnf -y install itcl-4.1.1-5.el8.x86_64.rpm && \
     # Build blt \
     cd /root && \
-    wget https://archive.fedoraproject.org/pub/fedora/linux/releases/35/Everything/source/tree/Packages/b/blt-2.4-60.z.fc35.src.rpm && \
+    wget https://archive.fedoraproject.org/pub/archive/fedora/linux/releases/35/Everything/source/tree/Packages/b/blt-2.4-60.z.fc35.src.rpm && \
     dnf -y builddep blt-2.4-60.z.fc35.src.rpm && \
     rpmbuild -rp blt-2.4-60.z.fc35.src.rpm && \
     sed -i "s/%if 0%{?rhel}/%if 0/g" rpmbuild/SPECS/blt.spec && \
@@ -26,7 +26,7 @@ RUN dnf -y install wget rpm-build dnf-plugins-core && \
     dnf -y install blt-2.4-60.z.el8.x86_64.rpm blt-devel-2.4-60.z.el8.x86_64.rpm && \
     # Build mot-adms \
     cd /root && \
-    wget https://archive.fedoraproject.org/pub/fedora/linux/releases/35/Everything/source/tree/Packages/m/mot-adms-2.3.7-3.fc35.src.rpm && \
+    wget https://archive.fedoraproject.org/pub/archive/fedora/linux/releases/35/Everything/source/tree/Packages/m/mot-adms-2.3.7-3.fc35.src.rpm && \
     dnf -y builddep mot-adms-2.3.7-3.fc35.src.rpm && \
     rpmbuild --rebuild mot-adms-2.3.7-3.fc35.src.rpm && \
     dnf -y history undo last && \
@@ -34,7 +34,7 @@ RUN dnf -y install wget rpm-build dnf-plugins-core && \
     dnf -y install mot-adms-2.3.7-3.el8.x86_64.rpm && \
     # Build ngspice \
     cd /root && \
-    wget https://archive.fedoraproject.org/pub/fedora/linux/releases/35/Everything/source/tree/Packages/n/ngspice-35-1.fc35.src.rpm && \
+    wget https://archive.fedoraproject.org/pub/archive/fedora/linux/releases/35/Everything/source/tree/Packages/n/ngspice-35-1.fc35.src.rpm && \
     dnf -y builddep ngspice-35-1.fc35.src.rpm && \
     rpmbuild --rebuild ngspice-35-1.fc35.src.rpm && \
     dnf -y history undo last && \
