@@ -13,3 +13,8 @@ RUN     dnf config-manager --set-enabled powertools && \
         pip3 install git+https://github.com/mpostaire/CCorrect.git --target=/usr/lib/python3.6/site-packages/
 
 ENV    PATH=/opt/rh/gcc-toolset-12/root/usr/bin/${PATH:+:${PATH}}
+ENV    MANPATH=/opt/rh/gcc-toolset-12/root/usr/share/man:${MANPATH} 
+ENV    INFOPATH=/opt/rh/gcc-toolset-12/root/usr/share/info${INFOPATH:+:${INFOPATH}} 
+ENV    PCP_DIR=/opt/rh/gcc-toolset-12/root 
+ENV    LD_LIBRARY_PATH=/opt/rh/gcc-toolset-12/root/usr/lib64:/opt/rh/gcc-toolset-12/root/usr/lib:/opt/rh/gcc-toolset-12/root/usr/lib64/dyninst:/opt/rh/gcc-toolset-12/root/usr/lib/dyninst:/opt/rh/gcc-toolset-12/root/usr/lib64:/opt/rh/gcc-toolset-12/root/usr/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} 
+ENV    PKG_CONFIG_PATH=/opt/rh/gcc-toolset-12/root/usr/lib64/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}} 
