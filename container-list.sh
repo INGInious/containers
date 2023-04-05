@@ -37,5 +37,6 @@ racket
 sekexe
 verilog
 unitex-nlp
+cpp-ccorrect
 END
 )
