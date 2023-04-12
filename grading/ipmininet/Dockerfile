@@ -3,7 +3,7 @@ FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="ipmininet"
 
 # Install mininet deps
-RUN	dnf install -y git make gcc centos-release-nfv-openvswitch &&\
+RUN	dnf install -y git make gcc centos-release-nfv-openvswitch which &&\
 	dnf install -y openvswitch3.1 &&\
 	pip3 install pyflakes
 
