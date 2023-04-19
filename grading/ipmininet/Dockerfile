@@ -3,8 +3,8 @@ FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="ipmininet"
 
 # Install mininet deps
-RUN	dnf install -y git make gcc centos-release-nfv-openvswitch bridge-utils which &&\
-	dnf install -y openvswitch3.1 &&\
+RUN	dnf config-manager --set-enabled powertools &&\
+	dnf install -y git make gcc bridge-utils which wget &&\
 	pip3 install pyflakes
 
 # Install mininet
@@ -22,7 +22,8 @@ RUN 	git clone https://github.com/mininet/mininet &&\
 RUN	git clone https://github.com/cnp3/ipmininet.git &&\
 	git -C ipmininet checkout 72cefde536ca02c650875d4b14d93899824af668 &&\
 	sed -i -e 's/^[ ]*setup_mininet_dep()/\t#setup_mininet_dep()/g' ipmininet/setup.py &&\
-	pip3 install ipmininet/
+	pip3 install ipmininet/ &&\
+	python -m ipmininet.install -q
 
 RUN 	dnf remove -y git gcc make &&\
 	dnf autoremove -y
