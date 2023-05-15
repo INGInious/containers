@@ -5,5 +5,5 @@ ARG   VERSION=latest
 FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="ssh-toolkit"
 
-RUN     dnf install -y openssh-clients && \
+RUN     dnf install -y openssh-clients sshpass && \
         dnf clean all
