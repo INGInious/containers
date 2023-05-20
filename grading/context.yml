@@ -1,3 +1,4 @@
+base_path: "."
 images:
   cpp:
   gcc8-openmpi:
