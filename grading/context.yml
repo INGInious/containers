@@ -1,21 +1,21 @@
 base_path: "."
 images:
   cpp:
-  gcc8-openmpi:
-    - gcc8
+  #gcc8-openmpi:
+  #  - gcc8
   gcc8:
   dafny:
   dotnet:
   gcc9:
-  gcc9-openmpi:
-    - gcc9
+  # gcc9-openmpi:
+  #  - gcc9
   htmlcss:
   java:
   java8:
   math:
-  mechanics:
-    - math
-  ngspice:
+  # mechanics:
+  #  - math
+  # ngspice:
   oz:
   php:
   pyjavacpp:
@@ -27,18 +27,18 @@ images:
   python3-pylint:
   python3-turtle:
   r:
-  racket:
+  # racket:
   r-bio:
     - r
-  sagemath:
+  # sagemath:
   scala:
     - java
   scapy:
     - cpp
-  sekexe:
+  # sekexe:
   sml:
   sql:
   ssh-toolkit:
-  unitex-nlp:
-    - cpp
+  # unitex-nlp:
+  #  - cpp
   verilog:
