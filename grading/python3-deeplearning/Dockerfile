@@ -6,4 +6,4 @@ FROM  ingi/inginious-c-base:${VERSION}
 LABEL org.inginious.grading.name="python3-deeplearning"
 
 # Packages needed
-RUN pip3 install --upgrade pip && pip3 install tensorflow keras numpy pandas matplotlib sklearn nltk gensim
+RUN pip3 install --upgrade pip && pip3 install tensorflow keras numpy pandas matplotlib scikit-learn nltk gensim
