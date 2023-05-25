@@ -1,7 +1,7 @@
-ARG   VERSION=latest
+ARG	VERSION=latest
 ARG	REGISTRY
-FROM  ${REGISTRY}/inginious/env-kvm:${VERSION}
-LABEL org.inginious.grading.name="ipmininet"
+FROM 	${REGISTRY}/inginious/env-kvm:${VERSION}
+LABEL	org.inginious.grading.name="ipmininet"
 
 # Install mininet deps
 RUN	dnf config-manager --set-enabled powertools &&\
