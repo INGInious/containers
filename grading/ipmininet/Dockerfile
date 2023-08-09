@@ -27,4 +27,7 @@ RUN	git clone https://github.com/cnp3/ipmininet.git &&\
 	pip3 install ipmininet/
 	#python -m ipmininet.install -q
 
+RUN ln -s /tmp /var/tmp/frr &&\
+    usermod -aG frrvty root
+
 WORKDIR /
