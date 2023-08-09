@@ -5,7 +5,7 @@ LABEL	org.inginious.grading.name="ipmininet"
 
 # Install mininet deps
 RUN	dnf config-manager --set-enabled powertools &&\
-	dnf install -y git make gcc bridge-utils which wget &&\
+	dnf install -y git make gcc bridge-utils which wget frr &&\
 	pip3 install pyflakes
 
 # Install mininet
