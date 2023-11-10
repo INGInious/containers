@@ -33,6 +33,7 @@ pyjavacpp
 pythia1compat
 python3-imageprocessing
 python3-deeplearning
+python3-nlp
 racket
 sekexe
 verilog
