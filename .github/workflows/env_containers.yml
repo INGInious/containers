@@ -8,6 +8,7 @@ on:
 
 jobs:
   containers_build_and_push:
+    runs-on: self-hosted
     uses: INGInious/.github/.github/workflows/containers.yml@673723b119b1a92695dd5fea1520f5ae28e38abb
     with:
       working-directory: grading 
