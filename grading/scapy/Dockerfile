@@ -1,5 +1,6 @@
 ARG   VERSION=latest
-FROM  ingi/inginious-c-cpp:${VERSION}
+ARG   REGISTRY
+FROM  ${REGISTRY}/inginious/env-cpp:${VERSION}
 LABEL org.inginious.grading.name="scapy"
 
 RUN dnf -y install texlive tcpdump && \
