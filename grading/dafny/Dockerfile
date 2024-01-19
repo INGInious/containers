@@ -1,5 +1,5 @@
 ARG   VERSION=latest
-ARG   REGISTRY
+ARG   REGISTRY=ghcr.io
 FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="dafny"
 

@@ -1,6 +1,6 @@
 # Inherit from the default container, which have all the needed script to launch tasks
 ARG   VERSION=latest
-ARG   REGISTRY
+ARG   REGISTRY=ghcr.io
 FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="ngspice"
 
