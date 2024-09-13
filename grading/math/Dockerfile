@@ -22,10 +22,10 @@ RUN     dnf -y install dnf-plugins-core && \
         rm statistics-1.4.2.tar.gz && \
         octave --eval "pkg install -forge netcdf" && \
         # Install julia \
-        wget https://julialang-s3.julialang.org/bin/linux/x64/1.10/julia-1.10.0-linux-x86_64.tar.gz && \
-        tar xvf julia-1.10.0-linux-x86_64.tar.gz && \
-        mv julia-1.10.0 /opt/julia && \
-        rm -f julia-1.10.1-linux-x86_64.tar.gz && \
+        wget https://julialang-s3.julialang.org/bin/linux/x64/1.10/julia-1.10.5-linux-x86_64.tar.gz && \
+        tar xvf julia-1.10.5-linux-x86_64.tar.gz && \
+        mv julia-1.10.5 /opt/julia && \
+        rm -f julia-1.10.5-linux-x86_64.tar.gz && \
         ln -s /opt/julia/bin/julia /usr/local/bin/julia && \
         # Install python math libs \
         pip3 install matplotlib numpy antlr4-python3-runtime scikit-learn sympy openpyxl pandas
