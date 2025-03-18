@@ -12,20 +12,18 @@ RUN     dnf -y install dnf-plugins-core && \
         dnf -y module enable javapackages-tools && \
         dnf -y install git octave octave-doc octave-GeographicLib octave-devel make redhat-rpm-config nettle-devel netcdf-devel wget &&\
         dnf clean all && \
-        octave --eval "pkg install -forge control" && \
-        octave --eval "pkg install -forge image" && \
-        octave --eval "pkg install -forge io" && \
-        octave --eval "pkg install -forge signal" && \
-        octave --eval "pkg install -forge general" && \
-        wget https://master.dl.sourceforge.net/project/octave/Octave%20Forge%20Packages/Individual%20Package%20Releases/statistics-1.4.2.tar.gz && \
-        octave --eval "pkg install statistics-1.4.2.tar.gz" && \
-        rm statistics-1.4.2.tar.gz && \
-        octave --eval "pkg install -forge netcdf" && \
+        octave --eval "pkg install 'https://github.com/gnu-octave/pkg-control/releases/download/control-4.1.1/control-4.1.1.tar.gz'" && \
+        octave --eval "pkg install 'https://downloads.sourceforge.net/project/octave/Octave%20Forge%20Packages/Individual%20Package%20Releases/image-2.14.0.tar.gz'" && \
+        octave --eval "pkg install 'https://downloads.sourceforge.net/project/octave/Octave%20Forge%20Packages/Individual%20Package%20Releases/io-2.6.4.tar.gz'" && \
+        octave --eval "pkg install 'https://downloads.sourceforge.net/project/octave/Octave%20Forge%20Packages/Individual%20Package%20Releases/signal-1.4.6.tar.gz'" && \
+        octave --eval "pkg install 'https://downloads.sourceforge.net/project/octave/Octave%20Forge%20Packages/Individual%20Package%20Releases/general-2.1.3.tar.gz'" && \
+        octave --eval "pkg install 'https://downloads.sourceforge.net/project/octave/Octave%20Forge%20Packages/Individual%20Package%20Releases/statistics-1.4.3.tar.gz'" && \
+        octave --eval "pkg install 'https://downloads.sourceforge.net/project/octave/Octave%20Forge%20Packages/Individual%20Package%20Releases/netcdf-1.0.18.tar.gz'" && \
         # Install julia \
-        wget https://julialang-s3.julialang.org/bin/linux/x64/1.10/julia-1.10.5-linux-x86_64.tar.gz && \
-        tar xvf julia-1.10.5-linux-x86_64.tar.gz && \
-        mv julia-1.10.5 /opt/julia && \
-        rm -f julia-1.10.5-linux-x86_64.tar.gz && \
+        wget https://julialang-s3.julialang.org/bin/linux/x64/1.10/julia-1.10.9-linux-x86_64.tar.gz && \
+        tar xvf julia-1.10.9-linux-x86_64.tar.gz && \
+        mv julia-1.10.9 /opt/julia && \
+        rm -f julia-1.10.9-linux-x86_64.tar.gz && \
         ln -s /opt/julia/bin/julia /usr/local/bin/julia && \
         # Install python math libs \
         pip3 install matplotlib numpy antlr4-python3-runtime scikit-learn sympy openpyxl pandas
