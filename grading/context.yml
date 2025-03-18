@@ -10,7 +10,7 @@ images:
   # gcc9-openmpi:
   #  - gcc9
   htmlcss:
-  java:
+  java-21:
   java-8:
   math:
   # mechanics:
