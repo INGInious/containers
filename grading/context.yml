@@ -11,7 +11,7 @@ images:
   #  - gcc9
   htmlcss:
   java:
-  java8:
+  java-8:
   math:
   # mechanics:
   #  - math
