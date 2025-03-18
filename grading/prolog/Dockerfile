@@ -2,7 +2,8 @@
 
 # Inherit from the default container, which have all the needed script to launch tasks
 ARG   VERSION=latest
-FROM  ingi/inginious-c-base:${VERSION}
+ARG   REGISTRY=ghcr.io
+FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL   org.inginious.grading.name="prolog"
 
 # http://www.swi-prolog.org/build/Redhat.html

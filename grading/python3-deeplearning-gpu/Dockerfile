@@ -2,7 +2,8 @@
 
 #inherit from the base container, which has all the needed script to launch tasks
 ARG   VERSION=latest
-FROM  ingi/inginious-c-base:${VERSION}
+ARG   REGISTRY=ghcr.io
+FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="python3-deeplearning-gpu"
 LABEL org.inginious.grading.need_gpu=1
 

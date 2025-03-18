@@ -2,7 +2,8 @@
 
 #inherit from the base container
 ARG   VERSION=latest
-FROM  ingi/inginious-c-base:${VERSION}
+ARG   REGISTRY=ghcr.io
+FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="ccorrect"
 
 # install gcc-toolset-12-gdb, libasan, libtsan, debug symbols for some libraries and install CCorrect

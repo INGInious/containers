@@ -8,7 +8,7 @@
 ARG     VERSION=latest
 ARG     REGISTRY
 
-# Instead of using ingi/inginious-c-base (default configuration),
+# Instead of using inginious/env-base (default configuration),
 # we must use the container with C/C++ (GCC) to install the Unitex/GramLab C++ Core.
 FROM    ${REGISTRY}/inginious/env-cpp:${VERSION}
 LABEL   org.inginious.grading.name="unitex-nlp"
