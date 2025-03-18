@@ -5,7 +5,7 @@ This container is part of [INGInious](https://github.com/UCL-INGI/INGInious), an
  intelligent grader that allows secured and automated testing of code made by st
 udents.
 
-SWI-Prolog container (ingi/inginious-c-prolog)
+SWI-Prolog container (inginious/env-prolog)
 ------------------------------------
 
 A container image for [SWI-Prolog](http://www.swi-prolog.org/); downloads the current devel release, so may break unexpectedly.

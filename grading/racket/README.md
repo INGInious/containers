@@ -6,7 +6,7 @@ an intelligent grader that allows secured and automated testing of code made by
 students. 
 
 
-Racket container (ingi/inginious-c-racket)
+Racket container (inginious/env-racket)
 ------------------------------------------
 
 A container image for [Racket](https://racket-lang.org/); downloads version 7.1.
