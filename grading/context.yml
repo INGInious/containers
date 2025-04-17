@@ -32,7 +32,7 @@ images:
     - r
   # sagemath:
   scala:
-    - java
+    - java-21
   scapy:
     - cpp
   # sekexe:
