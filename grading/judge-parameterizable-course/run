@@ -1,0 +1,18 @@
+#!/bin/bash
+
+parsetemplate /task/tests.py
+parsetemplate --output /task/student/code.py /course/template.py
+output=$(python3 /task/tests.py 2> stderr.log)
+
+if [ "$(tail -n 1 stderr.log)" = "" ]; then
+    feedback-result success
+	feedback-msg -em "Your code is saved for future grading"
+elif [ "$(tail -n 1 stderr.log)" != "OK" ]; then
+    error=$(grep "self" stderr.log | cut -d ',' -f3- | cut -d '"' -f2)
+    feedback-result failed
+    feedback-msg -em "$error"
+    exit 1
+else
+    feedback-result success
+	feedback-msg -em "Your code is correct"
+fi
