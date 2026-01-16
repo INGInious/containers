@@ -7,6 +7,7 @@ FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="javascript"
 
 # Add gcc
-RUN     dnf -y module enable nodejs:20 && \
+RUN     dnf -y module enable nodejs:24 && \
         dnf -y install git nodejs && \
-        dnf clean all
+        dnf clean all && \
+        npm install -g typescript
