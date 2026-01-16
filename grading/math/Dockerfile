@@ -6,6 +6,8 @@ ARG   REGISTRY=ghcr.io
 FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="math"
 
+ENV   JULIA_DEPOT_PATH="/opt/julia/worker/:"
+
 #install Octave, Julia, numpy and sympy
 RUN     dnf -y install dnf-plugins-core && \
         dnf config-manager --set-enabled powertools && \
@@ -25,7 +27,10 @@ RUN     dnf -y install dnf-plugins-core && \
         mv julia-1.12.0 /opt/julia && \
         rm -f julia-1.12.0-linux-x86_64.tar.gz && \
         ln -s /opt/julia/bin/julia /usr/local/bin/julia && \
-        julia -e 'using Pkg; Pkg.add("BenchmarkTools")' && \
-        julia -e 'using BenchmarkTools' && \
+        mkdir /opt/julia/worker && \
+        JULIA_DEPOT_PATH="/opt/julia/worker/:" julia -e 'using Pkg; Pkg.add("BenchmarkTools")' && \
+        JULIA_DEPOT_PATH="/opt/julia/worker/:" julia -e 'using BenchmarkTools' && \
+        chown -R worker:worker /opt/julia/worker && \
+        echo -e "\nJULIA_DEPOT_PATH=/opt/julia/worker/:\n" >> /etc/environment && \
         # Install python math libs \
         pip3 install matplotlib numpy antlr4-python3-runtime scikit-learn sympy openpyxl pandas
