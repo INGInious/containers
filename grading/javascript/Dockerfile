@@ -10,4 +10,4 @@ LABEL org.inginious.grading.name="javascript"
 RUN     dnf -y module enable nodejs:24 && \
         dnf -y install git nodejs && \
         dnf clean all && \
-        npm install -g typescript
+        npm install -g typescript tsx
