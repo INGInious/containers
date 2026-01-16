@@ -7,7 +7,7 @@ FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="ccorrect"
 
 # install gcc-toolset-12-gdb, libasan, libtsan, debug symbols for some libraries and install CCorrect
-RUN     dnf config-manager --set-enabled powertools && \
+RUN     dnf -y install dnf-plugins-core && dnf config-manager --set-enabled powertools && \
         dnf -y install gcc make git cppcheck gcc-toolset-12-gdb libasan libtsan && \
         dnf -y --enablerepo=baseos-debug debuginfo-install libgcc glibc libasan libtsan libstdc++ && \
         dnf clean all && \
