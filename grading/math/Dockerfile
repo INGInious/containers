@@ -33,4 +33,4 @@ RUN     dnf -y install dnf-plugins-core && \
         chown -R worker:worker /opt/julia/worker && \
         echo -e "\nJULIA_DEPOT_PATH=/opt/julia/worker/:\n" >> /etc/environment && \
         # Install python math libs \
-        pip3 install matplotlib numpy antlr4-python3-runtime scikit-learn sympy openpyxl pandas
+        pip3 install matplotlib numpy antlr4-python3-runtime scikit-learn sympy openpyxl pandas unittest-xml-reporting
