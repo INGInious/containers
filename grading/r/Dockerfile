@@ -7,8 +7,5 @@ FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="R"
 
 #install R
-RUN     dnf -y install dnf-plugins-core && \
-        dnf config-manager --set-enabled powertools && \
-        dnf -y install R && \
-        dnf clean all
+RUN     crb enable && dnf -y install R && dnf clean all
 
