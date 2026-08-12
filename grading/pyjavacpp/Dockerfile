@@ -6,7 +6,6 @@ ARG   REGISTRY=ghcr.io
 FROM  ${REGISTRY}/inginious/env-cpp:${VERSION}
 LABEL org.inginious.grading.name="pyjavacpp"
 
-# Add java 1.8
-RUN     dnf -y module enable javapackages-tools && \
-        dnf install -y java-1.8.0-openjdk-devel ant-junit bc enca file && \
+# Add java 21
+RUN     dnf install -y java-21-openjdk-devel ant-junit bc file && \
         dnf clean all
