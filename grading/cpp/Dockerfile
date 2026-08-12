@@ -11,6 +11,6 @@ RUN     dnf -y install dnf-plugins-core epel-release && crb enable && \
         dnf install -y gcc gcc-c++ gdb cpp make cmake valgrind binutils libstdc++ \
             clang clang-analyzer clang-devel llvm automake check check-devel CUnit \
             CUnit-devel zlib-devel openssl-devel time jansson-devel graphviz \
-            graphviz-devel cppcheck git && \
+            graphviz-devel cppcheck git openmpi-devel && \
         pip3 install GitPython && \
         dnf clean all
