@@ -6,5 +6,4 @@ ARG   REGISTRY=ghcr.io
 FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="dotnet"
 
-RUN     dnf install -y dotnet && \
-        dnf clean all
+RUN     dnf install -y dotnet-sdk-10.0 && dnf clean all
