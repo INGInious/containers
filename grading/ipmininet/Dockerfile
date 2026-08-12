@@ -1,3 +1,6 @@
+# WARNING : this image is for development purposes
+# and is not meant to be put in production
+
 ARG	VERSION=latest
 ARG	REGISTRY
 FROM 	${REGISTRY}/inginious/env-kvm:${VERSION}
