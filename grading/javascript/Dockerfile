@@ -7,7 +7,8 @@ FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="javascript"
 
 # Add gcc
-RUN     dnf -y module enable nodejs:24 && \
-        dnf -y install git nodejs && \
+RUN     dnf -y install git nodejs24 && \
         dnf clean all && \
+        ln -s /usr/bin/node-24 /usr/bin/node && \
+        ln -s /usr/bin/npm-24 /usr/bin/npm && \
         npm install -g typescript tsx
