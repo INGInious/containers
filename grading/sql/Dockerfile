@@ -7,5 +7,6 @@ FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL org.inginious.grading.name="sql"
 
 # Add SQLite DBMS and SQL linter
-RUN	dnf install -y sqlite &&\
-	pip3 install sqlfluff
+RUN     dnf install -y sqlite && \
+        pip3 install sqlfluff && \
+        pip3 install lsinf2172-inginious-utils==1.0rc11
