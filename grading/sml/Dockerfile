@@ -9,11 +9,9 @@ FROM  ${REGISTRY}/inginious/env-base:${VERSION}
 LABEL   org.inginious.grading.name="sml"
 
 
-RUN dnf -y install wget systemd-udev && \
-    dnf -y install make gcc-toolset-11 && \
-    source /opt/rh/gcc-toolset-11/enable && \
+RUN dnf -y install wget make gcc && \
     mkdir /root/smlnj && cd /root/smlnj && \
-    wget https://smlnj.org/dist/working/110.99.2/config.tgz && \
+    wget https://smlnj.org/dist/working/110.99.9/config.tgz && \
     tar xzvf config.tgz && \
     INSTALLDIR=/usr /root/smlnj/config/install.sh -64 && \
     cd /root && rm -rf /root/smlnj && \
