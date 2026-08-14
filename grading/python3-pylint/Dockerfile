@@ -3,8 +3,10 @@
 #inherit from the base container, which have all the needed script to launch tasks
 ARG   VERSION=latest
 ARG   REGISTRY=ghcr.io
-FROM  ${REGISTRY}/inginious/env-base:${VERSION}
-LABEL org.inginious.grading.name="python3-pylint"
+ARG   PYTHON_VERSION=3
+FROM  ${REGISTRY}/inginious/env-python${PYTHON_VERSION}:${VERSION}
+ARG   PYTHON_VERSION=3
+LABEL org.inginious.grading.name="python${PYTHON_VERSION}-pylint"
 
 # Packages needed
-RUN pip3 install pylint
+RUN pip${PYTHON_VERSION} install pylint

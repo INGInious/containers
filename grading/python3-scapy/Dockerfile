@@ -1,8 +1,10 @@
 ARG   VERSION=latest
 ARG   REGISTRY=ghcr.io
-FROM  ${REGISTRY}/inginious/env-cpp:${VERSION}
-LABEL org.inginious.grading.name="python3-scapy"
+ARG   PYTHON_VERSION=3
+FROM  ${REGISTRY}/inginious/env-python${PYTHON_VERSION}:${VERSION}
+ARG   PYTHON_VERSION=3
+LABEL org.inginious.grading.name="python${PYTHON_VERSION}-scapy"
 
 RUN dnf -y install texlive tcpdump && \
-    pip3 install scapy matplotlib cryptography pyx && \
+    pip${PYTHON_VERSION} install scapy matplotlib cryptography pyx && \
     dnf clean all
