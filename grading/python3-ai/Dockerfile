@@ -4,8 +4,9 @@
 ARG   VERSION=latest
 ARG   REGISTRY=ghcr.io
 FROM  ${REGISTRY}/inginious/env-base:${VERSION}
-LABEL org.inginious.grading.name="python3-nlp"
+LABEL org.inginious.grading.name="python3-ai"
 
 # Packages needed
-RUN pip3 install --upgrade pip && pip3 install numpy pandas matplotlib scikit-learn nltk gensim torch transformers datasets evaluate accelerate && \
+RUN pip3 install --upgrade pip && \
+    pip3 install numpy pandas matplotlib scikit-learn nltk gensim torch tensorflow keras transformers datasets evaluate accelerate && \
     python3 -m nltk.downloader -d /usr/local/share/nltk_data punkt

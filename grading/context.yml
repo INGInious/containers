@@ -21,7 +21,7 @@ images:
   pyjavacpp:
     - cpp
   python3:
-  python3-deeplearning:
+  python3-ai:
   python3-forbiddenfruit:
   python3-imageprocessing:
   python3-pylint:
