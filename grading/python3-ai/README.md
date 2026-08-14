@@ -11,3 +11,10 @@ The container contains python packages for Artificial Intelligence, Deep Learnin
 - Machine Learning / Data Science: [numpy](https://pypi.org/project/numpy/), [pandas](https://pypi.org/project/pandas/), [matplotlib](https://pypi.org/project/matplotlib/), [scikit-learn](https://pypi.org/project/scikit-learn/)
 - Deep Learning: [torch](https://pypi.org/project/torch/), [tensorflow](https://pypi.org/project/tensorflow/), [keras](https://pypi.org/project/Keras/)
 - Natural Language Processing: [nltk](https://pypi.org/project/nltk/) (with `punkt` pre-downloaded), [gensim](https://pypi.org/project/gensim/), [transformers](https://pypi.org/project/transformers/), [datasets](https://pypi.org/project/datasets/), [evaluate](https://pypi.org/project/evaluate/), [accelerate](https://pypi.org/project/accelerate/)
+
+Build using either `--target=env-python3-ai` or `--target=env-python3-ai-cuda`. You may also want to specify `--build-arg PYTHON_VERSION=3.xx`.
+
+For the CUDA build, Check the required CUDA library version using :
+
+    import tensorflow as tf
+    tf.sysconfig.get_build_info()
