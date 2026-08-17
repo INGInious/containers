@@ -6,5 +6,5 @@ ARG   PYTHON_VERSION=3
 LABEL org.inginious.grading.name="python${PYTHON_VERSION}-scapy"
 
 RUN dnf -y install texlive tcpdump && \
-    pip${PYTHON_VERSION} install scapy matplotlib cryptography pyx && \
+    pip${PYTHON_VERSION} install scapy matplotlib cryptography pyx requests && \
     dnf clean all
