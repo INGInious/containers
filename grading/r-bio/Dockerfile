@@ -21,5 +21,6 @@ RUN    dnf -y install libcurl-devel libxml2-devel geos-devel openssl-devel xmlse
        Rscript -e 'BiocManager::install("annotate");' && \
        Rscript -e 'BiocManager::install("UniProt.ws");' && \
        Rscript -e 'BiocManager::install("biomaRt");' && \
+       Rscript -e 'BiocManager::install("pwalign");' && \
        Rscript -e 'install.packages("mRMRe",dependencies=TRUE, repos="http://cran.rstudio.com/");' && \
        dnf clean all 
